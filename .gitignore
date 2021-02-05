@@ -1,0 +1,6 @@
+# Project exclude paths
+/cmake-build-debug/
+#python virtual env
+venv/
+__pycache__/
+.idea/
