@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "utils.hpp"
+#include "utils/utils.hpp"
 #include "request_handlers/Request.hpp"
 
 class Server {

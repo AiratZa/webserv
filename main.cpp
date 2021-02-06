@@ -41,42 +41,6 @@ void serveConnections(WebServ& webServ) {
 }
 
 
-//void serveConnections(WebServ& webServ) {
-//    while(TRUE) {
-//
-//        Server &server = webServ.getFrontServer();
-//
-//        FD_ZERO(server.getReadSetPtr());
-//        FD_ZERO(server.getWriteSetPtr());
-//        FD_SET(server.getListener(), server.getReadSetPtr());
-//
-//        server.setToReadFDSet();
-//        server.setToWriteFDSet();
-//
-//        // Ждём события в одном из сокетов
-//        server.updateMaxFD();
-//        if (select(server.getMaxFD() + 1,
-//                   server.getReadSetPtr(),
-//                   server.getWriteSetPtr(),
-//                   NULL,
-//                   NULL) < 0) {
-//            utils::exitWithLog();
-//        }
-//
-//        // Определяем тип события и выполняем соответствующие действия
-//        if (FD_ISSET(server.getListener(), server.getReadSetPtr())) {
-//            // Поступил новый запрос на соединение, используем accept
-//            server.acceptConnection();
-//        }
-//
-//        server.processConnections();
-//
-//        webServ.addServer(server); //push server to end
-//        webServ.popFrontServer(); //Remove next element
-//    }
-//}
-
-
 int main(int argc, char *argv[])
 {
     std::string path_to_config;

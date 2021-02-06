@@ -6,10 +6,12 @@
 #define WEBSERV_WEBSERV_HPP
 
 #include <vector>
-#include <list>
+
 #include "Server.hpp"
+#include "config_parsing/Config.hpp"
 
 #define CONFIG_FILE_DEFAULT_PATH "/webserv.conf"
+
 
 class WebServ {
 
@@ -37,6 +39,10 @@ private:
     fd_set _readset;
     fd_set _writeset;
     int _maxFD;
+
+    Config _config;
+
+
 
 
 };

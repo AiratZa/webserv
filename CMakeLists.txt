@@ -3,4 +3,4 @@ project(webserv)
 
 set(CMAKE_CXX_STANDARD 98)
 
-add_executable(webserv main.cpp utils.cpp Server.cpp WebServ.cpp)
+add_executable(webserv main.cpp utils/utils.cpp Server.cpp WebServ.cpp config_parsing/Config.cpp)

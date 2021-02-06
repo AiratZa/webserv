@@ -11,8 +11,9 @@ WebServ::WebServ(const std::string& config_file_path) {
         addServer(one);
         addServer(two);
     } else {
-        Server *three = new Server(8888);
-        addServer(three);
+        _config = Config(config_file_path);
+//        Server *three = new Server(8888);
+//        addServer(three);
     }
     std::cout << "Server(s) are started" << std::endl;
 }
