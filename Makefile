@@ -4,6 +4,7 @@ FLAGS = -std=c++98 -Wall -Wextra -Werror
 
 SRCS = main.cpp Server.cpp utils.cpp
 
+
 OBJS = $(SRCS:.cpp=.o)
 
 MAKE_DEPS = $(SRCS:.cpp=.d)
