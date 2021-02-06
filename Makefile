@@ -1,6 +1,6 @@
 NAME = webserv
 
-FLAGS = -std=c++98 -Wall -Wextra -Werror
+FLAGS = -std=c++98 -Wall -Wextra -Werror -g
 
 SRCS = main.cpp Server.cpp utils/utils.cpp WebServ.cpp config_parsing/Config.cpp
 

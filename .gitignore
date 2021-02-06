@@ -4,3 +4,16 @@
 venv/
 __pycache__/
 .idea/
+
+
+*.o
+a.out
+.DS_Store
+.vscode
+.idea
+cmake-build-debug
+CMakeLists.txt
+*.gch
+webserv
+*.d
+*.dSYM

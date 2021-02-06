@@ -17,6 +17,10 @@ Server::Server(int port) : _port(port) {
 	if (fcntl(_listener, F_SETFL, O_NONBLOCK) < 0) //превращает сокет в неблокирующий
 		utils::exitWithLog();
 
+	int optval = 1;
+	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		utils::exitWithLog();
+
 	if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
 		utils::exitWithLog();
 
@@ -32,6 +36,10 @@ void Server::acceptConnection(void) {
 
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0)
 		utils::exitWithLog();
+
+//	int optval = 1;
+//	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+//		utils::exitWithLog();
 
 	_clients_read.push_back(sock);
 }
