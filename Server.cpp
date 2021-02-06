@@ -67,7 +67,7 @@ void Server::handleRequests(void) {
 			buf[bytes_read] = '\0';
 
 			std::string tmp = buf;
-			MyRequest tmpRequest = MyRequest(tmp);
+			MyRequest* tmpRequest = new MyRequest(tmp);
 			_client_requests[*it] = tmpRequest;
 			_clients_write.push_back(*it);
 			it = _clients_read.erase(it);
@@ -91,7 +91,7 @@ void Server::handleResponses(void) {
 						  << "<h1>Test page</h1>\n"
 						  << "<p>This is body of the test page...</p>\n"
 						  << "<h2>Request headers</h2>\n"
-						  << "<pre>" << _client_requests[*it].getRawRequest() << "</pre>\n"
+						  << "<pre>" << _client_requests[*it]->getRawRequest() << "</pre>\n"
 						  << "<em><small>Test C++ Http Server</small></em>\n";
 
 			// Формируем весь ответ вместе с заголовками
