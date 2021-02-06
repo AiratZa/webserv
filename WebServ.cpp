@@ -6,28 +6,44 @@
 
 WebServ::WebServ(const std::string& config_file_path) {
     if (config_file_path == CONFIG_FILE_DEFAULT_PATH) { //TODO: //TEMP RESOLUTION, NNED TO BE CORRECTED
-        addServer(Server(8180));
-        addServer(Server(8181));
-//        addServer(Server(8082));
+        Server* one = new Server(8080);
+        Server* two = new Server(8081);
+        addServer(one);
+        addServer(two);
     } else {
-        addServer(Server(8088));
+        Server *three = new Server(8888);
+        addServer(three);
     }
-//    addServersListenerFD();
     std::cout << "Server(s) are started" << std::endl;
 }
 
 
-void WebServ::addServer(const Server& server) {
-    _servers.push(server);
+void WebServ::addServer(Server* server) {
+    _servers.push_back(server);
 }
 
-Server& WebServ::getFrontServer(void) {
-    return _servers.front();
+void WebServ::setToReadFDSet(std::list<int>& clientsFD) {
+    for(std::list<int>::iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+        FD_SET(*it, &_readset);
 }
 
-void WebServ::popFrontServer(void) {
-    _servers.pop();
+void WebServ::setToWriteFDSet(std::list<int>& clientsFD) {
+    for(std::list<int>::iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+        FD_SET(*it, &_writeset);
 }
+
+void WebServ::updateMaxFD(void) {
+    _maxFD = 0;
+    for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+        int tmp = (*it)->getMaxFD();
+        if (tmp > _maxFD)
+            _maxFD = tmp;
+    }
+}
+
+
+
+
 
 
 //void WebServ::addServersListenerFD(void) {
@@ -38,9 +54,9 @@ void WebServ::popFrontServer(void) {
 
 
 
-//Server& WebServ::getServerByPosition(int i) {
-//    return _servers[i];
-//}
+Server* WebServ::getServerByPosition(int i) {
+    return _servers[i];
+}
 
 
 

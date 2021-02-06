@@ -4,37 +4,77 @@
 void serveConnections(WebServ& webServ) {
     while(TRUE) {
 
-        Server &server = webServ.getFrontServer();
+        FD_ZERO(webServ.getReadSetPtr());
+        FD_ZERO(webServ.getWriteSetPtr());
 
-        FD_ZERO(server.getReadSetPtr());
-        FD_ZERO(server.getWriteSetPtr());
-        FD_SET(server.getListener(), server.getReadSetPtr());
+        for (int i = 0; i < webServ.getServersCount(); i++) {
+            Server *server = webServ.getServerByPosition(i);
+            FD_SET(server->getListener(), webServ.getReadSetPtr());
+            webServ.setToReadFDSet(server->getReadClients());
+            webServ.setToWriteFDSet(server->getReadClients());
+            server->updateMaxFD();
+        }
 
-        server.setToReadFDSet();
-        server.setToWriteFDSet();
+        webServ.updateMaxFD();
 
         // Ждём события в одном из сокетов
-        server.updateMaxFD();
-        if (select(server.getMaxFD() + 1,
-                   server.getReadSetPtr(),
-                   server.getWriteSetPtr(),
+        if (select(webServ.getMaxFD() + 1,
+                   webServ.getReadSetPtr(),
+                   webServ.getWriteSetPtr(),
                    NULL,
                    NULL) < 0) {
             utils::exitWithLog();
         }
 
         // Определяем тип события и выполняем соответствующие действия
-        if (FD_ISSET(server.getListener(), server.getReadSetPtr())) {
-            // Поступил новый запрос на соединение, используем accept
-            server.acceptConnection();
+        for (int i = 0; i < webServ.getServersCount(); i++) {
+            Server *server = webServ.getServerByPosition(i);
+            if (FD_ISSET(server->getListener(), webServ.getReadSetPtr())) {
+                // Поступил новый запрос на соединение, используем accept
+                server->acceptConnection();
+            }
+
+            server->processConnections(webServ.getReadSetPtr(), webServ.getWriteSetPtr());
         }
 
-        server.processConnections();
-
-        webServ.addServer(server); //push server to end
-        webServ.popFrontServer(); //Remove next element
     }
 }
+
+
+//void serveConnections(WebServ& webServ) {
+//    while(TRUE) {
+//
+//        Server &server = webServ.getFrontServer();
+//
+//        FD_ZERO(server.getReadSetPtr());
+//        FD_ZERO(server.getWriteSetPtr());
+//        FD_SET(server.getListener(), server.getReadSetPtr());
+//
+//        server.setToReadFDSet();
+//        server.setToWriteFDSet();
+//
+//        // Ждём события в одном из сокетов
+//        server.updateMaxFD();
+//        if (select(server.getMaxFD() + 1,
+//                   server.getReadSetPtr(),
+//                   server.getWriteSetPtr(),
+//                   NULL,
+//                   NULL) < 0) {
+//            utils::exitWithLog();
+//        }
+//
+//        // Определяем тип события и выполняем соответствующие действия
+//        if (FD_ISSET(server.getListener(), server.getReadSetPtr())) {
+//            // Поступил новый запрос на соединение, используем accept
+//            server.acceptConnection();
+//        }
+//
+//        server.processConnections();
+//
+//        webServ.addServer(server); //push server to end
+//        webServ.popFrontServer(); //Remove next element
+//    }
+//}
 
 
 int main(int argc, char *argv[])

@@ -25,22 +25,17 @@ public:
     ~Server() { };
 
     const int & getListener(void) const { return _listener; };
-    fd_set* getReadSetPtr(void) { return &_readset; };
-    fd_set* getWriteSetPtr(void) { return &_writeset; };
 
-    void setToReadFDSet(void);
-    void setToWriteFDSet(void);
-    void updateMaxFD(void) { _maxFD = std::max(std::max(_listener,
-                                              *std::max_element(_clients_read.begin(), _clients_read.end())),
-                                              *std::max_element(_clients_write.begin(), _clients_write.end()) );
-    }
+    void updateMaxFD(void);
 
     const int & getMaxFD() const { return _maxFD; }
 
     void acceptConnection(void);
-    void processConnections(void);
-    void handleRequests(void);
-    void handleResponses(void);
+    void processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr);
+    void handleRequests(fd_set* globalReadSetPtr);
+    void handleResponses(fd_set* globalWriteSetPtr);
+
+    std::list<int>& getReadClients(void) { return _clients_read; }
     
 
 private:
@@ -52,10 +47,6 @@ private:
     std::list<int> _clients_write;
 
     std::map<int, MyRequest *> _client_requests;
-
-    // Для заполнения множества сокетов
-    fd_set _readset;
-    fd_set _writeset;
 
     int _maxFD;
 
