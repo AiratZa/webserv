@@ -6,7 +6,7 @@
 class MyRequest {
 
 	public:
-		MyRequest(const std::string& request) : _raw_request(request) { };
+		MyRequest(const std::string& request ) : _raw_request(request) { };
 		~MyRequest(void) { };
 
 		const std::string & getRawRequest(void) { return this->_raw_request; }
