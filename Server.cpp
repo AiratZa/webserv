@@ -25,15 +25,6 @@ Server::Server(int port) : _port(port) {
 
 };
 
-void Server::setToReadFDSet(void) {
-	for(std::list<int>::iterator it = _clients_read.begin(); it != _clients_read.end(); it++)
-		FD_SET(*it, &_readset);
-}
-void Server::setToWriteFDSet(void) {
-	for(std::list<int>::iterator it = _clients_write.begin(); it != _clients_write.end(); it++)
-		FD_SET(*it, &_writeset);
-}
-
 void Server::acceptConnection(void) {
 	int sock = accept(_listener, NULL, NULL);
 	if(sock < 0)
@@ -45,13 +36,13 @@ void Server::acceptConnection(void) {
 	_clients_read.push_back(sock);
 }
 
-void Server::handleRequests(void) {
+void Server::handleRequests(fd_set* globalReadSetPtr) {
 	char buf[1024];
 	int bytes_read;
 	std::list<int>::iterator it = _clients_read.begin();
 
 	while (it != _clients_read.end()) {
-		if (FD_ISSET(*it, &_readset)) {
+		if (FD_ISSET(*it, globalReadSetPtr)) {
 			// Поступили данные от клиента, читаем их
 			bytes_read = recv(*it, buf, 1024, 0);
 
@@ -78,11 +69,11 @@ void Server::handleRequests(void) {
 	// monkey->SetNext(squirrel)->SetNext(dog);
 }
 
-void Server::handleResponses(void) {
+void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	std::list<int>::iterator it = _clients_write.begin();
 
 	while (it != _clients_write.end()) {
-		if (FD_ISSET(*it, &_writeset)) {
+		if (FD_ISSET(*it, globalWriteSetPtr)) {
 			std::stringstream response; // сюда будет записываться ответ клиенту
 			std::stringstream response_body; // тело ответа
 
@@ -118,10 +109,20 @@ void Server::handleResponses(void) {
 
 
 
-void Server::processConnections(void) {
-	handleRequests();
-	handleResponses();
+void Server::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
+	handleRequests(globalReadSetPtr);
+	handleResponses(globalWriteSetPtr);
 }
 
+void Server::updateMaxFD(void) {
+    int max_tmp = _listener;
+    if (!_clients_read.empty()) {
+        max_tmp = std::max(max_tmp, *std::max_element(_clients_read.begin(), _clients_read.end()));
+    }
+    if (!_clients_write.empty()) {
+        max_tmp = std::max(max_tmp, *std::max_element(_clients_write.begin(), _clients_write.end()));
+    }
+    _maxFD = max_tmp;
+}
 
 

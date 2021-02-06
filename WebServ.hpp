@@ -1,0 +1,45 @@
+//
+// Created by airat on 06.02.2021.
+//
+
+#ifndef WEBSERV_WEBSERV_HPP
+#define WEBSERV_WEBSERV_HPP
+
+#include <vector>
+#include <list>
+#include "Server.hpp"
+
+#define CONFIG_FILE_DEFAULT_PATH "/webserv.conf"
+
+class WebServ {
+
+public:
+    WebServ(const std::string& config_file_path);
+    void addServer(Server* server);
+    int getServersCount(void) const { return _servers.size(); }
+    Server* getServerByPosition(int i);
+
+    fd_set* getReadSetPtr(void) { return &_readset; };
+    fd_set* getWriteSetPtr(void) { return &_writeset; };
+
+    void setToReadFDSet(std::list<int>& clientsFD);
+    void setToWriteFDSet(std::list<int>& clientsFD);
+
+    void updateMaxFD(void);
+    const int & getMaxFD() const { return _maxFD; }
+
+
+private:
+    WebServ() { };
+    std::vector<Server*> _servers;
+
+    // Для заполнения множества сокетов
+    fd_set _readset;
+    fd_set _writeset;
+    int _maxFD;
+
+
+};
+
+
+#endif //WEBSERV_WEBSERV_HPP
