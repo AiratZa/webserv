@@ -5,4 +5,6 @@ git branch -d localBranchName
 git push origin --delete remoteBranchName
 
 
+git clone --single-branch --branch <branchname> <remote-repo>
+
 
