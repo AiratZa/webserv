@@ -16,7 +16,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "utils.h"
+#include "utils.hpp"
+#include "request_handlers/Request.hpp"
 
 class Server {
 public:
@@ -38,6 +39,9 @@ public:
 
     void acceptConnection(void);
     void processConnections(void);
+    void handleRequests(void);
+    void handleResponses(void);
+    
 
 private:
     int _listener;
@@ -47,7 +51,7 @@ private:
     std::list<int> _clients_read;
     std::list<int> _clients_write;
 
-    std::map<int, std::string> _client_requests;
+    std::map<int, MyRequest> _client_requests;
 
     // Для заполнения множества сокетов
     fd_set _readset;
