@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <arpa/inet.h>
 
 #include "utils/utils.hpp"
 #include "request_handlers/Request.hpp"

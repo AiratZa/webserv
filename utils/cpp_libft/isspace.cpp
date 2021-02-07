@@ -11,5 +11,6 @@ int libft::isspace(int ch) {
             ch == '\r' ||
             ch == '\t' ||
             ch == '\v')
-            
+        return (1);
+    return (0);
 }

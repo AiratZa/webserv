@@ -8,7 +8,8 @@ Server::Server(int port) : _port(port) {
 
 	_addr.sin_family = AF_INET;
 	_addr.sin_port = htons(_port);
-	_addr.sin_addr.s_addr = INADDR_ANY;
+    _addr.sin_addr.s_addr = INADDR_ANY;
+
 
 	_listener = socket(AF_INET, SOCK_STREAM, 0);
 	if(_listener < 0)
