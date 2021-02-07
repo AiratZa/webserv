@@ -1,6 +1,8 @@
 #include "Server.hpp"
 #include "WebServ.hpp"
 
+WebServ webServ;
+
 void serveConnections(WebServ& webServ) {
     while(TRUE) {
 
@@ -24,6 +26,7 @@ void serveConnections(WebServ& webServ) {
                    NULL,
                    NULL) < 0) {
             utils::exitWithLog();
+            return ;
         }
 
         // Определяем тип события и выполняем соответствующие действия
@@ -40,6 +43,11 @@ void serveConnections(WebServ& webServ) {
     }
 }
 
+void intHandler(int signal) {
+	(void)signal;
+	webServ.stop();
+	exit(EXIT_SUCCESS);
+}
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +61,8 @@ int main(int argc, char *argv[])
             << "or dont provide nothing and will be used CONFIG_FILE_DEFAULT_PATH" << std::endl;
         exit(EXIT_FAILURE);
     }
-    WebServ webServ = WebServ(path_to_config);
+	signal(SIGINT, intHandler);
+    webServ = WebServ(path_to_config);
     serveConnections(webServ);
     return 0;
 }

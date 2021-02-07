@@ -59,7 +59,9 @@ Server* WebServ::getServerByPosition(int i) {
     return _servers[i];
 }
 
-
+void WebServ::stop() {
+	return ;
+}
 
 
 
