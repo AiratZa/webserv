@@ -1,51 +1,11 @@
 #include "Server.hpp"
 #include "WebServ.hpp"
 
-WebServ webServ;
-
-void serveConnections(WebServ& webServ) {
-    while(TRUE) {
-
-        FD_ZERO(webServ.getReadSetPtr());
-        FD_ZERO(webServ.getWriteSetPtr());
-
-        for (int i = 0; i < webServ.getServersCount(); i++) {
-            Server *server = webServ.getServerByPosition(i);
-            FD_SET(server->getListener(), webServ.getReadSetPtr());
-            webServ.setToReadFDSet(server->getReadClients());
-            webServ.setToWriteFDSet(server->getReadClients());
-            server->updateMaxFD();
-        }
-
-        webServ.updateMaxFD();
-
-        // Ждём события в одном из сокетов
-        if (select(webServ.getMaxFD() + 1,
-                   webServ.getReadSetPtr(),
-                   webServ.getWriteSetPtr(),
-                   NULL,
-                   NULL) < 0) {
-            utils::exitWithLog();
-            return ;
-        }
-
-        // Определяем тип события и выполняем соответствующие действия
-        for (int i = 0; i < webServ.getServersCount(); i++) {
-            Server *server = webServ.getServerByPosition(i);
-            if (FD_ISSET(server->getListener(), webServ.getReadSetPtr())) {
-                // Поступил новый запрос на соединение, используем accept
-                server->acceptConnection();
-            }
-
-            server->processConnections(webServ.getReadSetPtr(), webServ.getWriteSetPtr());
-        }
-
-    }
-}
+WebServ webserv;
 
 void intHandler(int signal) {
 	(void)signal;
-	webServ.stop();
+	webserv.stop();
 	exit(EXIT_SUCCESS);
 }
 
@@ -62,7 +22,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);
-    webServ = WebServ(path_to_config);
-    serveConnections(webServ);
+	webserv = WebServ(path_to_config);
+	webserv.serveConnections();
     return 0;
 }

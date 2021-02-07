@@ -34,16 +34,13 @@ void WebServ::setToWriteFDSet(std::list<int>& clientsFD) {
 }
 
 void WebServ::updateMaxFD(void) {
-    _maxFD = 0;
+    _max_fd = 0;
     for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); it++) {
         int tmp = (*it)->getMaxFD();
-        if (tmp > _maxFD)
-            _maxFD = tmp;
+        if (tmp > _max_fd)
+            _max_fd = tmp;
     }
 }
-
-
-
 
 
 
@@ -53,10 +50,47 @@ void WebServ::updateMaxFD(void) {
 //    }
 //}
 
-
-
 Server* WebServ::getServerByPosition(int i) {
     return _servers[i];
+}
+
+void WebServ::serveConnections() {
+	while(TRUE) {
+
+		FD_ZERO(getReadSetPtr());
+		FD_ZERO(getWriteSetPtr());
+
+		for (int i = 0; i < getServersCount(); i++) {
+			Server *server = getServerByPosition(i);
+			FD_SET(server->getListener(), getReadSetPtr());
+			setToReadFDSet(server->getReadClients());
+			setToWriteFDSet(server->getReadClients());
+			server->updateMaxFD();
+		}
+
+		updateMaxFD();
+
+		// Ждём события в одном из сокетов
+		if (select(getMaxFD() + 1,
+				   getReadSetPtr(),
+				   getWriteSetPtr(),
+				   NULL,
+				   NULL) < 0) {
+			utils::exitWithLog();
+		}
+
+		// Определяем тип события и выполняем соответствующие действия
+		for (int i = 0; i < getServersCount(); i++) {
+			Server *server = getServerByPosition(i);
+			if (FD_ISSET(server->getListener(), getReadSetPtr())) {
+				// Поступил новый запрос на соединение, используем accept
+				server->acceptConnection();
+			}
+
+			server->processConnections(getReadSetPtr(), getWriteSetPtr());
+		}
+
+	}
 }
 
 void WebServ::stop() {

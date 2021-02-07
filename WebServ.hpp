@@ -28,7 +28,9 @@ public:
     void setToWriteFDSet(std::list<int>& clientsFD);
 
     void updateMaxFD(void);
-    const int & getMaxFD() const { return _maxFD; }
+    const int & getMaxFD() const { return _max_fd; }
+
+	void serveConnections();
 
 	void stop();
 
@@ -40,7 +42,7 @@ private:
     // Для заполнения множества сокетов
     fd_set _readset;
     fd_set _writeset;
-    int _maxFD;
+    int _max_fd;
 
     Config _config;
 

@@ -126,7 +126,7 @@ void Server::updateMaxFD(void) {
     if (!_clients_write.empty()) {
         max_tmp = std::max(max_tmp, *std::max_element(_clients_write.begin(), _clients_write.end()));
     }
-    _maxFD = max_tmp;
+    _max_fd = max_tmp;
 }
 
 
