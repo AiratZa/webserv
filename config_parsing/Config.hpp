@@ -5,10 +5,13 @@
 #ifndef WEBSERV_CONFIG_HPP
 #define WEBSERV_CONFIG_HPP
 
+#include <string>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "../utils/utils.hpp"
+
 
 class Config {
 public:
