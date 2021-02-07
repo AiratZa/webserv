@@ -15,6 +15,7 @@
 
 namespace utils {
     void exitWithLog(void);
+    void exitWithLog(const std::string& errorLog);
 }
 
 #endif //WEBSERV_UTILS_H

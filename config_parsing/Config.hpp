@@ -19,6 +19,10 @@ public:
     Config(const std::string &path_to_config);
 
 private:
+    void fillConfigTextFromFile(const std::string &path_to_config);
+    void splitConfigTextIntoBlocks(const std::string& constConfigText);
+    std::string _configText;
+
 
 
 };

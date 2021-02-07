@@ -1,1 +1,1 @@
-./webserv config_parsing/tests
+./webserv config_parsing/test_configs/1.conf
