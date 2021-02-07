@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "WebServ.hpp"
+#include <signal.h>
 
 WebServ webserv;
 
