@@ -28,7 +28,7 @@ public:
 
     void updateMaxFD(void);
 
-    const int & getMaxFD() const { return _maxFD; }
+    const int & getMaxFD() const { return _max_fd; }
 
     void acceptConnection(void);
     void processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr);
@@ -48,7 +48,7 @@ private:
 
     std::map<int, MyRequest *> _client_requests;
 
-    int _maxFD;
+    int _max_fd;
 
 
     Server() { };

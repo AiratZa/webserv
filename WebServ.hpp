@@ -14,8 +14,8 @@
 
 
 class WebServ {
-
 public:
+    WebServ() { }
     WebServ(const std::string& config_file_path);
     void addServer(Server* server);
     int getServersCount(void) const { return _servers.size(); }
@@ -28,22 +28,23 @@ public:
     void setToWriteFDSet(std::list<int>& clientsFD);
 
     void updateMaxFD(void);
-    const int & getMaxFD() const { return _maxFD; }
+    const int & getMaxFD() const { return _max_fd; }
+
+	void serveConnections();
+
+	void stop();
+
 
 
 private:
-    WebServ() { };
     std::vector<Server*> _servers;
 
     // Для заполнения множества сокетов
     fd_set _readset;
     fd_set _writeset;
-    int _maxFD;
+    int _max_fd;
 
     Config _config;
-
-
-
 
 };
 
