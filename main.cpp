@@ -1,45 +1,13 @@
 #include "Server.hpp"
 #include "WebServ.hpp"
 
-void serveConnections(WebServ& webServ) {
-    while(TRUE) {
+WebServ webserv;
 
-        FD_ZERO(webServ.getReadSetPtr());
-        FD_ZERO(webServ.getWriteSetPtr());
-
-        for (int i = 0; i < webServ.getServersCount(); i++) {
-            Server *server = webServ.getServerByPosition(i);
-            FD_SET(server->getListener(), webServ.getReadSetPtr());
-            webServ.setToReadFDSet(server->getReadClients());
-            webServ.setToWriteFDSet(server->getReadClients());
-            server->updateMaxFD();
-        }
-
-        webServ.updateMaxFD();
-
-        // Ждём события в одном из сокетов
-        if (select(webServ.getMaxFD() + 1,
-                   webServ.getReadSetPtr(),
-                   webServ.getWriteSetPtr(),
-                   NULL,
-                   NULL) < 0) {
-            utils::exitWithLog();
-        }
-
-        // Определяем тип события и выполняем соответствующие действия
-        for (int i = 0; i < webServ.getServersCount(); i++) {
-            Server *server = webServ.getServerByPosition(i);
-            if (FD_ISSET(server->getListener(), webServ.getReadSetPtr())) {
-                // Поступил новый запрос на соединение, используем accept
-                server->acceptConnection();
-            }
-
-            server->processConnections(webServ.getReadSetPtr(), webServ.getWriteSetPtr());
-        }
-
-    }
+void intHandler(int signal) {
+	(void)signal;
+	webserv.stop();
+	exit(EXIT_SUCCESS);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +21,8 @@ int main(int argc, char *argv[])
             << "or dont provide nothing and will be used CONFIG_FILE_DEFAULT_PATH" << std::endl;
         exit(EXIT_FAILURE);
     }
-    WebServ webServ = WebServ(path_to_config);
-    serveConnections(webServ);
+	signal(SIGINT, intHandler);
+	webserv = WebServ(path_to_config);
+	webserv.serveConnections();
     return 0;
 }

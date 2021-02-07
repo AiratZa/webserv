@@ -17,6 +17,10 @@ Server::Server(int port) : _port(port) {
 	if (fcntl(_listener, F_SETFL, O_NONBLOCK) < 0) //превращает сокет в неблокирующий
 		utils::exitWithLog();
 
+	int optval = 1;
+	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		utils::exitWithLog();
+
 	if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
 		utils::exitWithLog();
 
@@ -122,7 +126,7 @@ void Server::updateMaxFD(void) {
     if (!_clients_write.empty()) {
         max_tmp = std::max(max_tmp, *std::max_element(_clients_write.begin(), _clients_write.end()));
     }
-    _maxFD = max_tmp;
+    _max_fd = max_tmp;
 }
 
 
