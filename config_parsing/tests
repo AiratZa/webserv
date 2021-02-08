@@ -1,4 +1,5 @@
 ./webserv config_parsing/test_configs/1.conf
+./webserv "/home/airat/CLionProjects/webserv/config_parsing/test_configs/2.conf"
 
 https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 
@@ -42,6 +43,11 @@ value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
 modificators https://www.journaldev.com/26342/nginx-location-directive
 none: If no modifiers are present in a location block then the requested URI will be matched against the beginning of the requested URI.
 =: The equal sign is used to match a location block exactly against a requested URI.
+
+
+MULTIPLE PARAM IS INVALID
+invalid location modifier "/directory/"
+
 
 
 5. 	client_max_body_size

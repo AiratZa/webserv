@@ -2,10 +2,16 @@ NAME = webserv
 
 FLAGS = -std=c++98 -Wall -Wextra -Werror -g
 
-SRCS = main.cpp Server.cpp utils/utils.cpp\
- 	utils/get_next_line/get_next_line.cpp utils/get_next_line/get_next_line_utils.cpp \
- 	WebServ.cpp config_parsing/Config.cpp
+UTILS_SRCS = utils/utils.cpp \
+                utils/cpp_libft/stl_containers_operator_overloading.cpp \
+                utils/get_next_line/get_next_line.cpp \
+                utils/get_next_line/get_next_line_utils.cpp \
+                utils/cpp_libft/get_next_word.cpp \
+                utils/cpp_libft/isspace.cpp
 
+
+SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\
+    config_parsing/Config.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
