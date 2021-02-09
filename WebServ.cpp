@@ -11,9 +11,34 @@ WebServ::WebServ(const std::string& config_file_path) {
         addServer(one);
         addServer(two);
     } else {
-        _config = Config(config_file_path);
-//        Server *three = new Server(8888);
-//        addServer(three);
+
+        /*!!!CAN TEST LOADING FROM CONFIG
+         * ./webserv config_parsing/test_configs/2.conf
+         * PLEASE DONT CHANGE CONFIG FILE STRUCTURE
+        */
+         _config = Config(config_file_path);
+
+        std::cout << std::endl << "===================================================" << std::endl << std::endl;
+
+        const std::list<ServerContext*>& servers = _config.getServersList();
+        std::list<ServerContext*>::const_iterator it = servers.begin();
+        std::list<ServerContext*>::const_iterator ite = servers.end();
+
+        int i = 1;
+        while (it != ite) {
+            std::cout << "+++++ SERVER #" << i << " +++++" << std::endl;
+            std::cout << "HOST AND PORTS: " << (*it)->getHostsAndPorts() << std::endl;
+            std::cout << "____________________________________________" << std::endl;
+            std::cout << "SERVER NAMES: "  << (*it)->getServerNames() << std::endl;
+            std::cout << "____________________________________________" << std::endl;
+
+            Server *temp = new Server((*it)->getHostsAndPorts());
+            addServer(temp);
+
+            ++it;
+            i++;
+        }
+
     }
     std::cout << "Server(s) are started" << std::endl;
 }

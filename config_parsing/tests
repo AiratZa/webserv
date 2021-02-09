@@ -38,6 +38,8 @@ error_page код ... [=[ответ]] uri;
 
 value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
 
+ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
+
 4. location
 
 modificators https://www.journaldev.com/26342/nginx-location-directive

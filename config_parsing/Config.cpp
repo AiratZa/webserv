@@ -15,6 +15,10 @@ const std::string& Config::_getConfigText(void) const {
     return _config_text;
 }
 
+const std::list<ServerContext*>& Config::getServersList(void) const {
+    return _servers;
+}
+
 void Config::_fillAllowedContextForKeyWords(void) {
     // SERVER CONTEXT
     _serverContext.push_back(LOCATION_KW); //!!! CONTEXT !!!
@@ -49,6 +53,8 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[CLIENT_MAX_BODY_SIZE_KW] = false;
     _isMultipleParamDirective[AUTOINDEX_KW] = false;
     _isMultipleParamDirective[ALIAS_KW] = false;
+
+
 }
 
 
@@ -117,7 +123,9 @@ void Config::splitConfigTextIntoBlocks(void) {
         {
             if (tmpWord == SERVER_KW){
                 std::cout << "SERVER" << std::endl; //TODO: need to delete after test
-                parseInsideServerContext();
+                ServerContext* tmp_server = new ServerContext();
+                _servers.push_back(tmp_server);
+                parseInsideServerContext(tmp_server);
             } else {
                 if (tmpWord.size())
                     _badConfigError( "WORD " + tmpWord + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
@@ -140,16 +148,16 @@ void Config::_badConfigError(const std::string & error_text) const {
 }
 
 
-void Config::parseInsideServerContext(void) {
+void Config::parseInsideServerContext(ServerContext* current_server) {
     const std::string& const_config_text = _getConfigText();
 
     if ((_is_eof_reached = _skipSpacesInConfig()) || \
                 (const_config_text[_tmp_len] != '{') ) {
-        _badConfigError("'{' AFTER SERVER KEYWORD IS NOT FOUND");
+        _badConfigError("'{' AFTER 'server' KEYWORD IS NOT FOUND");
     }
     _tmp_len++; //skip found '{' symbol
 
-    std::string tmpWord;
+    std::string tmp_word;
     std::list<std::string>::const_iterator tmp_it;
 
 
@@ -170,30 +178,31 @@ void Config::parseInsideServerContext(void) {
         }
 
         //get next word
-        tmpWord = libft::get_next_word(const_config_text.substr(_tmp_len));
-        _tmp_len += tmpWord.size();
+        tmp_word = libft::get_next_word(const_config_text.substr(_tmp_len));
+        _tmp_len += tmp_word.size();
 
-        tmp_it = std::find(_serverContext.begin(), _serverContext.end(), tmpWord);
+        tmp_it = std::find(_serverContext.begin(), _serverContext.end(), tmp_word);
 
         if (tmp_it == _ite_server) { // word is not keyword
-            if (tmpWord.size())
-                _badConfigError( "WORD " + tmpWord + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
+            if (tmp_word.size())
+                _badConfigError( "WORD " + tmp_word + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
             else
                 _badConfigError( "SYMBOL '" + std::string(1, const_config_text[_tmp_len]) + \
                                                                     "' NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
         }
 
-        if (tmpWord == LOCATION_KW) {
+        if (tmp_word == LOCATION_KW) {
             std::cout << "LOCATION" << std::endl; //TODO: need to delete after test
-
-            parseInsideLocationContext();
-        } else if (_isMultipleParamDirective[tmpWord]) {
-            std::list<std::string> tmp = parseMultipleParamDirective(tmpWord);
-            std::cout << tmpWord <<" ==> "  << tmp << std::endl; //TODO: need to delete after test
-
+            parseInsideLocationContext(current_server);
         } else {
-            std::list<std::string> tmp = parseSingleParamDirective(tmpWord);
-            std::cout << tmpWord <<" ==> "  << tmp << std::endl; //TODO: need to delete after test
+            std::list<std::string> tmp_params;
+            if (_isMultipleParamDirective[tmp_word]) {
+                tmp_params = parseMultipleParamDirective(tmp_word);
+
+            } else {
+                tmp_params = parseSingleParamDirective(tmp_word);
+            }
+            _checkAndSetParams(current_server, tmp_word, tmp_params);
         }
     }
     if ((const_config_text[_tmp_len] != '}')) {
@@ -202,7 +211,71 @@ void Config::parseInsideServerContext(void) {
     _tmp_len++;
 }
 
-void Config::parseInsideLocationContext(void) {
+void Config::parseInsideLocationContext(ServerContext* current_server) {
+    const std::string& const_config_text = _getConfigText();
+    std::string tmp_word;
+    std::string location_uri;
+    std::list<std::string>::const_iterator tmp_it;
+
+
+    if ((_is_eof_reached = _skipSpacesInConfig())) {
+        _badConfigError("AFTER 'location' KEYWORD EXPECTED LOCATION URI FOR ROUTING");
+    }
+
+    location_uri = libft::get_next_word(const_config_text.substr(_tmp_len));
+    _tmp_len += location_uri.size();
+    _locationUriChecks(location_uri); //THROW EXCEPTION IF ERROR OCCURRED
+
+    if ((_is_eof_reached = _skipSpacesInConfig()) || \
+                (const_config_text[_tmp_len] != '{') ) {
+        _badConfigError("SYMBOL '{' AFTER LOCATION URI IS EXPECTED");
+    }
+    _tmp_len++; //skip found '{' symbol
+
+    LocationContext* current_location = current_server->addLocation(location_uri);
+
+    while (TRUE) {
+        //skip spaces and check EOF
+        if ((_is_eof_reached = _skipSpacesInConfig())) {
+            break;
+        }
+
+        //CHECK LOCATION CONTEXT IS FINISHED
+        if (const_config_text[_tmp_len] == '}') {
+            break;
+        }
+
+        //skip spaces and check EOF
+        if ((_is_eof_reached = _skipSpacesInConfig())) {
+            break;
+        }
+
+        //get next word
+        tmp_word = libft::get_next_word(const_config_text.substr(_tmp_len));
+        _tmp_len += tmp_word.size();
+
+        tmp_it = std::find(_locationContext.begin(), _locationContext.end(), tmp_word);
+
+        if (tmp_it == _ite_location) { // word is not keyword
+            if (tmp_word.size())
+                _badConfigError( "WORD " + tmp_word + " NOT EXPECTED THERE IN 'location' CONTEXT LEVEL");
+            else
+                _badConfigError( "SYMBOL '" + std::string(1, const_config_text[_tmp_len]) + \
+                                                                    "' NOT EXPECTED THERE IN 'location' CONTEXT LEVEL");
+        }
+
+        std::list<std::string> tmp_params;
+        if (_isMultipleParamDirective[tmp_word]) {
+            tmp_params = parseMultipleParamDirective(tmp_word);
+        } else {
+            tmp_params = parseSingleParamDirective(tmp_word);
+        }
+        _checkAndSetParams(current_location, tmp_word, tmp_params);
+    }
+    if ((const_config_text[_tmp_len] != '}')) {
+        _badConfigError("SYMBOL '}' THAT SHOULD CLOSE 'location' CONTEXT KEYWORD IS NOT FOUND");
+    }
+    _tmp_len++;
 
 }
 
@@ -255,11 +328,108 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
     //CHECK PARAM SETTING IS FINISHED
     if (const_config_text[_tmp_len] != ';') {
-        _badConfigError("DIRECTIVE: " + keyword  + " IS NOT FINISHED WITH ';' CHAR");
+        _badConfigError("INVALID NUMBER OF ARGUMETNS IN " + keyword  + " DIRECTIVE");
     }
     _tmp_len++;
     return params;
 }
+
+
+
+void Config::_checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
+                        const std::list<std::string>& directive_params) {
+    if (directive_keyword == LISTEN_KW)
+        _listenKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == SERVER_NAME_KW)
+        _serverNameKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == ERROR_PAGE_KW)
+        _errorPageKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW)
+        _clientMaxBodySizeKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == LIMIT_EXCEPT_KW)
+        _limitExceptKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == ALIAS_KW)
+        _aliasKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == AUTOINDEX_KW)
+        _autoindexExceptKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == INDEX_KW)
+        _indexExceptKeywordHandler(current_context, directive_params);
+    else
+        _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
+}
+
+
+// SIGNLE PART CONFIG CHECKS
+
+void Config::_locationUriChecks(const std::string& location_uri) {
+    if (!location_uri.size()) {
+        _badConfigError("LOCATION URI AFTER 'location' KEYWORD IS INVALID");
+    }
+}
+
+
+void Config::_listenKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    std::string host = "127.0.0.2"; // TODO: need DELETE
+    int port = libft::atoi((*directive_params.begin()).c_str());
+    static_cast<ServerContext*>(current_context)->addHostPort(host, port);
+
+    std::cout << "listen: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    ServerContext* tmp_server = static_cast<ServerContext*>(current_context);
+    std::list<std::string>::const_iterator it = directive_params.begin();
+
+    while (it != directive_params.end()) {
+        tmp_server->addServerName(*it);
+        ++it;
+    }
+
+    std::cout << "server_name: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::cout << "error_page: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    const std::string tmp = *(directive_params.begin());
+    int size = libft::atoi(tmp.c_str());
+    if (size < 0)
+        _badConfigError("\"client_max_body_size\" directive invalid value");
+    std::string sub_str =  tmp.substr(libft::unsigned_number_len(size, 10));
+    std::cout << "client_max_body_size :"<<  "SIZE DIGITS: " << size << " | MEASURE: " << sub_str << std::endl;   //TODO: need to delete after test
+}
+
+void Config::_limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::cout << "limit_except: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::cout << "alias: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::cout << "autoindex: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
+void Config::_indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::cout << "index: ";
+    std::cout << directive_params; //TODO: need to delete after test
+}
+
 
 
 

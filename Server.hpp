@@ -19,10 +19,13 @@
 
 #include "utils/utils.hpp"
 #include "request_handlers/Request.hpp"
+#include "config_parsing/ServerContext.hpp"
 
 class Server {
 public:
     Server(int port);
+//    Server(ServerContext* config);
+    Server(const std::map<std::string, std::list<int> >& hosts_n_ports);
     ~Server() { };
 
     const int & getListener(void) const { return _listener; };

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <list>
+#include <map>
 
 template <class T>
 std::ostream & operator<<(std::ostream & output, std::list<T> const & rhs) {
@@ -15,6 +16,20 @@ std::ostream & operator<<(std::ostream & output, std::list<T> const & rhs) {
         output << *it << "; ";
     }
     output << " ]" << std::endl;
+    return output;
+}
+
+template <class Key, class ValueType>
+std::ostream & operator<<(std::ostream & output, std::map<Key, std::list<ValueType> > const & rhs) {
+    typename std::map<Key, std::list<ValueType> >::const_iterator map_it = rhs.begin();
+    typename std::map<Key, std::list<ValueType> >::const_iterator map_ite = rhs.end();
+
+    output << "{ ";
+    while (map_it != map_ite) {
+        output << "\"" << (*map_it).first <<  "\": " << (*map_it).second;
+        ++map_it;
+    }
+    output << "}" << std::endl;
     return output;
 }
 

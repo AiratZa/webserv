@@ -30,6 +30,45 @@ Server::Server(int port) : _port(port) {
 
 };
 
+Server::Server(const std::map<std::string, std::list<int> >& hosts_n_ports) {
+    _listener = socket(AF_INET, SOCK_STREAM, 0);
+    if(_listener < 0)
+        utils::exitWithLog();
+
+    if (fcntl(_listener, F_SETFL, O_NONBLOCK) < 0) //превращает сокет в неблокирующий
+        utils::exitWithLog();
+
+    int optval = 1;
+    if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+        utils::exitWithLog();
+
+    //!!!EXPERIMENT: TRY TO USE HOST AND PORT FROM CONFIG
+    std::map<std::string, std::list<int> >::const_iterator map_it = hosts_n_ports.begin();
+    std::map<std::string, std::list<int> >::const_iterator map_ite = hosts_n_ports.end();
+
+    while (map_it != map_ite) {
+        const std::list<int>& ports = (*map_it).second;
+        std::list<int>::const_iterator ports_it = ports.begin();
+        std::list<int>::const_iterator ports_ite = ports.end();
+
+        while (ports_it != ports_ite) {
+            _addr.sin_family = AF_INET;
+            _addr.sin_port = htons((*ports_it));
+            _addr.sin_addr.s_addr = inet_addr(((*map_it).first).c_str());
+
+            if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
+                utils::exitWithLog();
+
+            ++ports_it;
+        }
+        ++map_it;
+    }
+
+    if (listen(_listener, SOMAXCONN) < 0)
+        utils::exitWithLog();
+}
+
+
 void Server::acceptConnection(void) {
 	int sock = accept(_listener, NULL, NULL);
 	if(sock < 0)

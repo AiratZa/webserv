@@ -5,13 +5,15 @@
 #ifndef WEBSERV_LOCATIONCONTEXT_HPP
 #define WEBSERV_LOCATIONCONTEXT_HPP
 
-#include "ServerContext.hpp"
+#include "AContext.hpp"
 
-class LocationContext : public ServerContext {
+class LocationContext : public AContext {
 public:
-    LocationContext();
+    LocationContext(const std::string& uri);
 
 private:
+    LocationContext() { };
+    std::string _uri;
 
 };
 

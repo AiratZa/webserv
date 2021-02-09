@@ -18,6 +18,9 @@
 #include "../utils/cpp_libft/libft.hpp"
 #include "../utils/cpp_libft/stl_containers_operator_overloading.cpp"
 
+#include "ServerContext.hpp"
+
+
 // NGINX CONF KEYWORDS (KW) BEGIN
 
 #define SERVER_KW "server"
@@ -42,6 +45,8 @@ public:
     Config() { }
     Config(const std::string &path_to_config);
 
+    const std::list<ServerContext*>& getServersList(void) const;
+
     class BadConfigException : public std::exception {
 
     };
@@ -51,18 +56,32 @@ private:
     void fillConfigTextFromFile(const std::string &path_to_config);
     void splitConfigTextIntoBlocks(void);
 
-    void parseInsideServerContext(void);
-    void parseInsideLocationContext(void);
+    void parseInsideServerContext(ServerContext* current_server);
+    void parseInsideLocationContext(ServerContext* current_server);
 
     std::list<std::string> parseMultipleParamDirective(const std::string &keyword);
     std::list<std::string> parseSingleParamDirective(const std::string &keyword);
-
 
     void _fillAllowedContextForKeyWords(void);
 
 
     bool _skipSpacesInConfig();
 
+
+    void _checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
+                            const std::list<std::string>& directive_params);
+
+
+    // SIGNLE PART CONFIG CHECKS
+    void _locationUriChecks(const std::string& location_uri);
+    void _listenKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    void _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     std::string _config_text;
@@ -79,6 +98,9 @@ private:
     std::list<std::string>::const_iterator _ite_location;
 
     std::map<std::string, bool> _isMultipleParamDirective;
+
+    std::list<ServerContext*> _servers;
+
 
 };
 
