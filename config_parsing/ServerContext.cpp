@@ -3,14 +3,21 @@
 //
 
 #include "ServerContext.hpp"
+//#include "ServerContext.hpp"
 
 const std::map<std::string, std::list<int> >&  ServerContext::getHostsAndPorts(void) const {
-    return _host_port;
+    return _hosts_ports;
 }
 
 const std::list<std::string>& ServerContext::getServerNames(void) const {
     return _server_names;
 }
+
+void ServerContext::setHostsAndPorts(Pair<std::string, std::list<int> >& host_and_ports) {
+    _hosts_ports[host_and_ports.first] = host_and_ports.second;
+}
+
+
 
 LocationContext* ServerContext::addLocation(const std::string& uri) {
     LocationContext* tmp = new LocationContext(uri);
@@ -18,12 +25,12 @@ LocationContext* ServerContext::addLocation(const std::string& uri) {
 }
 
 void ServerContext::addHostPort(const std::string& host, int port) {
-    if (_host_port.find(host) == _host_port.end()) {
+    if (_hosts_ports.find(host) == _hosts_ports.end()) {
         std::list<int> tmp_list;
         tmp_list.push_back(port);
-        _host_port[host] = tmp_list;
+        _hosts_ports[host] = tmp_list;
     } else {
-        _host_port[host].push_back(port);
+        _hosts_ports[host].push_back(port);
     }
 }
 

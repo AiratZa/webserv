@@ -11,6 +11,8 @@ class LocationContext : public AContext {
 public:
     LocationContext(const std::string& uri);
 
+    virtual void setLocationUri() { };
+
 private:
     LocationContext() { };
     std::string _uri;

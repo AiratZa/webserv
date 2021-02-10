@@ -338,8 +338,11 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
 void Config::_checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
                         const std::list<std::string>& directive_params) {
-    if (directive_keyword == LISTEN_KW)
-        _listenKeywordHandler(current_context, directive_params);
+    if (directive_keyword == LISTEN_KW) {
+        Pair<std::string, std::list<int> >* host_and_ports = _listenKeywordHandler(directive_params);
+        current_context->setHostsAndPorts(*host_and_ports);
+        delete host_and_ports;
+    }
     else if (directive_keyword == SERVER_NAME_KW)
         _serverNameKeywordHandler(current_context, directive_params);
     else if (directive_keyword == ERROR_PAGE_KW)
@@ -367,14 +370,37 @@ void Config::_locationUriChecks(const std::string& location_uri) {
     }
 }
 
+const std::string Config::parseHost(const std::string& param) const {
+    std::size_t found_pos = param.find("localhost");
+    if (found_pos != std::string::npos) {
+        if (found_pos != 0) {
+            _badConfigError("host not found in \"" + param + "\" of the \"listen\" directive");
+        }
+        return "127.0.0.1";
+    }
+    return ""; //for Werror flag
+}
 
-void Config::_listenKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
-    std::string host = "127.0.0.2"; // TODO: need DELETE
-    int port = libft::atoi((*directive_params.begin()).c_str());
-    static_cast<ServerContext*>(current_context)->addHostPort(host, port);
+Pair<std::string, std::list<int> >* Config::_listenKeywordHandler(const std::list<std::string>& directive_params) {
+    std::string tmp_word = *(directive_params.begin());
+    std::string host;
+    std::list<int> ports;
+
+    if (tmp_word.find(":") == std::string::npos) { //host:port ':' delimeter dont found
+        return NULL; //TODO
+    }
+    host =  parseHost(tmp_word);
+    if (tmp_word[host.length()] != ':') {
+        _badConfigError("host:port not found in \"" + tmp_word + "\" of the \"listen\" directive");
+    }
+    tmp_word = tmp_word.substr(host.length()+1);
+    ports.push_back(libft::atoi(tmp_word.c_str()));
+
+    Pair<std::string, std::list<int> >* host_ports = new Pair<std::string, std::list<int> >(host, ports);
 
     std::cout << "listen: ";
     std::cout << directive_params; //TODO: need to delete after test
+    return host_ports;
 }
 
 void Config::_serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {

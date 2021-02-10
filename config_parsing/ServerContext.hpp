@@ -10,6 +10,7 @@
 #include "AContext.hpp"
 #include "LocationContext.hpp"
 
+
 class ServerContext : public AContext {
 
 public:
@@ -23,9 +24,11 @@ public:
     void addHostPort(const std::string& host, int port);
     void addServerName(const std::string& server_name);
 
+    virtual void setHostsAndPorts(Pair<std::string, std::list<int> >& host_and_ports);
+
 private:
     std::list<LocationContext*> _locations;
-    std::map<std::string, std::list<int> > _host_port;
+    std::map<std::string, std::list<int> > _hosts_ports;
     std::list<std::string> _server_names;
 
 };

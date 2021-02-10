@@ -8,11 +8,14 @@
 #include <list>
 #include <map>
 #include <string>
+#include "../utils/cpp_libft/libft.hpp"
+#include "../utils/custom_structures/Pair.hpp"
 
 class AContext {
 public:
     AContext() { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
     virtual ~AContext(void) { };
+    virtual void setHostsAndPorts(Pair<std::string, std::list<int> >& host_and_ports) { (void)host_and_ports; };
 
 private:
     std::map<std::string, std::list<std::string> > _error_page; // error_codes, response_code, redirect_uri

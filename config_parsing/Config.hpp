@@ -35,12 +35,17 @@
 #define AUTOINDEX_KW "autoindex"
 #define INDEX_KW "index"
 
+#define FRIEND_TEST(test_case_name, test_name)\
+friend class test_case_name##_##test_name##_Test
+
 // NGINX CONF KEYWORDS (KW) END
 
 
 
 
 class Config {
+    FRIEND_TEST(ListenDirectiveTests, testOne);
+
 public:
     Config() { }
     Config(const std::string &path_to_config);
@@ -50,6 +55,8 @@ public:
     class BadConfigException : public std::exception {
 
     };
+
+
 
 private:
     const std::string& _getConfigText(void) const;
@@ -74,7 +81,7 @@ private:
 
     // SIGNLE PART CONFIG CHECKS
     void _locationUriChecks(const std::string& location_uri);
-    void _listenKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    Pair<std::string, std::list<int> >* _listenKeywordHandler(const std::list<std::string>& directive_params);
     void _serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
@@ -84,7 +91,10 @@ private:
     void _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
-    std::string _config_text;
+    const std::string parseHost(const std::string& param) const;
+
+
+        std::string _config_text;
     int _len;
 
     void _badConfigError(const std::string & error_text) const;
