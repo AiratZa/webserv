@@ -50,7 +50,7 @@ private:
     std::list<int> _clients_read;
     std::list<int> _clients_write;
 
-    std::map<int, MyRequest *> _client_requests;
+    std::map<int, Request *> _client_requests;
 
     int _max_fd;
 

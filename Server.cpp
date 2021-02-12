@@ -3,6 +3,7 @@
 //
 
 #include "Server.hpp"
+#include "response/Response.hpp"
 
 Server::Server(int port) : _port(port) {
 
@@ -77,6 +78,10 @@ void Server::acceptConnection(void) {
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0)
 		utils::exitWithLog();
 
+	int optval = 1;
+	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		utils::exitWithLog();
+
 	_clients_read.push_back(sock);
 }
 
@@ -102,7 +107,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
 			buf[bytes_read] = '\0';
 
 			std::string tmp = buf;
-			MyRequest* tmpRequest = new MyRequest(tmp);
+			Request* tmpRequest = new Request(tmp);
 			_client_requests[*it] = tmpRequest;
 			_clients_write.push_back(*it);
 			it = _clients_read.erase(it);
@@ -116,32 +121,17 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
 void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	std::list<int>::iterator it = _clients_write.begin();
 
+	int fd;
 	while (it != _clients_write.end()) {
-		if (FD_ISSET(*it, globalWriteSetPtr)) {
-			std::stringstream response; // сюда будет записываться ответ клиенту
-			std::stringstream response_body; // тело ответа
+		fd = *it;
+		if (FD_ISSET(fd, globalWriteSetPtr)) {
+			_client_requests[fd]->parse();
 
-			// формируем тело ответа (HTML)
-			response_body << "<title>Test C++ HTTP Server</title>\n"
-						  << "<h1>Test page</h1>\n"
-						  << "<p>This is body of the test page...</p>\n"
-						  << "<h2>Request headers</h2>\n"
-						  << "<pre>" << _client_requests[*it]->getRawRequest() << "</pre>\n"
-						  << "<em><small>Test C++ Http Server</small></em>\n";
+			Response response(_client_requests[fd], fd);
+			response.send_response();
 
-			// Формируем весь ответ вместе с заголовками
-			response << "HTTP/1.1 200 OK\r\n"
-					 << "Version: HTTP/1.1\r\n"
-					 << "Content-Type: text/html; charset=utf-8\r\n"
-					 << "Content-Length: " << response_body.str().length()
-					 << "\r\n\r\n"
-					 << response_body.str();
-
-			// Отправляем ответ клиенту с помощью функции send
-			send(*it, response.str().c_str(),
-				 response.str().length(), 0);
-			close(*it);
-			_client_requests.erase(*it);
+			close(fd);
+			_client_requests.erase(fd);
 			it = _clients_write.erase(it);
 
 		} else {
