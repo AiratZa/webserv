@@ -8,7 +8,7 @@ Request::Request(const std::string& request) : _raw_request(request), _status_co
 
 Request::~Request(void) { };
 
-const std::string & Request::getRawRequest(void) {
+	std::string & Request::getRawRequest(void) {
 	return this->_raw_request;
 }
 

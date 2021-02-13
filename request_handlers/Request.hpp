@@ -11,10 +11,11 @@
 class Request {
 
 	public:
+		Request() { };
 		Request(const std::string& request);
 		~Request(void);
 
-		const std::string & getRawRequest(void);
+		std::string & getRawRequest(void);
 		void setRawRequest(const std::string & request);
 
 
@@ -26,7 +27,6 @@ class Request {
 		void getContentByLength();
 		void parseHeaders();
 		void parse();
-
 
 	private:
 		std::string _raw_request;
