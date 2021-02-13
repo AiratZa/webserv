@@ -340,9 +340,6 @@ void Config::_checkAndSetParams(AContext* current_context, const std::string& di
                         const std::list<std::string>& directive_params) {
     if (directive_keyword == LISTEN_KW) {
         Pair<std::string, int> host_and_port = _listenKeywordHandler(directive_params);
-//        std::cout << "11111111111111111111111111111111" << std::endl;
-        std::cout << host_and_port.first << "   " <<  host_and_port.second << std::endl;
-//        std::cout << "11111111111111111111111111111111" << std::endl;
         static_cast<ServerContext*>(current_context)->addHostPort(host_and_port.first, host_and_port.second);
     }
     else if (directive_keyword == SERVER_NAME_KW)
@@ -404,6 +401,9 @@ const std::string Config::parseHost(const std::string& param) const {
         //parse last octet before ':' and port number
         if ((pos=tmp_param.find(':')) != std::string::npos) {
             octet = tmp_param.substr(0, pos);
+            octets.push_back(octet);
+        } else {
+            octet = tmp_param.substr(0);
             octets.push_back(octet);
         }
 
@@ -491,6 +491,7 @@ const Pair<std::string, int > Config::_listenKeywordHandler(const std::list<std:
             if (tmp_word.length() != libft::unsigned_number_len(port, 10) ) {
                 _badConfigError(universal_error_log);
             }
+            hosts = "*";
         }
     }
 

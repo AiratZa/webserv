@@ -51,6 +51,8 @@ friend class test_case_name##_##test_name##_Test
 
 class Config {
 
+// LISTEN DIRECTIVE FRIEND TEST CLASSES BEGINS
+
     //Negative scenarios
     FRIEND_TEST(ListenDirectiveHostTests, localhost_not_from_start);
     FRIEND_TEST(ListenDirectiveHostTests, ip_with_negative_number);
@@ -58,10 +60,34 @@ class Config {
     FRIEND_TEST(ListenDirectiveHostTests, ip_with_more_4_octet);
     FRIEND_TEST(ListenDirectiveHostTests, ip_starts_not_from_digit);
 
+    FRIEND_TEST(ListenDirectivePortsTests, port_min_minus_1);
+    FRIEND_TEST(ListenDirectivePortsTests, port_negative);
+    FRIEND_TEST(ListenDirectivePortsTests, too_long);
+    FRIEND_TEST(ListenDirectivePortsTests, empty_str);
+    FRIEND_TEST(ListenDirectivePortsTests, max_plus_1);
+    FRIEND_TEST(ListenDirectivePortsTests, with_unexpected_chars_start);
+    FRIEND_TEST(ListenDirectivePortsTests, with_unexpected_chars_end);
+
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, asterisk_plus_port_neg);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, localhost_or_ip_wtihout_port_neg);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, just_port_neg);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, host_port_combo_neg);
+
+
     //Positive scenarios
     FRIEND_TEST(ListenDirectiveHostTests, localhost);
     FRIEND_TEST(ListenDirectiveHostTests, min_ip);
     FRIEND_TEST(ListenDirectiveHostTests, max_ip);
+
+    FRIEND_TEST(ListenDirectivePortsTests, min);
+    FRIEND_TEST(ListenDirectivePortsTests, max);
+
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, asterisk_plus_port_pos);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, localhost_or_ip_wtihout_port_pos);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, just_port_pos);
+    FRIEND_TEST(ListenDirectiveHOST_PORTTests, host_port_combo_pos);
+
+// LISTEN DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
 public:
