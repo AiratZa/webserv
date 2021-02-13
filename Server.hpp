@@ -21,6 +21,8 @@
 #include "request_handlers/Request.hpp"
 #include "config_parsing/ServerContext.hpp"
 
+#define BUFFER_LENGHT 1024
+
 class Server {
 public:
     Server(int port);
@@ -41,9 +43,7 @@ public:
 	void checkRequest(Request* request);
 
     std::list<int>& getReadClients(void) { return _clients_read; }
-
-
-
+    
 
 private:
     int _listener;
@@ -60,9 +60,7 @@ private:
 
     Server() { };
 
-
     in_addr_t getHostInetAddrFromStr(const std::string& host_str) const;
-
 
 };
 

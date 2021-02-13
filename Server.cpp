@@ -101,35 +101,50 @@ void Server::acceptConnection(void) {
     _client_requests[sock] =  new Request();
 }
 
+int checkFullRequest(std::string const& req) {
+    size_t      lenght;
+    int      pointer;
+    std::string header = req.substr(0, req.find("\n\n"));
+    std::string body = "";
+    if (std::string::npos == req.find("\n\n"))
+        std::string body = req.substr((req.find("\n\n") + 2), req.length());
+    if ((std::string::npos != header.find("Transfer-Encoding: chunked"))) {
+        if ((std::string::npos != body.find("0\r\n\r\n"))) //TODO add check each chunks
+            return 1;
+    }
+    else if (std::string::npos != header.find("Content-Length:")) {
+        pointer = header.find("Content-Length:") + 15;
+        lenght = std::stoi(header.substr(pointer, header.length()));
+        if (body.length() == lenght)
+            return 1;
+    }
+    else if (std::string::npos != req.find("\n\0"))
+        return 1;
+    return 0;
+}
+
 void Server::handleRequests(fd_set* globalReadSetPtr) {
-    int len_buf = 1024;
-    char buf[len_buf];
+    char buf[BUFFER_LENGHT];
     int bytes_read;
     std::list<int>::iterator it = _clients_read.begin();
 
-    while (it != _clients_read.end()) {
-        if (FD_ISSET(*it, globalReadSetPtr)) {
-            // Поступили данные от клиента, читаем их
-            bytes_read = recv(*it, buf, len_buf - 1, 0); // -1 нужен иначе некуда ставить конец строки '\0'
-
-            if (bytes_read == 0) {
-                // Соединение разорвано, удаляем сокет из множества
+    while (it != _clients_read.end()) { // TODO we need timeout
+        if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
+            bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
+            if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества
                 close(*it);
                 it = _clients_read.erase(it);
                 delete _client_requests[*it];
                 continue;
             }
-            if (bytes_read < 0)
+            else if (bytes_read < 0)
                 bytes_read = 0;
             buf[bytes_read] = '\0';
 
-            _client_requests[*it]->getRawRequest().append(buf);
-//            tmp += buf; // собираем строку пока весь запрос в нее не поместится
-            std::cout << bytes_read << std::endl;
-            std::cout << _client_requests[*it]->getRawRequest() << std::endl;
-            if (bytes_read < len_buf - 1) { //после последнего считывания проверяем все ли доставлено
-//                MyRequest *tmpRequest = new MyRequest(tmp);
-//                _client_requests[*it] = tmpRequest;
+            _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
+            // std::cout << bytes_read << std::endl;
+            // std::cout << _client_requests[*it]->getRawRequest() << std::endl;
+            if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);
             }
