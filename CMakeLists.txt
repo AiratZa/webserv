@@ -10,15 +10,16 @@ set(UTILS_SRCS utils/utils.cpp
         utils/cpp_libft/libft.hpp utils/cpp_libft/isspace.cpp
         utils/cpp_libft/unsigned_number_len.cpp utils/cpp_libft/atoi.cpp
         utils/custom_structures/Pair.hpp
-        utils/cpp_libft/is_correct_ip_octet.cpp)
+        utils/cpp_libft/is_correct_ip_octet.cpp
+        utils/cpp_libft/tolower.cpp)
+
 
 set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
         config_parsing/AContext.hpp config_parsing/ServerContext.cpp config_parsing/LocationContext.cpp)
 
 
 add_executable(webserv main.cpp
-        Server.cpp WebServ.cpp ${CONFIG_PARSING_SRCS}
-        )
+        Server.cpp WebServ.cpp request_handlers/Request.cpp response/Response.cpp ${CONFIG_PARSING_SRCS} )
 
 
 ################################

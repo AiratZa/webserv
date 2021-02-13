@@ -17,7 +17,6 @@ UTILS_SRCS = utils/utils.cpp \
 SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\
     config_parsing/Config.cpp \
     config_parsing/ServerContext.cpp \
-    config_parsing/LocationContext.cpp
     config_parsing/LocationContext.cpp \
     request_handlers/Request.cpp \
     response/Response.cpp
