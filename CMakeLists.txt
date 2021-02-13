@@ -9,7 +9,8 @@ set(UTILS_SRCS utils/utils.cpp
         utils/cpp_libft/get_next_word.cpp
         utils/cpp_libft/libft.hpp utils/cpp_libft/isspace.cpp
         utils/cpp_libft/unsigned_number_len.cpp utils/cpp_libft/atoi.cpp
-        utils/custom_structures/Pair.hpp)
+        utils/custom_structures/Pair.hpp
+        utils/cpp_libft/is_correct_ip_octet.cpp)
 
 set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
         config_parsing/AContext.hpp config_parsing/ServerContext.cpp config_parsing/LocationContext.cpp)

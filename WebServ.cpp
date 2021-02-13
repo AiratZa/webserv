@@ -34,7 +34,6 @@ WebServ::WebServ(const std::string& config_file_path) {
 
             Server *temp = new Server((*it)->getHostsAndPorts());
             addServer(temp);
-
             ++it;
             i++;
         }

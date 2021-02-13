@@ -52,10 +52,11 @@ Server::Server(const std::map<std::string, std::list<int> >& hosts_n_ports) {
         std::list<int>::const_iterator ports_it = ports.begin();
         std::list<int>::const_iterator ports_ite = ports.end();
 
+        in_addr_t host_addr = getHostInetAddrFromStr((*map_it).first);
         while (ports_it != ports_ite) {
             _addr.sin_family = AF_INET;
             _addr.sin_port = htons((*ports_it));
-            _addr.sin_addr.s_addr = inet_addr(((*map_it).first).c_str());
+            _addr.sin_addr.s_addr = host_addr;
 
             if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
                 utils::exitWithLog();
@@ -67,6 +68,19 @@ Server::Server(const std::map<std::string, std::list<int> >& hosts_n_ports) {
 
     if (listen(_listener, SOMAXCONN) < 0)
         utils::exitWithLog();
+}
+
+
+in_addr_t Server::getHostInetAddrFromStr(const std::string& host_str) const {
+    in_addr_t host_addr;
+    if (host_str == "*") {
+        host_addr = htonl(INADDR_ANY);
+    } else if (host_str == "localhost") {
+        host_addr = htonl(INADDR_LOOPBACK);
+    } else {
+        host_addr = inet_addr(host_str.c_str());
+    }
+    return host_addr;
 }
 
 

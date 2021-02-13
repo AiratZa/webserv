@@ -9,3 +9,5 @@ void utils::exitWithLog(const std::string& errorLog) {
     std::cout << errorLog << std::endl;
     exit(EXIT_FAILURE);
 }
+
+

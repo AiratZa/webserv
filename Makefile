@@ -9,17 +9,18 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/get_next_word.cpp \
                 utils/cpp_libft/isspace.cpp \
                 utils/cpp_libft/unsigned_number_len.cpp \
-                utils/cpp_libft/atoi.cpp \
-                utils/cpp_libft/tolower.cpp
+                utils/cpp_libft/atoi.cpp\
+                utils/cpp_libft/tolower.cpp\
+                utils/cpp_libft/is_correct_ip_octet.cpp
 
 
 SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\
     config_parsing/Config.cpp \
     config_parsing/ServerContext.cpp \
+    config_parsing/LocationContext.cpp
     config_parsing/LocationContext.cpp \
     request_handlers/Request.cpp \
     response/Response.cpp
-
 
 OBJS = $(SRCS:.cpp=.o)
 

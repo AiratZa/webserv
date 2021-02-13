@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
         path_to_config = CONFIG_FILE_DEFAULT_PATH;
     } else {
         std::cout << "Please provide only 1 arg -> path to webserv config" << std::endl\
-            << "or dont provide nothing and will be used CONFIG_FILE_DEFAULT_PATH" << std::endl;
+            << "or provide nothing and will be used CONFIG_FILE_DEFAULT_PATH" << std::endl;
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);

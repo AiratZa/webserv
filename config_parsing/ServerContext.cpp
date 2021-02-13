@@ -13,12 +13,6 @@ const std::list<std::string>& ServerContext::getServerNames(void) const {
     return _server_names;
 }
 
-void ServerContext::setHostsAndPorts(Pair<std::string, std::list<int> >& host_and_ports) {
-    _hosts_ports[host_and_ports.first] = host_and_ports.second;
-}
-
-
-
 LocationContext* ServerContext::addLocation(const std::string& uri) {
     LocationContext* tmp = new LocationContext(uri);
     return tmp;

@@ -339,9 +339,11 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 void Config::_checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
                         const std::list<std::string>& directive_params) {
     if (directive_keyword == LISTEN_KW) {
-        Pair<std::string, std::list<int> >* host_and_ports = _listenKeywordHandler(directive_params);
-        current_context->setHostsAndPorts(*host_and_ports);
-        delete host_and_ports;
+        Pair<std::string, int> host_and_port = _listenKeywordHandler(directive_params);
+//        std::cout << "11111111111111111111111111111111" << std::endl;
+        std::cout << host_and_port.first << "   " <<  host_and_port.second << std::endl;
+//        std::cout << "11111111111111111111111111111111" << std::endl;
+        static_cast<ServerContext*>(current_context)->addHostPort(host_and_port.first, host_and_port.second);
     }
     else if (directive_keyword == SERVER_NAME_KW)
         _serverNameKeywordHandler(current_context, directive_params);
@@ -371,36 +373,143 @@ void Config::_locationUriChecks(const std::string& location_uri) {
 }
 
 const std::string Config::parseHost(const std::string& param) const {
-    std::size_t found_pos = param.find("localhost");
+    const std::string localhost_kw = "localhost";
+
+
+    std::size_t found_pos = param.find(localhost_kw);
     if (found_pos != std::string::npos) {
         if (found_pos != 0) {
             _badConfigError("host not found in \"" + param + "\" of the \"listen\" directive");
         }
-        return "127.0.0.1";
+//        if (param[localhost_kw.size()] != ':') {
+//            _badConfigError("there is not found colon(':') after host in \"" + param + "\" of the \"listen\" directive");
+//        }
+        return "localhost";
+    } else {
+        if (param.length() > std::string("255.255.255.255:65536").length()) {
+            _badConfigError("host:port combination is not correct in \"" + param + "\" of the \"listen\" directive");
+        }
+
+        std::string tmp_param = param;
+        size_t pos = 0;
+        std::string octet;
+
+        std::list<std::string> octets;
+
+        while ((pos = tmp_param.find('.')) != std::string::npos) {
+            octet = tmp_param.substr(0, pos);
+            octets.push_back(octet);
+            tmp_param.erase(0, pos + 1);
+        }
+        //parse last octet before ':' and port number
+        if ((pos=tmp_param.find(':')) != std::string::npos) {
+            octet = tmp_param.substr(0, pos);
+            octets.push_back(octet);
+        }
+
+        if (octets.size() != 4) {
+            _badConfigError("there is found not equal to 4 delimeted by '.' octets."
+"it doesnt look like correct ip address: \"" + param + "\" (\"listen\" directive)");
+        }
+
+        std::size_t ip_len_to_return = 3; //3 dots between octets
+        std::list<std::string>::iterator it = octets.begin();
+        while (it != octets.end()) {
+            if (!libft::is_correct_ip_octet(*it)) {
+                _badConfigError("one of octet in host ip is not correct: \"" + param + "\" (\"listen\" directive)");
+            }
+            ip_len_to_return += (*it).size();
+            ++it;
+        }
+//        if (ip_len_to_return == param.size() || param[ip_len_to_return] != ':') {
+//            _badConfigError("there is not found colon(':') after host in \"" + param + "\" of the \"listen\" directive");
+//        }
+        return param.substr(0, ip_len_to_return);
     }
-    return ""; //for Werror flag
 }
 
-Pair<std::string, std::list<int> >* Config::_listenKeywordHandler(const std::list<std::string>& directive_params) {
-    std::string tmp_word = *(directive_params.begin());
-    std::string host;
-    std::list<int> ports;
 
-    if (tmp_word.find(":") == std::string::npos) { //host:port ':' delimeter dont found
-        return NULL; //TODO
+
+int Config::parsePort(const std::string& param) const {
+    size_t len = param.length();
+
+    std::string error_log = "port is not found where it should be: \"" + param + "\" (\"listen\" directive)";
+
+    if ( len <=0 || len > 5 ) {
+        _badConfigError(error_log);
     }
-    host =  parseHost(tmp_word);
-    if (tmp_word[host.length()] != ':') {
-        _badConfigError("host:port not found in \"" + tmp_word + "\" of the \"listen\" directive");
+    int port = libft::atoi(param.c_str());
+
+    if (port <= 0 || port > 65535) {
+        _badConfigError(error_log);
     }
-    tmp_word = tmp_word.substr(host.length()+1);
-    ports.push_back(libft::atoi(tmp_word.c_str()));
+    if (len != libft::unsigned_number_len(port, 10)) {
+        _badConfigError(error_log);
+    }
+    return port;
+}
 
-    Pair<std::string, std::list<int> >* host_ports = new Pair<std::string, std::list<int> >(host, ports);
 
+const Pair<std::string, int > Config::_listenKeywordHandler(const std::list<std::string>& directive_params) {
     std::cout << "listen: ";
     std::cout << directive_params; //TODO: need to delete after test
-    return host_ports;
+
+    std::string tmp_word = *(directive_params.begin());
+
+    std::string hosts;
+    int port;
+
+    std::string universal_error_log = "correct [host][:port] not found in \"" + tmp_word + "\" of the \"listen\" directive";
+
+
+    //!!! 1 PATTERN
+    if (tmp_word.find("*") != std::string::npos) {
+        // it should be param like this 'listen *:8000' or it's invalid
+        //!!! '*:' means LOCALHOST 127.0.0.0 — 127.255.255.254
+        if ((tmp_word.find("*:") != 0) || (tmp_word.length() < 3)) {
+            _badConfigError(universal_error_log);
+        }
+        port = parsePort(tmp_word.substr(2)); //end of string checks inside
+        if (tmp_word.length() != (libft::unsigned_number_len(port, 10) + 2) ) {
+            _badConfigError(universal_error_log);
+        }
+        hosts = "*";
+    }
+
+    //!!! 2 PATTERN
+    else if (tmp_word.find(":") == std::string::npos) { //host:port ':' delimeter dont found
+        if ((tmp_word.find('.') != std::string::npos) || (tmp_word.find("localhost") != std::string::npos)) {
+            //if dots delimeters for ip octets arent found it should be just 'localhost' or just correct IP
+            hosts = parseHost(tmp_word);
+            if (hosts.size() != tmp_word.size()) {
+                _badConfigError("invalid host in \"" + tmp_word + "\" of the \"listen\" directive");
+            }
+            port = DEFAULT_PORT;
+        } else {
+            // or it is should be just correct port
+            port = parsePort(tmp_word);
+            if (tmp_word.length() != libft::unsigned_number_len(port, 10) ) {
+                _badConfigError(universal_error_log);
+            }
+        }
+    }
+
+
+    //!!! 3 PATTERN
+    else {
+        // full host:port combination (like 127.0.0.1:8000 or localhost:8000)
+        hosts = parseHost(tmp_word);
+        if (tmp_word[hosts.length()] != ':') {
+            _badConfigError(universal_error_log);
+        }
+        std::string tmp_word2 = tmp_word.substr(hosts.length() + 1); // pass ':'
+        port = parsePort(tmp_word2);
+        if (tmp_word.length() != (libft::unsigned_number_len(port, 10) + 1 + hosts.length()) ) {
+            _badConfigError(universal_error_log);
+        }
+    }
+
+    return Pair<std::string, int >(hosts, port);
 }
 
 void Config::_serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {

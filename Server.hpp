@@ -41,7 +41,9 @@ public:
 	void checkRequest(Request* request);
 
     std::list<int>& getReadClients(void) { return _clients_read; }
-    
+
+
+
 
 private:
     int _listener;
@@ -57,6 +59,9 @@ private:
 
 
     Server() { };
+
+
+    in_addr_t getHostInetAddrFromStr(const std::string& host_str) const;
 
 
 };

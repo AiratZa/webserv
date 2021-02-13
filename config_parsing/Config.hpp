@@ -10,6 +10,10 @@
 #include <map>
 #include <algorithm>    // std::find
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -20,6 +24,8 @@
 
 #include "ServerContext.hpp"
 
+//!!! listen *:80 | *:8000;
+#define DEFAULT_PORT -1
 
 // NGINX CONF KEYWORDS (KW) BEGIN
 
@@ -44,7 +50,19 @@ friend class test_case_name##_##test_name##_Test
 
 
 class Config {
-    FRIEND_TEST(ListenDirectiveTests, testOne);
+
+    //Negative scenarios
+    FRIEND_TEST(ListenDirectiveHostTests, localhost_not_from_start);
+    FRIEND_TEST(ListenDirectiveHostTests, ip_with_negative_number);
+    FRIEND_TEST(ListenDirectiveHostTests, ip_with_max_octet_plus_1);
+    FRIEND_TEST(ListenDirectiveHostTests, ip_with_more_4_octet);
+    FRIEND_TEST(ListenDirectiveHostTests, ip_starts_not_from_digit);
+
+    //Positive scenarios
+    FRIEND_TEST(ListenDirectiveHostTests, localhost);
+    FRIEND_TEST(ListenDirectiveHostTests, min_ip);
+    FRIEND_TEST(ListenDirectiveHostTests, max_ip);
+
 
 public:
     Config() { }
@@ -81,7 +99,7 @@ private:
 
     // SIGNLE PART CONFIG CHECKS
     void _locationUriChecks(const std::string& location_uri);
-    Pair<std::string, std::list<int> >* _listenKeywordHandler(const std::list<std::string>& directive_params);
+    const Pair<std::string, int > _listenKeywordHandler(const std::list<std::string>& directive_params);
     void _serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
@@ -92,7 +110,7 @@ private:
 
 
     const std::string parseHost(const std::string& param) const;
-
+    int parsePort(const std::string& param) const;
 
         std::string _config_text;
     int _len;
