@@ -78,39 +78,47 @@ void Server::acceptConnection(void) {
 		utils::exitWithLog();
 
 	_clients_read.push_back(sock);
+
+    _client_requests[sock] =  new MyRequest();
 }
 
 void Server::handleRequests(fd_set* globalReadSetPtr) {
-	char buf[1024];
-	int bytes_read;
-	std::list<int>::iterator it = _clients_read.begin();
+    int len_buf = 1024;
+    char buf[len_buf];
+    int bytes_read;
+    std::list<int>::iterator it = _clients_read.begin();
 
-	while (it != _clients_read.end()) {
-		if (FD_ISSET(*it, globalReadSetPtr)) {
-			// Поступили данные от клиента, читаем их
-			bytes_read = recv(*it, buf, 1024, 0);
+    while (it != _clients_read.end()) {
+        if (FD_ISSET(*it, globalReadSetPtr)) {
+            // Поступили данные от клиента, читаем их
+            bytes_read = recv(*it, buf, len_buf - 1, 0); // -1 нужен иначе некуда ставить конец строки '\0'
 
-			if (bytes_read <= 0) {
-				// Соединение разорвано, удаляем сокет из множества
-				close(*it);
-				it = _clients_read.erase(it);
-				continue;
-			}
+            if (bytes_read == 0) {
+                // Соединение разорвано, удаляем сокет из множества
+                close(*it);
+                it = _clients_read.erase(it);
+                delete _client_requests[*it];
+                continue;
+            }
+            if (bytes_read < 0)
+                bytes_read = 0;
+            buf[bytes_read] = '\0';
 
-			// Мы знаем фактический размер полученных данных, поэтому ставим метку конца строки
-			// В буфере запроса.
-			buf[bytes_read] = '\0';
-
-			std::string tmp = buf;
-			MyRequest* tmpRequest = new MyRequest(tmp);
-			_client_requests[*it] = tmpRequest;
-			_clients_write.push_back(*it);
-			it = _clients_read.erase(it);
-		} else {
-			++it;
-		}
-	}
-	// monkey->SetNext(squirrel)->SetNext(dog);
+            _client_requests[*it]->getRawRequest().append(buf);
+//            tmp += buf; // собираем строку пока весь запрос в нее не поместится
+            std::cout << bytes_read << std::endl;
+            std::cout << _client_requests[*it]->getRawRequest() << std::endl;
+            if (bytes_read < len_buf - 1) { //после последнего считывания проверяем все ли доставлено
+//                MyRequest *tmpRequest = new MyRequest(tmp);
+//                _client_requests[*it] = tmpRequest;
+                _clients_write.push_back(*it);
+                 it = _clients_read.erase(it);
+            }
+        } else {
+            ++it;
+        }
+    }
+    // monkey->SetNext(squirrel)->SetNext(dog);
 }
 
 void Server::handleResponses(fd_set* globalWriteSetPtr) {
