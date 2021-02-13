@@ -106,9 +106,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
 			// В буфере запроса.
 			buf[bytes_read] = '\0';
 
-			std::string tmp = buf;
-			Request* tmpRequest = new Request(tmp);
-			_client_requests[*it] = tmpRequest;
+			_client_requests[*it] = new Request(buf);
 			_clients_write.push_back(*it);
 			it = _clients_read.erase(it);
 		} else {
@@ -118,6 +116,10 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
 	// monkey->SetNext(squirrel)->SetNext(dog);
 }
 
+void Server::checkRequest(Request* request) {
+	(void)request;
+}
+
 void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	std::list<int>::iterator it = _clients_write.begin();
 
@@ -125,10 +127,12 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	while (it != _clients_write.end()) {
 		fd = *it;
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
-			_client_requests[fd]->parse();
+			Request* request = _client_requests[fd];
+			request->parse();
+			checkRequest(request);
 
-			Response response(_client_requests[fd], fd);
-			response.send_response();
+			Response response(request, fd);
+			response.sendResponse();
 
 			close(fd);
 			_client_requests.erase(fd);
@@ -140,8 +144,6 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	}
 	// monkey->SetNext(squirrel)->SetNext(dog);
 }
-
-
 
 void Server::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
 	handleRequests(globalReadSetPtr);

@@ -38,6 +38,7 @@ public:
     void processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr);
     void handleRequests(fd_set* globalReadSetPtr);
     void handleResponses(fd_set* globalWriteSetPtr);
+	void checkRequest(Request* request);
 
     std::list<int>& getReadClients(void) { return _clients_read; }
     
