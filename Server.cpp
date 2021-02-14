@@ -102,7 +102,7 @@ void Server::acceptConnection(void) {
 }
 
 int checkFullRequest(std::string const& req) {
-    size_t      lenght;
+    size_t      length;
     int      pointer;
     std::string header = req.substr(0, req.find("\n\n"));
     std::string body = "";
@@ -114,8 +114,8 @@ int checkFullRequest(std::string const& req) {
     }
     else if (std::string::npos != header.find("Content-Length:")) {
         pointer = header.find("Content-Length:") + 15;
-        lenght = std::stoi(header.substr(pointer, header.length()));
-        if (body.length() == lenght)
+        length = std::stoi(header.substr(pointer, header.length()));
+        if (body.length() == length)
             return 1;
     }
     else if (std::string::npos != req.find("\n\0"))
