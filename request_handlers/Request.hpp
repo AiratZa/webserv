@@ -11,7 +11,7 @@
 class Request {
 
 	public:
-		Request() { };
+		Request();
 		Request(const std::string& request);
 		~Request(void);
 

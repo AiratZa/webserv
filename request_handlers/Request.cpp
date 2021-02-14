@@ -4,11 +4,12 @@
 
 #include "Request.hpp"
 
+Request::Request() : _raw_request(""), _status_code(200) { };
 Request::Request(const std::string& request) : _raw_request(request), _status_code(200) { };
 
 Request::~Request(void) { };
 
-	std::string & Request::getRawRequest(void) {
+std::string & Request::getRawRequest(void) {
 	return this->_raw_request;
 }
 
@@ -16,8 +17,7 @@ void Request::setRawRequest(const std::string & request) {
 	this->_raw_request = request ;
 }
 
-void Request::setStatusCode(int status_code)
-{
+void Request::setStatusCode(int status_code) {
 	_status_code = status_code;
 }
 
