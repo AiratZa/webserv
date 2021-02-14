@@ -3,9 +3,49 @@
 
 https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 
+//!!! DONE: LISTEN DIRECTIVE
+//listen - map
+
+//TODO: SERVER_NAME
+// server_name VECTOR
+/*
+ * Синтаксис:	server_name имя ...;
+Умолчание:
+server_name "";
+Контекст:	server
+
+server {
+    server_name example.com www.example.com;
+}
+Первое имя становится основным именем сервера.
+
+В именах серверов можно использовать звёздочку (“*”) для замены первой или последней части имени:
+
+server {
+    server_name example.com *.example.com www.example.*;
+}
+Такие имена называются именами с маской.
+
+Два первых вышеприведённых имени можно объединить в одно:
+
+server {
+    server_name .example.com;
+}
+
+Возможно также указать пустое имя сервера (0.7.11):
+
+server {
+    server_name www.example.com "";
+}
+Это позволяет обрабатывать запросы без поля “Host” заголовка запроса в этом сервере,
+а не в сервере по умолчанию для данной пары адрес:порт. Это настройка по умолчанию.
+ */
+
+
+
 server {
 
-    listen 127.0.0.1:8080 [8081];
+    listen 127.0.0.1:8080;
     server_name example.com [www.example.com];
 
     error_page 500 502 503 504 /50x.html;
@@ -18,15 +58,8 @@ server {
 
 }
 
-1. how much
 
-listen - VECTOR
-server_name VECTOR
-
-may be
-
-server may be empty but it will do nothing
-
+1. server may be empty but it will do nothing
 
 2. SET DEFAULT FOR FIRST
 
@@ -49,8 +82,6 @@ none: If no modifiers are present in a location block then the requested URI wil
 
 MULTIPLE PARAM IS INVALID
 invalid location modifier "/directory/"
-
-
 
 5. 	client_max_body_size
 

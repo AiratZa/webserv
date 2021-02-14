@@ -31,7 +31,9 @@ Server::Server(int port) : _port(port) {
 
 };
 
-Server::Server(const std::map<std::string, std::list<int> >& hosts_n_ports) {
+Server::Server(const ServerContext server_context) {
+    const std::map<std::string, std::list<int> >& hosts_n_ports = server_context.getHostsAndPorts();
+
     _listener = socket(AF_INET, SOCK_STREAM, 0);
     if(_listener < 0)
         utils::exitWithLog();
@@ -43,7 +45,6 @@ Server::Server(const std::map<std::string, std::list<int> >& hosts_n_ports) {
     if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
         utils::exitWithLog();
 
-    //!!!EXPERIMENT: TRY TO USE HOST AND PORT FROM CONFIG
     std::map<std::string, std::list<int> >::const_iterator map_it = hosts_n_ports.begin();
     std::map<std::string, std::list<int> >::const_iterator map_ite = hosts_n_ports.end();
 

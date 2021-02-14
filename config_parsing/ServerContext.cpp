@@ -28,8 +28,20 @@ void ServerContext::addHostPort(const std::string& host, int port) {
     }
 }
 
-void ServerContext::addServerName(const std::string& server_name) {
-    _server_names.push_back(server_name);
+void ServerContext::addServerNames(std::list<std::string>& server_names) {
+    std::list<std::string>::iterator it = server_names.begin();
+
+    while (it != server_names.end()) {
+        std::list<std::string>::iterator tmp_it;
+
+        std::list<std::string>::iterator ite_private = _server_names.end();
+        tmp_it = std::find(_server_names.begin(), ite_private, *it);
+
+        if (tmp_it == ite_private) { // word is not keyword
+            _server_names.push_back(*it);
+        }
+        ++it;
+    }
 }
 
 

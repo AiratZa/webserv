@@ -27,7 +27,7 @@ class Server {
 public:
     Server(int port);
 //    Server(ServerContext* config);
-    Server(const std::map<std::string, std::list<int> >& hosts_n_ports);
+    Server(const ServerContext server_context);
     ~Server() { };
 
     const int & getListener(void) const { return _listener; };

@@ -32,7 +32,8 @@ WebServ::WebServ(const std::string& config_file_path) {
             std::cout << "SERVER NAMES: "  << (*it)->getServerNames() << std::endl;
             std::cout << "____________________________________________" << std::endl;
 
-            Server *temp = new Server((*it)->getHostsAndPorts());
+            Server *temp = new Server(*(*it));
+            delete *it;
             addServer(temp);
             ++it;
             i++;
