@@ -7,6 +7,8 @@
 
 #include <list>
 #include <map>
+#include <algorithm>
+
 #include "AContext.hpp"
 #include "LocationContext.hpp"
 
@@ -14,21 +16,26 @@
 class ServerContext : public AContext {
 
 public:
-    ServerContext() { };
+    ServerContext() : is_server_names_were_updated(false) { _server_names.push_back("");  };
 
     const std::map<std::string, std::list<int> >&  getHostsAndPorts(void) const;
     const std::list<std::string>& getServerNames(void) const;
 
+    bool get_status_is_server_names_were_updated(void) const { return is_server_names_were_updated;}
+    void set_server_names_were_updated(bool value) { is_server_names_were_updated = value; }
+    void clear_server_names(void) { _server_names.clear(); }
+
     LocationContext* addLocation(const std::string& uri);
 
     void addHostPort(const std::string& host, int port);
-    void addServerName(const std::string& server_name);
+    void addServerNames(std::list<std::string>& server_names);
 
 private:
     std::list<LocationContext*> _locations;
     std::map<std::string, std::list<int> > _hosts_ports;
     std::list<std::string> _server_names;
 
+    bool is_server_names_were_updated;
 };
 
 #endif //WEBSERV_SERVERCONTEXT_HPP

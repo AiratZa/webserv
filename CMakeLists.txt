@@ -40,7 +40,8 @@ include_directories(google_test/googletest/include)
 set(CONFIG_TESTS_PATH "config_parsing/test_configs/")
 set(CONFIG_DIRECTIVES_TESTS_PATH ${CONFIG_TESTS_PATH}directives/)
 
-file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp)
+file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp)
 #file(GLOB TEST_STACK_SRC "tests/test_stack/*.hpp" "tests/test_stack/*.cpp")
 #file(GLOB TEST_QUEUE_SRC "tests/test_queue/*.hpp" "tests/test_queue/*.cpp")
 

@@ -90,6 +90,23 @@ class Config {
 // LISTEN DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
+// SERVER_NAME DIRECTIVE FRIEND TEST CLASSES BEGINS
+
+    //Negative scenarios
+    FRIEND_TEST(ServerNameDirectiveTests, more_than_1_asterisk);
+    FRIEND_TEST(ServerNameDirectiveTests, quotes_tests);
+
+    //Positive scenarios
+    FRIEND_TEST(ServerNameDirectiveTests, one_server_names_in_one_line);
+    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_one_line);
+    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line);
+
+
+
+// SERVER_NAME DIRECTIVE FRIEND TEST CLASSES ENDS
+
+
+
 public:
     Config() { }
     Config(const std::string &path_to_config);
@@ -126,7 +143,7 @@ private:
     // SIGNLE PART CONFIG CHECKS
     void _locationUriChecks(const std::string& location_uri);
     const Pair<std::string, int > _listenKeywordHandler(const std::list<std::string>& directive_params);
-    void _serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::list<std::string> _serverNameKeywordHandler(const std::list<std::string>& directive_params);
     void _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
@@ -137,6 +154,14 @@ private:
 
     const std::string parseHost(const std::string& param) const;
     int parsePort(const std::string& param) const;
+
+    bool is_correct_serv_name(const std::string& serv_name) const;
+    std::string checkAndRemoveQuotes(const std::string& serv_name) const;
+    std::size_t parse_until_quote_be_closed(const std::string& serv_name, std::size_t tmp_pos, char found_quote) const;
+    void find_first_occured_quote(const std::string& serv_name, std::size_t pos_to_start_search,
+                                          int *found_pos, char *found_quote) const;
+
+
 
         std::string _config_text;
     int _len;

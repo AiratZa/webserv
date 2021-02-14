@@ -44,12 +44,12 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _ite_server = _serverContext.end();
     _ite_location = _locationContext.end();
 
-    _isMultipleParamDirective[LISTEN_KW] = true;
     _isMultipleParamDirective[SERVER_NAME_KW] = true;
     _isMultipleParamDirective[ERROR_PAGE_KW] = true;
     _isMultipleParamDirective[INDEX_KW] = true;
     _isMultipleParamDirective[LIMIT_EXCEPT_KW] = true;
 
+    _isMultipleParamDirective[LISTEN_KW] = false;
     _isMultipleParamDirective[CLIENT_MAX_BODY_SIZE_KW] = false;
     _isMultipleParamDirective[AUTOINDEX_KW] = false;
     _isMultipleParamDirective[ALIAS_KW] = false;
@@ -78,7 +78,6 @@ void Config::fillConfigTextFromFile(const std::string &path_to_config) {
         utils::exitWithLog("Error happened when read config file :(");
     }
     close(file);
-    std::cout << "read finished" << std::endl; //TODO: NEED DELETE
 }
 
 
@@ -104,8 +103,6 @@ void Config::splitConfigTextIntoBlocks(void) {
     const std::string& const_config_text = _getConfigText();
     _tmp_len = 0; //initialize tmp value (start is here)
 
-    std::cout << "PARSING STARTED" << std::endl; //TODO: NEED DELETE
-
     std::string tmpWord;
 
     while (TRUE) {
@@ -122,7 +119,6 @@ void Config::splitConfigTextIntoBlocks(void) {
         try
         {
             if (tmpWord == SERVER_KW){
-                std::cout << "SERVER" << std::endl; //TODO: need to delete after test
                 ServerContext* tmp_server = new ServerContext();
                 _servers.push_back(tmp_server);
                 parseInsideServerContext(tmp_server);
@@ -192,7 +188,6 @@ void Config::parseInsideServerContext(ServerContext* current_server) {
         }
 
         if (tmp_word == LOCATION_KW) {
-            std::cout << "LOCATION" << std::endl; //TODO: need to delete after test
             parseInsideLocationContext(current_server);
         } else {
             std::list<std::string> tmp_params;
@@ -342,8 +337,15 @@ void Config::_checkAndSetParams(AContext* current_context, const std::string& di
         Pair<std::string, int> host_and_port = _listenKeywordHandler(directive_params);
         static_cast<ServerContext*>(current_context)->addHostPort(host_and_port.first, host_and_port.second);
     }
-    else if (directive_keyword == SERVER_NAME_KW)
-        _serverNameKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == SERVER_NAME_KW) {
+        ServerContext * serv = static_cast<ServerContext*>(current_context);
+        if (!serv->get_status_is_server_names_were_updated()){
+            serv->clear_server_names();
+            serv->set_server_names_were_updated(true);
+        }
+        std::list<std::string> server_names = _serverNameKeywordHandler(directive_params);
+        serv->addServerNames(server_names);
+    }
     else if (directive_keyword == ERROR_PAGE_KW)
         _errorPageKeywordHandler(current_context, directive_params);
     else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW)
@@ -369,6 +371,23 @@ void Config::_locationUriChecks(const std::string& location_uri) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const std::string Config::parseHost(const std::string& param) const {
     const std::string localhost_kw = "localhost";
 
@@ -378,9 +397,6 @@ const std::string Config::parseHost(const std::string& param) const {
         if (found_pos != 0) {
             _badConfigError("host not found in \"" + param + "\" of the \"listen\" directive");
         }
-//        if (param[localhost_kw.size()] != ':') {
-//            _badConfigError("there is not found colon(':') after host in \"" + param + "\" of the \"listen\" directive");
-//        }
         return "localhost";
     } else {
         if (param.length() > std::string("255.255.255.255:65536").length()) {
@@ -398,7 +414,6 @@ const std::string Config::parseHost(const std::string& param) const {
             octets.push_back(octet);
             tmp_param.erase(0, pos + 1);
         }
-        //parse last octet before ':' and port number
         if ((pos=tmp_param.find(':')) != std::string::npos) {
             octet = tmp_param.substr(0, pos);
             octets.push_back(octet);
@@ -421,9 +436,6 @@ const std::string Config::parseHost(const std::string& param) const {
             ip_len_to_return += (*it).size();
             ++it;
         }
-//        if (ip_len_to_return == param.size() || param[ip_len_to_return] != ':') {
-//            _badConfigError("there is not found colon(':') after host in \"" + param + "\" of the \"listen\" directive");
-//        }
         return param.substr(0, ip_len_to_return);
     }
 }
@@ -451,9 +463,6 @@ int Config::parsePort(const std::string& param) const {
 
 
 const Pair<std::string, int > Config::_listenKeywordHandler(const std::list<std::string>& directive_params) {
-    std::cout << "listen: ";
-    std::cout << directive_params; //TODO: need to delete after test
-
     std::string tmp_word = *(directive_params.begin());
 
     std::string hosts;
@@ -513,17 +522,153 @@ const Pair<std::string, int > Config::_listenKeywordHandler(const std::list<std:
     return Pair<std::string, int >(hosts, port);
 }
 
-void Config::_serverNameKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
-    ServerContext* tmp_server = static_cast<ServerContext*>(current_context);
-    std::list<std::string>::const_iterator it = directive_params.begin();
 
-    while (it != directive_params.end()) {
-        tmp_server->addServerName(*it);
-        ++it;
+
+
+
+
+bool Config::is_correct_serv_name(const std::string& serv_name) const {
+    std::size_t len = serv_name.length();
+    std::size_t found_pos = serv_name.find('*');
+
+    std::string tmp_serv_name = serv_name;
+
+    if (found_pos != std::string::npos) {
+        if ((found_pos != 0) && (found_pos != (len - 1))) {
+            return false;
+        }
+        if (len < 3) {
+            return false;
+        }
+        if (found_pos == 0) {
+            tmp_serv_name = serv_name.substr(1);
+            if ((tmp_serv_name.find('*') != std::string::npos) || \
+                    tmp_serv_name[0] != '.') {
+                return false;
+            }
+        } else {
+            tmp_serv_name = serv_name.substr(0, len - 1);
+            if ((tmp_serv_name.find('*') != std::string::npos) || \
+                    tmp_serv_name[len - 2] != '.') {
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+std::size_t Config::parse_until_quote_be_closed(const std::string& serv_name, std::size_t tmp_pos, char found_quote) const {
+    std::size_t len = serv_name.length();
+
+    std::string unexpected_eof_log = "unexpected end of file, expecting \";\" or \"}\"";
+
+    if (tmp_pos == (len - 1)) {
+        _badConfigError(unexpected_eof_log);
     }
 
-    std::cout << "server_name: ";
-    std::cout << directive_params; //TODO: need to delete after test
+    if (libft::isspace(serv_name[tmp_pos+1])) {
+        _badConfigError(unexpected_eof_log);
+    }
+    tmp_pos++; //add to found char pos 1
+    std::size_t found_pos = serv_name.find(found_quote, tmp_pos); //search from (found_pos + 1)
+    if (found_pos == std::string::npos) {
+        _badConfigError(unexpected_eof_log);
+    }
+    return found_pos;
+}
+
+void Config::find_first_occured_quote(const std::string& serv_name, std::size_t pos_to_start_search,
+                                      int *found_pos, char *found_quote) const {
+
+    std::size_t found_pos_single_quotes = serv_name.find('\'', pos_to_start_search);
+    std::size_t found_pos_double_quotes = serv_name.find('"', pos_to_start_search);
+
+    if ( (found_pos_single_quotes == std::string::npos) || \
+            (found_pos_double_quotes == std::string::npos) ) {
+        if ( (found_pos_single_quotes == std::string::npos) && \
+            (found_pos_double_quotes == std::string::npos) ) {
+            *found_pos = -1;
+            *found_quote = 0; //quotes are not found
+        }
+        else if (found_pos_single_quotes == std::string::npos) {
+            *found_quote = '"';
+            *found_pos = found_pos_double_quotes;
+        }
+        else {
+            *found_quote = '\'';
+            *found_pos = found_pos_single_quotes;
+        }
+    }
+    else if (found_pos_single_quotes < found_pos_double_quotes) {
+        *found_quote = '\'';
+        *found_pos = found_pos_single_quotes;
+    }
+    else {
+        *found_quote = '"';
+        *found_pos = found_pos_double_quotes;
+    }
+}
+
+
+std::string Config::checkAndRemoveQuotes(const std::string& serv_name) const {
+    std::size_t len = serv_name.length();
+
+    char found_quote;
+    int found_pos;
+
+    find_first_occured_quote(serv_name, 0, &found_pos, &found_quote);
+    if (found_pos == (-1)) { //if quotes are not found
+        return serv_name;
+    }
+
+    std::size_t tmp_pos = found_pos;
+    if (found_pos != 0) {
+        while (tmp_pos < len) {
+            find_first_occured_quote(serv_name, tmp_pos, &found_pos, &found_quote);
+            if (found_pos == (-1)) { //if quotes are not found
+                return serv_name;
+            }
+            tmp_pos = found_pos;
+            tmp_pos = parse_until_quote_be_closed(serv_name, tmp_pos, found_quote); //if closed quote is not found throw Exception
+            tmp_pos++; // pass closing quote
+        }
+        return serv_name; // nginx dont remove quotes inside string
+    }
+    else { //param starts from quote, it should be finished by this qoute and no one symbol after it is closed
+        std::string unexpected_eof_log = "unexpected end of file, expecting \";\" or \"}\"";
+        if (len < 2) {
+            _badConfigError(unexpected_eof_log);
+        }
+
+        std::size_t found_pos_close_quote = serv_name.find(found_quote, 1);
+        if (found_pos_close_quote != (len -1)) {
+            _badConfigError(unexpected_eof_log);
+        }
+        return serv_name.substr(1, len - 2); //return string without border quotes
+    }
+}
+
+
+
+
+
+std::list<std::string>  Config::_serverNameKeywordHandler(const std::list<std::string>& directive_params) {
+    std::list<std::string> serv_names;
+    std::list<std::string>::const_iterator it = directive_params.begin();
+
+    std::string tmp_param;
+
+    while (it != directive_params.end()) {
+        tmp_param = checkAndRemoveQuotes(*it);
+
+        if (is_correct_serv_name(tmp_param)) {
+            serv_names.push_back(tmp_param);
+        } else {
+            _badConfigError("invalid server name or wildcard \"" + *it + "\"");
+        }
+        ++it;
+    }
+    return serv_names;
 }
 
 void Config::_errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
