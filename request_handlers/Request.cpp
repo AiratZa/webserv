@@ -3,6 +3,9 @@
 //
 
 #include "Request.hpp"
+#include "../utils/cpp_libft/libft.hpp"
+
+#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 
 Request::Request() : _raw_request(""), _status_code(200) { };
 Request::Request(const std::string& request) : _raw_request(request), _status_code(200) { };
@@ -42,7 +45,7 @@ void Request::parseRequestLine() {
 	_http_version = _raw_request.substr(0, word_end);
 	_raw_request.erase(0, word_end + 2);
 
-	if (_method.length() + _request_target.length() + _http_version.length() + 4 > MAX_REQUEST_LINE_LENGTH)
+	if (_method.length() + _request_target.length() + _http_version.length() + 4 > MAX_HEADER_LINE_LENGTH)
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 }
 
@@ -75,7 +78,7 @@ void Request::parseHeaders() {
 
 	size_t line_length = _raw_request.find("\r\n");
 	while (line_length != 0) {
-		if (line_length > MAX_REQUEST_LINE_LENGTH ||
+		if (line_length > MAX_HEADER_LINE_LENGTH ||
 			line_length == std::string::npos) {
 			return setStatusCode(400); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
@@ -120,7 +123,7 @@ void Request::parse() {
 
 	if (isStatusCodeOk())
 	{
-		if (_headers.count("transfer-encoding"))
+		if (_headers.count("transfer-encoding") && _headers["transfer-encoding"].find("chunked") != std::string::npos)
 			parseChunkedContent();
 		else if (_headers.count("content-length"))
 			getContentByLength();

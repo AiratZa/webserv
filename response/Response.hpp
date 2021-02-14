@@ -18,6 +18,10 @@ public:
 
 	void sendResponse();
 
+	static std::map<int,std::string> initStatusCodes();
+
+public:
+	static const std::map<int, std::string> status_codes;
 
 private:
 	std::string _raw_response;
