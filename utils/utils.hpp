@@ -10,6 +10,7 @@
 #include <cstring> //for strerror
 #include <cstdlib>
 #include <list>
+#include <map>
 
 #define TRUE 1
 #define FALSE 1
@@ -18,6 +19,13 @@ namespace utils {
     void exitWithLog(void);
     void exitWithLog(const std::string& errorLog);
 
+    template <class Container, class Value>
+    bool is_exists_in_container(const Container& container_to_search_in, const Value& value_to_search) {
+        if (container_to_search_in.find(value_to_search) == container_to_search_in.end()) {
+            return false;
+        }
+        return true;
+    }
 }
 
 #endif //WEBSERV_UTILS_H

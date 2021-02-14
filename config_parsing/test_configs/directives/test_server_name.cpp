@@ -6,7 +6,7 @@
 #include "../../Config.hpp"
 #include "../../ServerContext.hpp"
 
-//NEGATIVE SCENARIOS
+////NEGATIVE SCENARIOS
 
 TEST(ServerNameDirectiveTests, more_than_1_asterisk)
 {
@@ -15,19 +15,19 @@ TEST(ServerNameDirectiveTests, more_than_1_asterisk)
     std::list<std::string> serv_names;
 
     serv_names.push_back("*.hello.*");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("*.hello*.");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back(".*hello.*");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("***");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 }
 
@@ -38,27 +38,27 @@ TEST(ServerNameDirectiveTests, quotes_tests)
     std::list<std::string> serv_names;
 
     serv_names.push_back("\"");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("'");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("\"фаы.qwertyuiop[]asdfghjklzxcvbnm,./\"\"hi\"");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("'фаы.qwertyuiop[]asdfghjklzxcvbnm,./''hi'");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("\"фаы.qwertyuop[]a'1'sdfghjklzxcvbnm\"\"\"");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
     serv_names.push_back("'фаы.qwertyuop[]a\"1\"sdfghjklzxcvbnm'''");
-    EXPECT_THROW(conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();
 
 
@@ -78,7 +78,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("\"\"");
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -99,7 +99,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("\"  \"");
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -119,7 +119,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("''");
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -139,7 +139,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("'  '");
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -159,7 +159,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("\"фаы.qwertyuiop[]asdfghjklzxcvbnm,./''hi\"" );
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -179,7 +179,7 @@ TEST(ServerNameDirectiveTests, one_server_names_in_one_line)
         std::list<std::string> serv_names;
 
         serv_names.push_back("'фаы.qwertyuiop[]asdfghjklzxcvbnm,./\"\"hi'" );
-        conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+        conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
         std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -213,7 +213,7 @@ TEST(ServerNameDirectiveTests, multiple_server_names_in_one_line)
     serv_names.push_back(".hello3.*");
     serv_names.push_back("www.hello4.com");
     serv_names.push_back("www.hello5.*");
-    conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+    conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
 
     std::list<std::string> post_serv_names = serv_context.getServerNames();
 
@@ -248,7 +248,7 @@ TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line)
     serv_names.push_back(".hello3.*");
     serv_names.push_back("www.hello4.com");
     serv_names.push_back("www.hello5.*");
-    conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+    conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
     serv_names.clear();
 
     serv_names.push_back("*.2hello1.com");
@@ -262,7 +262,7 @@ TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line)
     serv_names.push_back(".2hello3.*");
     serv_names.push_back("www.2hello4.com");
     serv_names.push_back("www.2hello5.*");
-    conf._checkAndSetParams(&serv_context, SERVER_NAME_KW, serv_names);
+    conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names);
     serv_names.clear();
 
 
@@ -293,6 +293,7 @@ TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line)
     }
 
 }
+
 
 
 

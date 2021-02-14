@@ -4,45 +4,46 @@
 https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 
 //!!! DONE: LISTEN DIRECTIVE
-//listen - map
+//listen - map<host, list<port> >
 
-//TODO: SERVER_NAME
-// server_name VECTOR
+//!!! DONE: SERVER_NAME DIRECTIVE
+// server_name LIST
+
+//TODO: ERROR_PAGE
+
+// error_page map<error_code(string), std::map<param_key(string), param_value(string)> >
+// example error_page 404 = /404.php;
+
+map<error_code, std::map<param_key, param_value > >
+
+{ 404: {
+    'uri_to_redirect': "/404.php",
+    'change_error_code': "="
+    }
+};
+
+
+Директивы наследуются с предыдущего уровня конфигурации при условии, что на данном уровне не описаны свои директивы error_page.
+
+Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
+и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
+
+error_page 404 = /404.php;
+
+
+
+3. ERROR PAGE (may be inside location and server)
+error_page код ... [=[ответ]] uri;
+
+Для 1 кода используется только первая установка
+        установки могут быть на сколько угодно строках
+
+value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
+
+ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
+
+
 /*
- * Синтаксис:	server_name имя ...;
-Умолчание:
-server_name "";
-Контекст:	server
-
-server {
-    server_name example.com www.example.com;
-}
-Первое имя становится основным именем сервера.
-
-В именах серверов можно использовать звёздочку (“*”) для замены первой или последней части имени:
-
-server {
-    server_name example.com *.example.com www.example.*;
-}
-Такие имена называются именами с маской.
-
-Два первых вышеприведённых имени можно объединить в одно:
-
-server {
-    server_name .example.com;
-}
-
-Возможно также указать пустое имя сервера (0.7.11):
-
-server {
-    server_name www.example.com "";
-}
-Это позволяет обрабатывать запросы без поля “Host” заголовка запроса в этом сервере,
-а не в сервере по умолчанию для данной пары адрес:порт. Это настройка по умолчанию.
- */
-
-
-
 server {
 
     listen 127.0.0.1:8080;
@@ -54,24 +55,13 @@ server {
 
         error_page 500 502 503 504 /50x.html;
     }
-
-
 }
+*/
 
-
+/*
 1. server may be empty but it will do nothing
 
 2. SET DEFAULT FOR FIRST
-
-3. ERROR PAGE (may be inside location and server)
-error_page код ... [=[ответ]] uri;
-
-Для 1 кода используется только первая установка
-установки могут быть на сколько угодно строках
-
-value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
-
-ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
 
 4. location
 
@@ -155,8 +145,9 @@ autoindex off;
 
 "autoindex" directive is duplicate in /etc/nginx/nginx.conf:79
 
-11. https://nginx.org/ru/docs/http/ngx_http_index_module.html
 
+
+11. https://nginx.org/ru/docs/http/ngx_http_index_module.html
 
 МОЖЕТ БЫТЬ НЕСКОЛЬКО, ДОБАВЛЯЮТСЯ ДРУГ ЗА ДРУГОМ, НЕ ПЕРЕЗАПИСЫВАЕТСЯ НИЧЕГО
 

@@ -33,4 +33,30 @@ std::ostream & operator<<(std::ostream & output, std::map<Key, std::list<ValueTy
     return output;
 }
 
+template <class Key_1, class Key_2, class Value_2>
+std::ostream & operator<<(std::ostream & output, std::map<Key_1, std::map<Key_2, Value_2> > const & rhs) {
+    typename std::map<Key_1, std::map<Key_2, Value_2> >::const_iterator map_it = rhs.begin();
+    typename std::map<Key_1, std::map<Key_2, Value_2> >::const_iterator map_ite = rhs.end();
+
+    output << "{ ";
+    while (map_it != map_ite) {
+        output << "\"" << (*map_it).first <<  "\": ";
+
+        typename std::map<Key_2, Value_2>::const_iterator map_2_it = (*map_it).second.begin();
+        typename std::map<Key_2, Value_2>::const_iterator map_2_ite = (*map_it).second.end();
+        output << "{ ";
+        while (map_2_it != map_2_ite) {
+            output << "\"" << (*map_2_it).first << "\": " << "\"" <<  (*map_2_it).second << "\"";
+            output<< "; ";
+            ++map_2_it;
+        }
+        output << "}" << std::endl;
+
+        ++map_it;
+    }
+    output << "}" << std::endl;
+    return output;
+}
+
+
 #endif

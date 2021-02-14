@@ -115,7 +115,8 @@ int checkFullRequest(std::string const& req) {
     }
     else if (std::string::npos != header.find("Content-Length:")) {
         pointer = header.find("Content-Length:") + 15;
-        length = std::stoi(header.substr(pointer, header.length()));
+        length = libft::atoi(header.substr(pointer, header.length()).c_str()); //// WAS CHANGED TO OWN atoi REALIZATION (it takes C-strings)
+                                                                                // TODO: please check is it correct or not
         if (body.length() == length)
             return 1;
     }

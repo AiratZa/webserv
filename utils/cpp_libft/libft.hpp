@@ -9,6 +9,8 @@
 
 namespace libft {
     int isspace(int ch);
+    int	isdigit(int c);
+
     int	atoi(const char *nptr);
     unsigned int unsigned_number_len(unsigned int number, unsigned int base);
 

@@ -3,7 +3,7 @@ project(webserv)
 
 set(CMAKE_CXX_STANDARD 98)
 
-set(UTILS_SRCS utils/utils.cpp
+set(UTILS_SRCS utils/utils.cpp utils/utils.hpp
         utils/get_next_line/get_next_line.cpp utils/get_next_line/get_next_line_utils.cpp
         utils/cpp_libft/stl_containers_operator_overloading.cpp
         utils/cpp_libft/get_next_word.cpp
@@ -11,7 +11,9 @@ set(UTILS_SRCS utils/utils.cpp
         utils/cpp_libft/unsigned_number_len.cpp utils/cpp_libft/atoi.cpp
         utils/custom_structures/Pair.hpp
         utils/cpp_libft/is_correct_ip_octet.cpp
-        utils/cpp_libft/tolower.cpp)
+        utils/cpp_libft/tolower.cpp
+        utils/cpp_libft/isdigit.cpp
+        )
 
 
 set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
@@ -41,11 +43,13 @@ set(CONFIG_TESTS_PATH "config_parsing/test_configs/")
 set(CONFIG_DIRECTIVES_TESTS_PATH ${CONFIG_TESTS_PATH}directives/)
 
 file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
-        ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp)
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_error_page.cpp
+        )
 #file(GLOB TEST_STACK_SRC "tests/test_stack/*.hpp" "tests/test_stack/*.cpp")
 #file(GLOB TEST_QUEUE_SRC "tests/test_queue/*.hpp" "tests/test_queue/*.cpp")
 
-set (TEST_FILES ${TEST_DIRECTIVES} )
+set (TEST_FILES ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )
 
 set_source_files_properties(${CONFIG_PARSING_SRCS} ${TEST_FILES} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
 

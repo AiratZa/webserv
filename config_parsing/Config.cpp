@@ -197,7 +197,7 @@ void Config::parseInsideServerContext(ServerContext* current_server) {
             } else {
                 tmp_params = parseSingleParamDirective(tmp_word);
             }
-            _checkAndSetParams(current_server, tmp_word, tmp_params);
+            _checkAndSetParams(current_server, current_server, tmp_word, tmp_params);
         }
     }
     if ((const_config_text[_tmp_len] != '}')) {
@@ -265,7 +265,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
         } else {
             tmp_params = parseSingleParamDirective(tmp_word);
         }
-        _checkAndSetParams(current_location, tmp_word, tmp_params);
+        _checkAndSetParams(current_server, current_location, tmp_word, tmp_params);
     }
     if ((const_config_text[_tmp_len] != '}')) {
         _badConfigError("SYMBOL '}' THAT SHOULD CLOSE 'location' CONTEXT KEYWORD IS NOT FOUND");
@@ -331,8 +331,9 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
 
 
-void Config::_checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
+void Config::_checkAndSetParams(ServerContext* current_server, AContext* current_context, const std::string& directive_keyword,
                         const std::list<std::string>& directive_params) {
+    (void)current_server; // TODO: it will be needed when copy server(outside) directive MAYBE
     if (directive_keyword == LISTEN_KW) {
         Pair<std::string, int> host_and_port = _listenKeywordHandler(directive_params);
         static_cast<ServerContext*>(current_context)->addHostPort(host_and_port.first, host_and_port.second);
@@ -346,8 +347,10 @@ void Config::_checkAndSetParams(AContext* current_context, const std::string& di
         std::list<std::string> server_names = _serverNameKeywordHandler(directive_params);
         serv->addServerNames(server_names);
     }
-    else if (directive_keyword == ERROR_PAGE_KW)
-        _errorPageKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == ERROR_PAGE_KW) {
+        std::map<int, std::map<std::string, std::string> > error_page_conf = _errorPageKeywordHandler(current_context, directive_params);
+        current_context->setErrorPageDirectiveInfo(error_page_conf);
+    }
     else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW)
         _clientMaxBodySizeKeywordHandler(current_context, directive_params);
     else if (directive_keyword == LIMIT_EXCEPT_KW)
@@ -671,11 +674,110 @@ std::list<std::string>  Config::_serverNameKeywordHandler(const std::list<std::s
     return serv_names;
 }
 
-void Config::_errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
-    (void)current_context;
-    std::cout << "error_page: ";
-    std::cout << directive_params; //TODO: need to delete after test
+
+
+
+
+
+
+
+
+
+const std::string Config::_checkForChangeErrorCodeParam(const std::list<std::string>& directive_params) const {
+    std::size_t len = directive_params.size();
+    std::list<std::string>::const_iterator it = directive_params.begin();
+
+    std::string last_minus_one_pos_param;
+
+    std::size_t i = 0;
+    while (i < (len - 2) ) {
+        i++;
+        ++it;
+    }
+    last_minus_one_pos_param = *it;
+
+    if (last_minus_one_pos_param.find('=') != 0) {
+        return "";
+    } else {
+        std::string invalid_value_log = "invalid value ";
+
+        if (last_minus_one_pos_param.size() > 18) {
+            _badConfigError(invalid_value_log + last_minus_one_pos_param);
+        }
+        std::string::iterator it_2 = last_minus_one_pos_param.begin();
+        ++it_2;
+
+        while (it_2 != last_minus_one_pos_param.end()) {
+            if (!libft::isdigit(*it_2)) {
+                _badConfigError(invalid_value_log + last_minus_one_pos_param);
+            }
+            ++it_2;
+        }
+        return last_minus_one_pos_param;
+    }
 }
+
+
+int Config::_checkErrorCodeThatShouldBeChanged(const std::string& error_code_str) const {
+    std::size_t len = error_code_str.length();
+
+    std::string must_between_err_log = " must be between 300 and 599 in \"error_page\" directive";
+    int err_code = libft::atoi(error_code_str.c_str());
+
+    if ((err_code < 300) || (err_code > 599)) {
+        _badConfigError(must_between_err_log);
+    }
+    if ( (len != 3) || (libft::unsigned_number_len(err_code, 10) != len) ) {
+        _badConfigError("invalid value \"" + error_code_str + "\"");
+    }
+    return err_code;
+}
+
+std::map<int, std::map<std::string, std::string> >  Config::_errorPageKeywordHandler(AContext* current_context,
+                                                                     const std::list<std::string>& directive_params) {
+
+    (void) current_context;
+
+
+    std::size_t len = directive_params.size();
+
+    if (len < 2) {
+        _badConfigError("invalid number of arguments in \"error_page\" directive");
+    }
+
+    std::map<std::string, std::string> error_page_params;
+
+    error_page_params[ERROR_PAGE_CHANGE_ERROR_CODE] = "";
+    error_page_params[ERROR_PAGE_REDIRECT_URI] = directive_params.back();
+
+    if (len > 2) {
+        error_page_params[ERROR_PAGE_CHANGE_ERROR_CODE] = _checkForChangeErrorCodeParam(directive_params);
+    }
+
+    std::map<int, std::map<std::string, std::string> > error_page_conf; // VALUE THAT BE RETURNED IF OK
+
+    // prepeare for iteration in error codes that response params should be changed
+    std::size_t it_max = (error_page_params[ERROR_PAGE_CHANGE_ERROR_CODE].size()) ? (len - 2) : (len - 1);
+    std::size_t i = 0;
+    std::list<std::string>::const_iterator it = directive_params.begin();
+
+    while (i < it_max) {
+        int err_code = _checkErrorCodeThatShouldBeChanged(*it);
+        error_page_conf[err_code] = error_page_params;
+        i++;
+        ++it;
+    }
+
+    return error_page_conf;
+}
+
+
+
+
+
+
+
+
 
 void Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;

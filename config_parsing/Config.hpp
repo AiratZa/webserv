@@ -41,6 +41,9 @@
 #define AUTOINDEX_KW "autoindex"
 #define INDEX_KW "index"
 
+#define ERROR_PAGE_REDIRECT_URI "ERROR_PAGE_REDIRECT_URI"
+#define ERROR_PAGE_CHANGE_ERROR_CODE "ERROR_PAGE_CHANGE_ERROR_CODE"
+
 #define FRIEND_TEST(test_case_name, test_name)\
 friend class test_case_name##_##test_name##_Test
 
@@ -106,6 +109,19 @@ class Config {
 // SERVER_NAME DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
+// ERROR_PAGE DIRECTIVE FRIEND TEST CLASSES BEGINS
+
+    //Negative scenarios
+    FRIEND_TEST(ErrorPageDirectiveTests, min_max_values_neg);
+
+    //Positive scenarios
+//    FRIEND_TEST(ServerNameDirectiveTests, one_server_names_in_one_line);
+//    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_one_line);
+//    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line);
+
+// ERROR_PAGE DIRECTIVE FRIEND TEST CLASSES ENDS
+
+
 
 public:
     Config() { }
@@ -136,7 +152,7 @@ private:
     bool _skipSpacesInConfig();
 
 
-    void _checkAndSetParams(AContext* current_context, const std::string& directive_keyword,
+    void _checkAndSetParams(ServerContext* current_server, AContext* current_context, const std::string& directive_keyword,
                             const std::list<std::string>& directive_params);
 
 
@@ -144,7 +160,7 @@ private:
     void _locationUriChecks(const std::string& location_uri);
     const Pair<std::string, int > _listenKeywordHandler(const std::list<std::string>& directive_params);
     std::list<std::string> _serverNameKeywordHandler(const std::list<std::string>& directive_params);
-    void _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::map<int, std::map<std::string, std::string> >  _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
@@ -162,8 +178,12 @@ private:
                                           int *found_pos, char *found_quote) const;
 
 
+    const std::string _checkForChangeErrorCodeParam(const std::list<std::string>& directive_params) const;
+    int _checkErrorCodeThatShouldBeChanged(const std::string& error_code_str) const;
 
-        std::string _config_text;
+
+
+    std::string _config_text;
     int _len;
 
     void _badConfigError(const std::string & error_text) const;

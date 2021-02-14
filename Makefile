@@ -8,6 +8,7 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/get_next_line/get_next_line_utils.cpp \
                 utils/cpp_libft/get_next_word.cpp \
                 utils/cpp_libft/isspace.cpp \
+                utils/cpp_libft/isdigit.cpp \
                 utils/cpp_libft/unsigned_number_len.cpp \
                 utils/cpp_libft/atoi.cpp\
                 utils/cpp_libft/tolower.cpp\

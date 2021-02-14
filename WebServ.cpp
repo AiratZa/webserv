@@ -31,6 +31,8 @@ WebServ::WebServ(const std::string& config_file_path) {
             std::cout << "____________________________________________" << std::endl;
             std::cout << "SERVER NAMES: "  << (*it)->getServerNames() << std::endl;
             std::cout << "____________________________________________" << std::endl;
+            std::cout << "SERVER LEVEL ERROR_PAGES: "  << (*it)->getErrorPagesDirectiveInfo() << std::endl;
+            std::cout << "____________________________________________" << std::endl;
 
             Server *temp = new Server(*(*it));
             delete *it;
