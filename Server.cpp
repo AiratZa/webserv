@@ -125,15 +125,32 @@ int checkFullRequest(std::string const& req) {
     return 0;
 }
 
+int			get_time(void)
+{
+    struct timeval	current;
+
+    gettimeofday(&current, NULL);
+    return ((int)(((current.tv_sec) * 1000) + ((current.tv_usec) / 1000)));
+}
+
+void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std::list<int>::iterator const& ite) {
+    while (it != ite) {
+        time[*it] = get_time();
+        ++it;
+    }
+}
+
 void Server::handleRequests(fd_set* globalReadSetPtr) {
     char buf[BUFFER_LENGHT];
     int bytes_read;
     std::list<int>::iterator it = _clients_read.begin();
+    std::map<int, int> time;
+    set_time(time, it, _clients_read.end());
 
-    while (it != _clients_read.end()) { // TODO we need timeout
+    while (it != _clients_read.end() ) { // TODO we need timeout
         if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
             bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
-            if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества
+            if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества
                 close(*it);
                 it = _clients_read.erase(it);
                 delete _client_requests[*it];
@@ -141,16 +158,24 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
             }
             else if (bytes_read < 0)
                 bytes_read = 0;
+            else
+                time[*it] = get_time();
             buf[bytes_read] = '\0';
 
             _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-            // std::cout << bytes_read << std::endl;
+//            std::cout << get_time() - time[*it] << std::endl;
             // std::cout << _client_requests[*it]->getRawRequest() << std::endl;
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);
             }
         } else {
+            if ((get_time() - time[*it]) > TIME_OUT) {
+                close(*it);
+                it = _clients_read.erase(it);
+                delete _client_requests[*it];
+                continue;
+            }
             ++it;
         }
     }

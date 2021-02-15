@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -22,6 +23,7 @@
 #include "config_parsing/ServerContext.hpp"
 
 #define BUFFER_LENGHT 1024
+#define TIME_OUT 15
 
 class Server {
 public:
