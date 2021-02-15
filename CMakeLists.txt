@@ -20,8 +20,9 @@ set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
         config_parsing/AContext.hpp config_parsing/ServerContext.cpp config_parsing/LocationContext.cpp)
 
 
-add_executable(webserv main.cpp
-        Server.cpp WebServ.cpp request_handlers/Request.cpp response/Response.cpp ${CONFIG_PARSING_SRCS} )
+set (PROJECT_SRCS  Server.cpp WebServ.cpp request_handlers/Request.cpp response/Response.cpp ${CONFIG_PARSING_SRCS})
+
+add_executable(webserv main.cpp ${PROJECT_SRCS} )
 
 
 ################################
@@ -29,10 +30,8 @@ add_executable(webserv main.cpp
 ################################
 
 add_subdirectory(google_test/)
-#ADD_SUBDIRECTORY (gtest-1.6.0)
 enable_testing()
 include_directories(google_test/googletest/include)
-#include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 ################################
 # Unit Tests
@@ -42,12 +41,11 @@ include_directories(google_test/googletest/include)
 set(CONFIG_TESTS_PATH "config_parsing/test_configs/")
 set(CONFIG_DIRECTIVES_TESTS_PATH ${CONFIG_TESTS_PATH}directives/)
 
+# Config tests
 file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_error_page.cpp
         )
-#file(GLOB TEST_STACK_SRC "tests/test_stack/*.hpp" "tests/test_stack/*.cpp")
-#file(GLOB TEST_QUEUE_SRC "tests/test_queue/*.hpp" "tests/test_queue/*.cpp")
 
 set (TEST_FILES ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )
 
@@ -57,3 +55,23 @@ add_executable( runConfigParsingUnitTests ${TEST_FILES} ${CONFIG_PARSING_SRCS})
 # Link test executable against gtest & gtest_main
 target_link_libraries(runConfigParsingUnitTests gtest gtest_main)
 add_test( runConfigParsingUnitTests runConfigParsingUnitTests )
+
+
+#===============================================================
+
+# Engine tests
+
+set(ENGINE_TESTS_PATH "engine_tests/")
+
+file(GLOB TEST_ENGINE ${ENGINE_TESTS_PATH}test_servers.cpp
+)
+
+
+set_source_files_properties(${TEST_ENGINE} ${PROJECT_SRCS} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
+
+add_executable( runEngineUnitTests ${TEST_ENGINE} ${PROJECT_SRCS})
+
+# Link test executable against gtest & gtest_main
+target_link_libraries(runEngineUnitTests gtest gtest_main)
+add_test( runEngineUnitTests runEngineUnitTests )
+

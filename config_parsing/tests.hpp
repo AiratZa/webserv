@@ -9,7 +9,14 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 //!!! DONE: SERVER_NAME DIRECTIVE
 // server_name LIST
 
-//TODO: ERROR_PAGE
+//TODO
+// 1. ERROR_PAGE
+// 2. LOCATION
+// 3. INDEX
+// 4. LIMIT_EXCEPT
+// 5. client_max_body_size
+// 6. alias
+// 7. MAYBE root
 
 // error_page map<error_code(string), std::map<param_key(string), param_value(string)> >
 // example error_page 404 = /404.php;
