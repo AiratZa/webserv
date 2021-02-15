@@ -16,8 +16,14 @@ WebServ::WebServ(const std::string& config_file_path) {
          * ./webserv config_parsing/test_configs/2.conf
          * PLEASE DONT CHANGE CONFIG FILE STRUCTURE
         */
-         _config = Config(config_file_path);
-
+        try
+        {
+            _config = Config(config_file_path);
+        }
+        catch (Config::BadConfigException & e)
+        {
+            exit(EXIT_FAILURE);
+        }
         std::cout << std::endl << "===================================================" << std::endl << std::endl;
 
         const std::list<ServerContext*>& servers = _config.getServersList();

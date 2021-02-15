@@ -5,12 +5,15 @@
 #ifndef WEBSERV_LOCATIONCONTEXT_HPP
 #define WEBSERV_LOCATIONCONTEXT_HPP
 
+class ServerContext;
+
 #include "AContext.hpp"
+#include "ServerContext.hpp"
 #include "../utils/utils.hpp"
 
 class LocationContext : public AContext {
 public:
-    LocationContext(const std::string& uri);
+    LocationContext(const std::string& uri, const ServerContext& serv_context);
 
     virtual void setLocationUri() { };
 
@@ -18,7 +21,7 @@ public:
 
 
 private:
-    LocationContext() { };
+    LocationContext() { }
     std::string _uri;
 
 };

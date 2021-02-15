@@ -4,8 +4,8 @@
 
 #include "LocationContext.hpp"
 
-LocationContext::LocationContext(const std::string& uri) : _uri(uri) {
-
+LocationContext::LocationContext(const std::string& uri, const ServerContext& serv_context) : _uri(uri) {
+    _error_pages_info = serv_context.getErrorPagesDirectiveInfo();
 }
 
 void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {

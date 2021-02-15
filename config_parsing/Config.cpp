@@ -116,23 +116,16 @@ void Config::splitConfigTextIntoBlocks(void) {
         _tmp_len += tmpWord.size();
 
         // if not server in root = it is bad config
-        try
-        {
-            if (tmpWord == SERVER_KW){
-                ServerContext* tmp_server = new ServerContext();
-                _servers.push_back(tmp_server);
-                parseInsideServerContext(tmp_server);
-            } else {
-                if (tmpWord.size())
-                    _badConfigError( "WORD " + tmpWord + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
-                else
-                    _badConfigError( "SYMBOL '" + std::string(1, const_config_text[_tmp_len]) + \
-                                                                    "' NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
-            }
-        }
-        catch (Config::BadConfigException & e)
-        {
-            exit(EXIT_FAILURE);
+        if (tmpWord == SERVER_KW) {
+            ServerContext *tmp_server = new ServerContext();
+            _servers.push_back(tmp_server);
+            parseInsideServerContext(tmp_server);
+        } else {
+            if (tmpWord.size())
+                _badConfigError("WORD " + tmpWord + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
+            else
+                _badConfigError("SYMBOL '" + std::string(1, const_config_text[_tmp_len]) + \
+                                                                "' NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
         }
     }
 }
@@ -701,7 +694,7 @@ const std::string Config::_checkForChangeErrorCodeParam(const std::list<std::str
     } else {
         std::string invalid_value_log = "invalid value ";
 
-        if (last_minus_one_pos_param.size() > 18) {
+        if (last_minus_one_pos_param.size() > 19) {
             _badConfigError(invalid_value_log + last_minus_one_pos_param);
         }
         std::string::iterator it_2 = last_minus_one_pos_param.begin();
@@ -725,7 +718,7 @@ int Config::_checkErrorCodeThatShouldBeChanged(const std::string& error_code_str
     int err_code = libft::atoi(error_code_str.c_str());
 
     if ((err_code < 300) || (err_code > 599)) {
-        _badConfigError(must_between_err_log);
+        _badConfigError(error_code_str + must_between_err_log);
     }
     if ( (len != 3) || (libft::unsigned_number_len(err_code, 10) != len) ) {
         _badConfigError("invalid value \"" + error_code_str + "\"");

@@ -9,6 +9,8 @@
 #include <map>
 #include <algorithm>
 
+class LocationContext;
+
 #include "AContext.hpp"
 #include "LocationContext.hpp"
 

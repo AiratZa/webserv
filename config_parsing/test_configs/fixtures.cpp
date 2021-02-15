@@ -11,7 +11,7 @@
 
 #include "fixtures.hpp"
 
-void createTestConfigFromListOfString(const std::string& file_name,
+void createTestConfigFromString(const std::string& file_name,
                                       const std::string& config_text) {
     int conf_file = open(file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
 

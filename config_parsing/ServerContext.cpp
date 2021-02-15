@@ -14,7 +14,7 @@ const std::list<std::string>& ServerContext::getServerNames(void) const {
 }
 
 LocationContext* ServerContext::addLocation(const std::string& uri) {
-    LocationContext* tmp = new LocationContext(uri);
+    LocationContext* tmp = new LocationContext(uri, *this);
     return tmp;
 }
 

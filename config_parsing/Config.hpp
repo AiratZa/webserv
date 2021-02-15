@@ -104,22 +104,17 @@ class Config {
     FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_one_line);
     FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line);
 
-
-
 // SERVER_NAME DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
 // ERROR_PAGE DIRECTIVE FRIEND TEST CLASSES BEGINS
-
-    //Negative scenarios
-    FRIEND_TEST(ErrorPageDirectiveTests, min_max_values_neg);
-
-    //Positive scenarios
-//    FRIEND_TEST(ServerNameDirectiveTests, one_server_names_in_one_line);
-//    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_one_line);
-//    FRIEND_TEST(ServerNameDirectiveTests, multiple_server_names_in_multiple_line);
-
+    //// ERROR_PAGE TESTS ARE NOT NEEDED FRIENDSHIP :D
 // ERROR_PAGE DIRECTIVE FRIEND TEST CLASSES ENDS
+
+
+
+
+
 
 
 

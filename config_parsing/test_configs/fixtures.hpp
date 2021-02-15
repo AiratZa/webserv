@@ -7,7 +7,7 @@
 
 #define CONFIG_TEST_ROOT_PATH "/home/airat/CLionProjects/webserv/config_parsing/test_configs"
 
-void createTestConfigFromListOfString(const std::string& file_name,
+void createTestConfigFromString(const std::string& file_name,
                                       const std::string& config_text);
 
 

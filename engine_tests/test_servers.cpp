@@ -17,5 +17,5 @@ TEST(WebServEngine, servers_count_tests) {
 TEST(StringTests, len) {
 
     std::string str = "Hello";
-    ASSERT_EQ(str.length(), 4);
+    ASSERT_EQ(str.length(), 5);
 }
