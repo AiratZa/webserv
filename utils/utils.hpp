@@ -19,6 +19,7 @@
 namespace utils {
     void exitWithLog(void);
     void exitWithLog(const std::string& errorLog);
+    std::string			setDate(void);
 
     template <class Container, class Value>
     bool is_exists_in_container(const Container& container_to_search_in, const Value& value_to_search) {
