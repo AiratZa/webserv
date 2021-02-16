@@ -12,7 +12,6 @@ a.out
 .vscode
 .idea
 cmake-build-debug
-CMakeLists.txt
 *.gch
 webserv
 *.d
