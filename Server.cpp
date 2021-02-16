@@ -102,26 +102,36 @@ void Server::acceptConnection(void) {
     _client_requests[sock] =  new Request();
 }
 
-int checkFullRequest(std::string const& req) {
+int Server::checkFullRequest(std::string const& req) {
     size_t      length;
-    int      pointer;
-    std::string header = req.substr(0, req.find("\n\n"));
-    std::string body = "";
-    if (std::string::npos == req.find("\n\n"))
-        std::string body = req.substr((req.find("\n\n") + 2), req.length());
-    if ((std::string::npos != header.find("Transfer-Encoding: chunked"))) {
-        if ((std::string::npos != body.find("0\r\n\r\n"))) //TODO add check each chunks
+    int         pointer;
+
+    if (std::string::npos != req.find("\r\n\r\n")) {
+        std::string header = req.substr(0, req.find("\r\n\r\n"));
+        std::transform(header.begin(), header.end(), header.begin(), tolower); //TODO add stringToLower()
+        std::string body = req.substr((req.find("\r\n\r\n") + 4), req.length());
+        if (std::string::npos != header.find("transfer-encoding:")) {
+            std::string encoding = header.substr(header.find("transfer-encoding:") + 18);
+            encoding = encoding.substr(0, encoding.find("\r\n"));
+            if (encoding.find("chunked"))
+                while (!body.empty()) {
+                    if ((length = libft::atoi(body.c_str())) == 0 && body.find("0\r\n\r\n") == 0)
+                        return 1;
+                    if (body.length() >= length + 5)
+                        body = body.substr(body.find("\r\n") + 2 + length);
+                    else
+                        break;
+                }
+        }
+        else if (std::string::npos != header.find("content-length:")) {
+            pointer = header.find("content-length:") + 15;
+            length = libft::atoi(header.substr(pointer, header.length()).c_str());
+            if (body.length() == length)
+                return 1;
+        }
+        else
             return 1;
     }
-    else if (std::string::npos != header.find("Content-Length:")) {
-        pointer = header.find("Content-Length:") + 15;
-        length = libft::atoi(header.substr(pointer, header.length()).c_str()); //// WAS CHANGED TO OWN atoi REALIZATION (it takes C-strings)
-                                                                                // TODO: please check is it correct or not
-        if (body.length() == length)
-            return 1;
-    }
-    else if (std::string::npos != req.find("\n\0"))
-        return 1;
     return 0;
 }
 
@@ -163,7 +173,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
             buf[bytes_read] = '\0';
 
             _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-            // std::cout << _client_requests[*it]->getRawRequest() << std::endl;
+
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);

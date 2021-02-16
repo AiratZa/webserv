@@ -75,3 +75,18 @@ add_executable( runEngineUnitTests ${TEST_ENGINE} ${PROJECT_SRCS})
 target_link_libraries(runEngineUnitTests gtest gtest_main)
 add_test( runEngineUnitTests runEngineUnitTests )
 
+# Requests tests
+
+set(REQUESTS_TESTS_PATH "requests_test/")
+
+file(GLOB TEST_REQUESTS ${REQUESTS_TESTS_PATH}test_servers.cpp
+)
+
+
+set_source_files_properties(${TEST_REQUESTS} ${PROJECT_SRCS} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
+
+add_executable( runRequestsUnitTests ${TEST_REQUESTS} ${PROJECT_SRCS})
+
+# Link test executable against gtest & gtest_main
+target_link_libraries(runRequestsUnitTests gtest gtest_main)
+add_test( runRequestsUnitTests runRequestsUnitTests )

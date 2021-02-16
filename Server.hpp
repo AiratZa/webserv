@@ -45,7 +45,8 @@ public:
 	void checkRequest(Request* request);
 
     std::list<int>& getReadClients(void) { return _clients_read; }
-    
+
+    int checkFullRequest(std::string const& req);
 
 private:
     int _listener;
