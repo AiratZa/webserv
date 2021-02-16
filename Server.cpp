@@ -163,7 +163,6 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
             buf[bytes_read] = '\0';
 
             _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-//            std::cout << get_time() - time[*it] << std::endl;
             // std::cout << _client_requests[*it]->getRawRequest() << std::endl;
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
                 _clients_write.push_back(*it);
