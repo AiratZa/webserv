@@ -17,6 +17,7 @@ namespace libft {
     std::string get_next_word(const std::string& value);
 
 	int		tolower(int c);
+	std::string ft_itoa_base(size_t n, int base);
 }
 
 #endif //WEBSERV_LIBFT_HPP

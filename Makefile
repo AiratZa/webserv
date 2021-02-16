@@ -11,7 +11,8 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/unsigned_number_len.cpp \
                 utils/cpp_libft/atoi.cpp\
                 utils/cpp_libft/tolower.cpp\
-                utils/cpp_libft/is_correct_ip_octet.cpp
+                utils/cpp_libft/is_correct_ip_octet.cpp \
+                utils/cpp_libft/itoa_base.cpp
 
 
 SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\
