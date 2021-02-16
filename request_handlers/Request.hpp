@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 class Request {
 
@@ -24,6 +25,9 @@ class Request {
 		void parseHeaders();
 		void parse();
 
+private:
+	static std::set<std::string> initRequestHeaders();
+
 	private:
 		std::string _raw_request;
 
@@ -36,6 +40,8 @@ class Request {
 		std::map<std::string, std::string> _headers;
 
 		std::string _content;
+
+		static const std::set<std::string> implemented_headers;
 
 //		bool _is_chunked;
 //		bool _is_content_lenght;

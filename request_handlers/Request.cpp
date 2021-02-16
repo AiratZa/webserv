@@ -2,10 +2,32 @@
 // Created by jnannie on 2/13/21.
 //
 
+#include <string>
+#include <set>
 #include "Request.hpp"
 #include "../utils/cpp_libft/libft.hpp"
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+
+const std::set<std::string> Request::implemented_headers = Request::initRequestHeaders();
+
+std::set<std::string> Request::initRequestHeaders() {
+	std::set<std::string> implemented_headers;
+	implemented_headers.insert("accept-charset"); // Accept-Charset: utf-8
+	implemented_headers.insert("accept-language"); // Accept-Language: ru
+	implemented_headers.insert("authorization"); // Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+	implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
+	implemented_headers.insert("content-length"); // Content-Length: 1348
+	implemented_headers.insert("content-location");
+	implemented_headers.insert("content-type"); // Content-Type: text/html;charset=utf-8
+	implemented_headers.insert("date"); // Date: Tue, 15 Nov 1994 08:12:31 GMT
+	implemented_headers.insert("host"); // Host: ru.wikipedia.org
+	implemented_headers.insert("last-modified");
+	implemented_headers.insert("referer"); // Referer: http://en.wikipedia.org/wiki/Main_Page
+	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
+	implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+	return implemented_headers;
+}
 
 Request::Request() : _raw_request(""), _status_code(200) { };
 Request::Request(const std::string& request) : _raw_request(request), _status_code(200) { };
@@ -70,6 +92,15 @@ void Request::getContentByLength() {
 
 }
 
+//bool is_implemented_header(std::string field_name) {
+//	return (Request::implemented_headers.count(field_name));
+//}
+
+//bool is_appendable_header(std::string field_name) {
+//	return (field_name == "accept-charset" || field_name == "accept-language"
+//			|| field_name == "content-language" || field_name == "transfer-encoding");
+//}
+
 void Request::parseHeaders() {
 	std::string field_name;
 	std::string field_value;
@@ -99,17 +130,27 @@ void Request::parseHeaders() {
 
 		field_value_length = line_length - field_name_length - 1; // field-value
 		if (_raw_request[0] == ' ') {
-			_raw_request.erase(0, 1);
+			_raw_request.erase(0, 1); // remove optional whitespace in the beginning of field-value
 			field_value_length--;
 		}
 		if (_raw_request[field_value_length - 1] == ' ') {
-			_raw_request.erase(field_value_length - 1, 1);
+			_raw_request.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
 			field_value_length--;
 		}
 		field_value = _raw_request.substr(0, field_value_length);
 		_raw_request.erase(0, field_value_length + 2);
 
-		_headers[field_name] = field_value; // add field_name-field_value to map
+		if (Request::implemented_headers.count(field_name))
+		{
+			if (_headers.count(field_name)) {
+				_headers[field_name].append(",");
+//				if (is_appendable_header(field_name))
+//					_headers[field_name].append(",");
+//				else
+//					return setStatusCode(400);
+			}
+			_headers[field_name].append(field_value); // add field_name-field_value to map
+		}
 
 		line_length = _raw_request.find("\r\n");
 	}

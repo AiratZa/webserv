@@ -4,8 +4,29 @@
 
 #include "Response.hpp"
 #include <sstream>
+#include <string>
+#include <set>
+
+const std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
 const std::map<int, std::string> Response::status_codes = Response::initStatusCodes();
+
+std::set<std::string> Response::initResponseHeaders() {
+	std::set<std::string> implemented_headers;
+	implemented_headers.insert("allow"); // Allow: OPTIONS, GET, HEAD
+	implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
+	implemented_headers.insert("content-length"); // Content-Length: 1348
+	implemented_headers.insert("content-location");
+	implemented_headers.insert("content-type"); // Content-Type: text/html;charset=utf-8
+	implemented_headers.insert("date"); // Date: Tue, 15 Nov 1994 08:12:31 GMT
+	implemented_headers.insert("last-modified");
+	implemented_headers.insert("location"); // Location: http://example.com/about.html#contacts
+	implemented_headers.insert("retry-after");
+	implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
+	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
+	implemented_headers.insert("www-authenticate");
+	return implemented_headers;
+}
 
 std::map<int,std::string> Response::initStatusCodes() {
 	std::map<int,std::string> status_codes;
