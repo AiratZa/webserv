@@ -6,6 +6,7 @@
 #define WEBSERV_LIBFT_HPP
 
 #include <iostream>
+#include <string>
 
 namespace libft {
     int isspace(int ch);
@@ -18,6 +19,7 @@ namespace libft {
 
 	int		tolower(int c);
 	unsigned long strtoul_base(std::string & str, int base);
+	void string_to_lower(std::string & str);
 }
 
 #endif //WEBSERV_LIBFT_HPP

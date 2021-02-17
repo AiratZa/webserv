@@ -78,12 +78,7 @@ void Request::parseRequestLine() {
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 }
 
-void Request::stringToLower(std::string & str) {
-	for (std::string::iterator it = str.begin(); it != str.end(); ++it)
-	{
-		*it = libft::tolower(*it);
-	}
-}
+
 
 //bool is_implemented_header(std::string field_name) {
 //	return (Request::implemented_headers.count(field_name));
@@ -113,7 +108,7 @@ void Request::parseHeaders() {
 		}
 		field_name = _raw_request.substr(0, field_name_length);
 
-		stringToLower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
+		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
 		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
 			return setStatusCode(400);
@@ -183,7 +178,7 @@ void Request::parseChunkedContent() {
 
 		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
 
-		stringToLower(chunk_length_field);
+		libft::string_to_lower(chunk_length_field);
 		chunk_length = libft::strtoul_base(chunk_length_field, 16);
 		if (chunk_length == ULONG_MAX)
 			return setStatusCode(413); // 413 (Request Entity Too Large)
@@ -219,7 +214,7 @@ void Request::parse() {
 
 	if (isStatusCodeOk()) {
 		if (_headers.count("transfer-encoding")) {
-			stringToLower(_headers["transfer-encoding"]); // to find "chunked"
+			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"
 			if (_headers["transfer-encoding"].find("chunked") != std::string::npos)
 				parseChunkedContent();
 		}
