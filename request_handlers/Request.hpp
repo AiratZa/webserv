@@ -24,6 +24,7 @@ class Request {
 		void getContentByLength();
 		void parseHeaders();
 		void parse();
+		void checkHeaders();
 
 private:
 	static std::set<std::string> initRequestHeaders();

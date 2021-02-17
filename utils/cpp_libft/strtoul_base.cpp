@@ -7,18 +7,19 @@
 #include <iostream>
 
 namespace libft {
-	static int		digit_count(std::string & str)
+	static int digit_count(std::string & str, int base)
 	{
 		int i;
 
 		i = 0;
 		while (((str[i] >= '0') && (str[i] <= '9'))
-			   || ((str[i] >= 'a') && (str[i] <= 'f')))
+			   || (base == 16 && (str[i] >= 'a') && (str[i] <= 'f')))
 			i++;
 		return (i);
 	}
 
 	/*
+	 * function skips whitespaces and zeros
 	 * 10 and 16 base only
 	 * 16 base numbers must be in lowercase
 	 * dont forget to set base properly
@@ -32,12 +33,12 @@ namespace libft {
 		str.erase(0, str.find_first_not_of("\t\n\r\v\f "));
 		str.erase(0, str.find_first_not_of('0'));
 		res = 0;
-		n = digit_count(str);
+		n = digit_count(str, base);
 
 		for (int i = 0; i < n; i++) {
 			if ((str[i] >= '0') && (str[i] <= '9'))
 				digit = str[i] - '0';
-			else if ((str[i] >= 'a') && (str[i] <= 'f'))
+			else
 				digit = 10 + (str[i] - 'a');
 
 			if (res < ULONG_MAX / base)

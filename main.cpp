@@ -14,6 +14,10 @@ void intHandler(int signal) {
 
 int main(int argc, char *argv[])
 {
+//	std::string str("ffffffffffffffff");
+//
+//	std::cout << libft::strtoul_base(str, 16) << std::endl;
+//	return 0;
     std::string path_to_config;
     if  (argc == 2) {
         path_to_config = argv[1];

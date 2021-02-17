@@ -205,6 +205,10 @@ void Request::getContentByLength() {
 	_raw_request.clear();
 }
 
+void Request::checkHeaders() {
+
+}
+
 void Request::parse() {
 	parseRequestLine();
 	if (isStatusCodeOk())
@@ -220,5 +224,8 @@ void Request::parse() {
 			getContentByLength();
 		else
 			_content.swap(_raw_request);
+	}
+	if (isStatusCodeOk()) {
+		checkHeaders();
 	}
 }
