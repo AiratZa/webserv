@@ -24,13 +24,19 @@ class Request {
 		void getContentByLength();
 		void parseHeaders();
 		void parse();
+		void checkMethod();
+		void checkRequestTarget();
+		void checkHttpVersion();
 		void checkHeaders();
 
-private:
-	static std::set<std::string> initRequestHeaders();
+	private:
+		static std::set<std::string> initRequestHeaders();
 
 	private:
 		std::string _raw_request;
+
+	public:
+		static const std::set<std::string> implemented_headers;
 
 	public:
 		int _status_code;
@@ -41,8 +47,6 @@ private:
 		std::map<std::string, std::string> _headers;
 
 		std::string _content;
-
-		static const std::set<std::string> implemented_headers;
 
 		unsigned long _client_max_body_size; // need to use client_max_body_size from server config
 

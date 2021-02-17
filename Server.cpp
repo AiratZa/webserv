@@ -125,7 +125,7 @@ int Server::checkFullRequest(std::string const& req) {
         }
         else if (std::string::npos != header.find("content-length:")) {
             pointer = header.find("content-length:") + 15;
-            length = libft::atoi(header.substr(pointer, header.length()).c_str());
+            length = libft::atoi(header.substr(pointer, header.length()).c_str()); //TODO: use libft::strtoul_base(header.substr(pointer, header.length()), 10) instead
             if (body.length() == length)
                 return 1;
         }
@@ -193,7 +193,12 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
 }
 
 void Server::checkRequest(Request* request) {
-	(void)request;
+	if (request->isStatusCodeOk()) {
+		request->checkMethod();
+		request->checkRequestTarget();
+		request->checkHttpVersion();
+		request->checkHeaders();
+	}
 }
 
 void Server::handleResponses(fd_set* globalWriteSetPtr) {
@@ -208,6 +213,7 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 			checkRequest(request);
 
 			Response response(request, fd);
+			response.generateResponse();
 			response.sendResponse();
 
 			close(fd);

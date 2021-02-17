@@ -18,6 +18,8 @@ public:
 
 	void sendResponse();
 
+	void generateResponse();
+
 private:
 	static std::map<int,std::string> initStatusCodes();
 	static std::set<std::string> initResponseHeaders();

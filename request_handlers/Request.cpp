@@ -20,7 +20,7 @@ const std::set<std::string> Request::implemented_headers = Request::initRequestH
 
 std::set<std::string> Request::initRequestHeaders() {
 	std::set<std::string> implemented_headers;
-	implemented_headers.insert("accept-charset"); // Accept-Charset: utf-8
+	implemented_headers.insert("accept-charset"); // Accept-Charset: utf-8  Accept-Charset: iso-8859-5, unicode-1-1;q=0.8
 	implemented_headers.insert("accept-language"); // Accept-Language: ru
 	implemented_headers.insert("authorization"); // Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
 	implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
@@ -205,6 +205,18 @@ void Request::getContentByLength() {
 	_raw_request.clear();
 }
 
+void Request::checkMethod() {
+
+}
+
+void Request::checkRequestTarget() {
+
+}
+
+void Request::checkHttpVersion() {
+
+}
+
 void Request::checkHeaders() {
 
 }
@@ -224,8 +236,5 @@ void Request::parse() {
 			getContentByLength();
 		else
 			_content.swap(_raw_request);
-	}
-	if (isStatusCodeOk()) {
-		checkHeaders();
 	}
 }

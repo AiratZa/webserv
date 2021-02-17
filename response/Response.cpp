@@ -78,6 +78,10 @@ Response::Response(Request* request, int socket) : _raw_response(""), _request(r
 
 Response::~Response(void) { };
 
+void Response::generateResponse() {
+
+}
+
 void Response::sendResponse() {
 	std::stringstream response; // сюда будет записываться ответ клиенту
 	std::stringstream response_body; // тело ответа
@@ -86,7 +90,7 @@ void Response::sendResponse() {
 	response_body << "<title>Test C++ HTTP Server</title>\n"
 				  << "<h1>Test page</h1>\n"
 				  << "<p>This is body of the test page...</p>\n"
-				  << "<h2>Request headers</h2>\n";
+				  << "<h2>Implemented request headers</h2>\n";
 	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
 	{
 		response_body << "<pre>" << (*it).first << ":" << (*it).second << "</pre>\n";
