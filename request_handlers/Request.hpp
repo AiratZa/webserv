@@ -43,6 +43,10 @@ private:
 
 		static const std::set<std::string> implemented_headers;
 
+		unsigned long _client_max_body_size;
+
+
+
 //		bool _is_chunked;
 //		bool _is_content_lenght;
 //		size_t _content_lenght;

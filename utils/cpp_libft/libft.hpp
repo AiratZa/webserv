@@ -17,6 +17,7 @@ namespace libft {
     std::string get_next_word(const std::string& value);
 
 	int		tolower(int c);
+	unsigned long strtoul_base(std::string & str, int base);
 }
 
 #endif //WEBSERV_LIBFT_HPP

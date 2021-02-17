@@ -36,8 +36,8 @@ std::set<std::string> Request::initRequestHeaders() {
 	return implemented_headers;
 }
 
-Request::Request() : _raw_request(""), _status_code(200) { };
-Request::Request(const std::string& request) : _raw_request(request), _status_code(200) { };
+Request::Request() : _raw_request(""), _status_code(200), _client_max_body_size(0xfffff) { };
+Request::Request(const std::string& request) : _raw_request(request), _status_code(200), _client_max_body_size(0xfffff) { };
 
 Request::~Request(void) { };
 
@@ -156,22 +156,22 @@ bool Request::isStatusCodeOk() {
 	return true;
 }
 
-bool check_chunk_length_field(std::string & chunk_length_field) {
-	if (chunk_length_field.size() > 5
-		|| chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
-		return false;
-	return true;
-}
+//bool check_chunk_length_field(std::string & chunk_length_field) {
+//	if (chunk_length_field.size() > 5
+//		|| chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
+//		return false;
+//	return true;
+//}
 
 /*
  * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
  *
- * !!! need to convert chunk size to 10base, and then pass to atoi_base
  * !!! need to use CLIENT_MAX_BODY_SIZE from server config
  */
 void Request::parseChunkedContent() {
 	std::string chunk_length_field;
-	int chunk_length;
+	std::string start_line;
+	unsigned long chunk_length;
 
 	size_t start_line_length = _raw_request.find("\r\n");
 	while (_raw_request[0] != '0') {
@@ -183,10 +183,11 @@ void Request::parseChunkedContent() {
 
 		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
 
-		if (!check_chunk_length_field(chunk_length_field))
+		stringToLower(chunk_length_field);
+		chunk_length = libft::strtoul_base(chunk_length_field, 16);
+		if (chunk_length == ULONG_MAX)
 			return setStatusCode(413); // 413 (Request Entity Too Large)
-		chunk_length = libft::atoi_base(chunk_length_field, 16); // !!! need to convert chunk size to 10base, and then pass to atoi_base
-		if (_server_config.client_max_body_size && chunk_length > _server_config.client_max_body_size)
+		if (_client_max_body_size && chunk_length > _client_max_body_size)
 			return setStatusCode(413);
 
 		_raw_request.erase(0, start_line_length + 2); // remove start line
@@ -201,10 +202,10 @@ void Request::parseChunkedContent() {
 }
 
 void Request::getContentByLength() {
-	if (!check_content_length_field(_headers["content-length"]))
+	unsigned long content_length = libft::strtoul_base(_headers["content-length"], 10);
+	if (content_length == ULONG_MAX)
 		return setStatusCode(413); // 413 (Request Entity Too Large)
-	int content_length = libft::atoi_base(_headers["content-length"], 10);
-	if (_server_config.client_max_body_size && content_length > _server_config.client_max_body_size)
+	if (_client_max_body_size && content_length > _client_max_body_size)
 		return setStatusCode(413);
 	_content.append(_raw_request.substr(0, content_length));
 	_raw_request.erase(0, content_length);
@@ -218,7 +219,7 @@ void Request::parse() {
 
 	if (isStatusCodeOk()) {
 		if (_headers.count("transfer-encoding")) {
-			stringToLower(_headers["transfer-encoding"]) // to find "chunked"
+			stringToLower(_headers["transfer-encoding"]); // to find "chunked"
 			if (_headers["transfer-encoding"].find("chunked") != std::string::npos)
 				parseChunkedContent();
 		}
