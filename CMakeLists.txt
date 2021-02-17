@@ -92,3 +92,17 @@ add_executable( runRequestsUnitTests ${TEST_REQUESTS} ${PROJECT_SRCS})
 # Link test executable against gtest & gtest_main
 target_link_libraries(runRequestsUnitTests gtest gtest_main)
 add_test( runRequestsUnitTests runRequestsUnitTests )
+
+
+# libft::strtoul_base() tests
+set(TESTS_PATH "request_handlers/tests/")
+
+file(GLOB TEST_FILES ${TESTS_PATH}strtoul_base_tests.cpp)
+
+set_source_files_properties(${TEST_FILES} ${PROJECT_SRCS} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
+
+add_executable( runStrtoulBaseUnitTests ${TEST_FILES} ${PROJECT_SRCS})
+
+# Link test executable against gtest & gtest_main
+target_link_libraries(runStrtoulBaseUnitTests gtest gtest_main)
+add_test( runStrtoulBaseUnitTests runStrtoulBaseUnitTests )
