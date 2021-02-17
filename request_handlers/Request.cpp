@@ -14,7 +14,7 @@
  * https://serverfault.com/questions/871717/nginx-disconnect-when-client-sends-chunked-body-exceeding-desired-size
  * https://nginx.org/ru/docs/http/ngx_http_core_module.html#client_max_body_size
  */
-#define CLIENT_MAX_BODY_SIZE 0xfffff
+//#define CLIENT_MAX_BODY_SIZE 0xfffff
 
 const std::set<std::string> Request::implemented_headers = Request::initRequestHeaders();
 
@@ -160,8 +160,6 @@ bool Request::isStatusCodeOk() {
 
 /*
  * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
- *
- * !!! need to use CLIENT_MAX_BODY_SIZE from server config
  */
 void Request::parseChunkedContent() {
 	std::string chunk_length_field;

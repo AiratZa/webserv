@@ -43,7 +43,7 @@ private:
 
 		static const std::set<std::string> implemented_headers;
 
-		unsigned long _client_max_body_size;
+		unsigned long _client_max_body_size; // need to use client_max_body_size from server config
 
 
 
