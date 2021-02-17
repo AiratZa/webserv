@@ -108,7 +108,7 @@ int Server::checkFullRequest(std::string const& req) {
 
     if (std::string::npos != req.find("\r\n\r\n")) {
         std::string header = req.substr(0, req.find("\r\n\r\n"));
-        std::transform(header.begin(), header.end(), header.begin(), tolower); //TODO add stringToLower()
+        libft::string_to_lower(header);
         std::string body = req.substr((req.find("\r\n\r\n") + 4), req.length());
         if (std::string::npos != header.find("transfer-encoding:")) {
             std::string encoding = header.substr(header.find("transfer-encoding:") + 18);
@@ -157,7 +157,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
     std::map<int, int> time;
     set_time(time, it, _clients_read.end());
 
-    while (it != _clients_read.end() ) { // TODO we need timeout
+    while (it != _clients_read.end() ) {
         if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
             bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
             if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества
@@ -175,6 +175,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
             _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
 
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
+//                std::cout << _client_requests[*it]->getRawRequest() << std::endl;
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);
             }

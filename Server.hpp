@@ -21,6 +21,7 @@
 #include "utils/utils.hpp"
 #include "request_handlers/Request.hpp"
 #include "config_parsing/ServerContext.hpp"
+#include "utils/cpp_libft/libft.hpp"
 
 #define BUFFER_LENGHT 1024
 #define TIME_OUT 15
