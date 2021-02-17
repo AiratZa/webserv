@@ -1,6 +1,8 @@
 #include "Server.hpp"
 #include "WebServ.hpp"
 #include <signal.h>
+#include "utils/cpp_libft/libft.hpp"
+#include <iostream>
 
 WebServ webserv;
 

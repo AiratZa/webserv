@@ -1,3 +1,5 @@
+#include "libft.hpp"
+
 namespace libft {
 	int		tolower(int c)
 	{

@@ -162,8 +162,8 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
             bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
             if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества
                 close(*it);
+                delete _client_requests[*it]; // should use iterator before erasing it
                 it = _clients_read.erase(it);
-                delete _client_requests[*it];
                 continue;
             }
             else if (bytes_read < 0)
