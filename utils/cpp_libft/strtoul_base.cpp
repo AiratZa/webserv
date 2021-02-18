@@ -2,6 +2,7 @@
 // Created by jnannie on 2/17/21.
 //
 
+#include "libft.hpp"
 #include <string>
 #include <climits>
 #include <iostream>
@@ -19,10 +20,18 @@ namespace libft {
 	}
 
 	/*
+	 * similar to std::strtol
+	 *
+	 * there must no be sign in str
 	 * function skips whitespaces and zeros
 	 * 10 and 16 base only
 	 * 16 base numbers must be in lowercase
 	 * dont forget to set base properly
+	 *
+	 * Return Value
+	 * If no valid conversion could be performed, a zero value is returned (0L).
+	 * If the value read is out of the range of representable values by a unsigned long, the function returns ULONG_MAX (defined in <climits>).
+	 *
 	 */
 	unsigned long strtoul_base(std::string str, int base)
 	{

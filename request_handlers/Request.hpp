@@ -48,7 +48,7 @@ class Request {
 
 		std::string _content;
 
-		unsigned long _client_max_body_size; // need to use client_max_body_size from server config
+		size_t _client_max_body_size; // need to use client_max_body_size from server config
 
 
 

@@ -102,6 +102,7 @@ void Server::acceptConnection(void) {
     _client_requests[sock] =  new Request();
 }
 
+
 int Server::checkFullRequest(std::string const& req) {
     size_t      length;
     int         pointer;
@@ -115,7 +116,7 @@ int Server::checkFullRequest(std::string const& req) {
             encoding = encoding.substr(0, encoding.find("\r\n"));
             if (encoding.find("chunked"))
                 while (!body.empty()) {
-                    if ((length = libft::atoi(body.c_str())) == 0 && body.find("0\r\n\r\n") == 0)
+                    if ((length = libft::atoi(body.c_str())) == 0 && body.find("0\r\n\r\n") == 0) //TODO: use libft::strtoul_base(body.c_str(), 16) instead
                         return 1;
                     if (body.length() >= length + 5)
                         body = body.substr(body.find("\r\n") + 2 + length);
@@ -160,7 +161,7 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
     while (it != _clients_read.end() ) {
         if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
             bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
-            if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества
+            if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества //TODO: not to check timeout if we already get data from client
                 close(*it);
                 delete _client_requests[*it]; // should use iterator before erasing it
                 it = _clients_read.erase(it);
@@ -172,13 +173,13 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
                 time[*it] = get_time();
             buf[bytes_read] = '\0';
 
-            _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-
+            _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем // TODO: catch std::bad_alloc and if thrown set request->_status_code to some value and clear request data
+//			_client_requests[*it]->_status_code = 500;
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
 //                std::cout << _client_requests[*it]->getRawRequest() << std::endl;
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);
-            }
+            } //TODO: else increase it, according to checklist: "there should be only one read or write per client per select"
         } else {
             if ((get_time() - time[*it]) > TIME_OUT) {
                 close(*it);

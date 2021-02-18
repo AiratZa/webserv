@@ -97,8 +97,8 @@ void Request::parseHeaders() {
 
 	size_t line_length = _raw_request.find("\r\n");
 	while (line_length != 0) {
-		if (line_length > MAX_HEADER_LINE_LENGTH ||
-			line_length == std::string::npos) {
+		if (line_length > MAX_HEADER_LINE_LENGTH
+			|| line_length == std::string::npos) {
 			return setStatusCode(400); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
 
@@ -164,7 +164,8 @@ bool Request::isStatusCodeOk() {
 void Request::parseChunkedContent() {
 	std::string chunk_length_field;
 	std::string start_line;
-	unsigned long chunk_length;
+	size_t chunk_length;
+	size_t sum_content_length = 0;
 
 	size_t start_line_length = _raw_request.find("\r\n");
 	while (_raw_request[0] != '0') {
@@ -180,7 +181,8 @@ void Request::parseChunkedContent() {
 		chunk_length = libft::strtoul_base(chunk_length_field, 16);
 		if (chunk_length == ULONG_MAX)
 			return setStatusCode(413); // 413 (Request Entity Too Large)
-		if (_client_max_body_size && chunk_length > _client_max_body_size)
+		sum_content_length +=chunk_length;
+		if (_client_max_body_size && sum_content_length > _client_max_body_size)
 			return setStatusCode(413);
 
 		_raw_request.erase(0, start_line_length + 2); // remove start line
@@ -195,7 +197,7 @@ void Request::parseChunkedContent() {
 }
 
 void Request::getContentByLength() {
-	unsigned long content_length = libft::strtoul_base(_headers["content-length"], 10);
+	size_t content_length = libft::strtoul_base(_headers["content-length"], 10);
 	if (content_length == ULONG_MAX)
 		return setStatusCode(413); // 413 (Request Entity Too Large)
 	if (_client_max_body_size && content_length > _client_max_body_size)

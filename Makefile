@@ -14,7 +14,8 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/tolower.cpp\
                 utils/cpp_libft/is_correct_ip_octet.cpp \
                 utils/cpp_libft/strtoul_base.cpp \
-                utils/cpp_libft/string_to_lower.cpp
+                utils/cpp_libft/string_to_lower.cpp \
+                utils/cpp_libft/ultostr_base.cpp
 
 
 SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\

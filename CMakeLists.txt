@@ -15,6 +15,7 @@ set(UTILS_SRCS utils/utils.cpp utils/utils.hpp
         utils/cpp_libft/isdigit.cpp
         utils/cpp_libft/strtoul_base.cpp
         utils/cpp_libft/string_to_lower.cpp
+        utils/cpp_libft/ultostr_base.cpp
         )
 
 
@@ -106,3 +107,16 @@ add_executable( runStrtoulBaseUnitTests ${TEST_FILES} ${PROJECT_SRCS})
 # Link test executable against gtest & gtest_main
 target_link_libraries(runStrtoulBaseUnitTests gtest gtest_main)
 add_test( runStrtoulBaseUnitTests runStrtoulBaseUnitTests )
+
+# libft::ultostr_base() tests
+set(TESTS_PATH "response/tests/")
+
+file(GLOB TEST_FILES ${TESTS_PATH}ultostr_base_tests.cpp)
+
+set_source_files_properties(${TEST_FILES} ${PROJECT_SRCS} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
+
+add_executable( runUltostrBaseUnitTests ${TEST_FILES} ${PROJECT_SRCS})
+
+# Link test executable against gtest & gtest_main
+target_link_libraries(runUltostrBaseUnitTests gtest gtest_main)
+add_test( runUltostrBaseUnitTests runUltostrBaseUnitTests )

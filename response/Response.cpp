@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <set>
+#include "../utils/cpp_libft/libft.hpp"
 
 const std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -74,39 +75,90 @@ std::map<int,std::string> Response::initStatusCodes() {
 	return status_codes;
 }
 
-Response::Response(Request* request, int socket) : _raw_response(""), _request(request), _socket(socket) { };
+Response::Response(Request* request, int socket) : _request(request), _socket(socket), _reason_phrase("KK"), _raw_response(""), _content("") { };
 
 Response::~Response(void) { };
 
-void Response::generateResponse() {
+void Response::generateGetResponse() {
+
+	_content += "<title>Test C++ HTTP Server</title>\n";
+	_content += "<h1>Test page</h1>\n";
+	_content += "<p>This is body of the test page...</p>\n";
+	_content += "<h2>Implemented request headers</h2>\n";
+	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
+	{
+		_content += "<pre>";
+		_content += (*it).first;
+		_content += ":";
+		_content += (*it).second;
+		_content += "</pre>\n";
+	}
+	_content += "<em><small>Test C++ Http Servergg</small></em>\n";
+
+
+	_raw_response += "HTTP/1.1 ";
+	_raw_response += libft::ultostr_base(_request->_status_code, 10);
+//	_raw_response += "201";
+	_raw_response += " ";
+	_raw_response += _reason_phrase;
+	_raw_response += "\r\n";
+	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
+	_raw_response += "Content-Length: ";
+	_raw_response += libft::ultostr_base(_content.length(), 10);
+	_raw_response += "\r\n\r\n";
+	_raw_response += _content;
+
+	std::cout << _raw_response << std::endl;
+
+
+
+
+//	std::stringstream response; // сюда будет записываться ответ клиенту
+//	std::stringstream response_body; // тело ответа
+//
+//	// формируем тело ответа (HTML)
+//	response_body << "<title>Test C++ HTTP Server</title>\n"
+//				  << "<h1>Test page</h1>\n"
+//				  << "<p>This is body of the test page...</p>\n"
+//				  << "<h2>Implemented request headers</h2>\n";
+//	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
+//	{
+//		response_body << "<pre>" << (*it).first << ":" << (*it).second << "</pre>\n";
+//	}
+//	response_body << "<em><small>Test C++ Http Servergg</small></em>\n";
+//
+//	// Формируем весь ответ вместе с заголовками
+//	response << "HTTP/1.1 200 OK\r\n"
+//			 << "Version: HTTP/1.1\r\n"
+//			 << "Content-Type: text/html; charset=utf-8\r\n"
+//			 << "Content-Length: " << response_body.str().length()
+//			 << "\r\n\r\n"
+//			 << response_body.str();
+//
+//	_raw_response = response.str();
+}
+
+void Response::generateHeadResponse() {
 
 }
 
-void Response::sendResponse() {
-	std::stringstream response; // сюда будет записываться ответ клиенту
-	std::stringstream response_body; // тело ответа
+void Response::generatePutResponse() {
 
-	// формируем тело ответа (HTML)
-	response_body << "<title>Test C++ HTTP Server</title>\n"
-				  << "<h1>Test page</h1>\n"
-				  << "<p>This is body of the test page...</p>\n"
-				  << "<h2>Implemented request headers</h2>\n";
-	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
-	{
-		response_body << "<pre>" << (*it).first << ":" << (*it).second << "</pre>\n";
+}
+
+void Response::generateResponse() {
+	if (_request->_method == "GET") {
+		generateGetResponse();
+	} else if (_request->_method == "HEAD") {
+		generateHeadResponse();
+	} else if (_request->_method == "PUT") {
+		generatePutResponse();
+	} else {
+		return _request->setStatusCode(501); // 501 Not Implemented
 	}
-	response_body << "<em><small>Test C++ Http Server</small></em>\n";
+}
 
-	// Формируем весь ответ вместе с заголовками
-	response << "HTTP/1.1 200 OK\r\n"
-			 << "Version: HTTP/1.1\r\n"
-			 << "Content-Type: text/html; charset=utf-8\r\n"
-			 << "Content-Length: " << response_body.str().length()
-			 << "\r\n\r\n"
-			 << response_body.str();
-
-	_raw_response = response.str();
-
+void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
 	send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
 }
