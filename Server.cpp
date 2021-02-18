@@ -204,12 +204,13 @@ void Server::checkRequest(Request* request) {
 
 void Server::handleResponses(fd_set* globalWriteSetPtr) {
 	std::list<int>::iterator it = _clients_write.begin();
+	Request* request;
 
 	int fd;
 	while (it != _clients_write.end()) {
 		fd = *it;
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
-			Request* request = _client_requests[fd];
+			request = _client_requests[fd];
 			request->parse();
 			checkRequest(request);
 
@@ -218,6 +219,7 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 			response.sendResponse();
 
 			close(fd);
+			delete _client_requests[fd];
 			_client_requests.erase(fd);
 			it = _clients_write.erase(it);
 

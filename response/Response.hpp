@@ -22,14 +22,18 @@ public:
 	void generateHeadResponse();
 	void generatePutResponse();
 	void generateResponse();
+	void generateResponseByStatusCode(int status_code);
+	void generateStatusLine();
+	void generateHeaders();
+	void generateContent();
 
 private:
 	static std::map<int,std::string> initStatusCodes();
 	static std::set<std::string> initResponseHeaders();
 
 public:
-	static const std::set<std::string> implemented_headers;
-	static const std::map<int, std::string> status_codes;
+	static std::set<std::string> implemented_headers;
+	static std::map<int, std::string> status_codes;
 
 private:
 	Request* _request;
