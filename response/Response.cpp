@@ -75,30 +75,24 @@ std::map<int,std::string> Response::initStatusCodes() {
 	return status_codes;
 }
 
-Response::Response(Request* request, int socket) : _request(request), _socket(socket), _reason_phrase("KK"), _raw_response(""), _content("") { };
+Response::Response(Request* request, int socket) : _request(request), _socket(socket), _reason_phrase("OK"), _raw_response(""), _content("") { };
 
 Response::~Response(void) { };
 
 void Response::generateGetResponse() {
-
 	_content += "<title>Test C++ HTTP Server</title>\n";
 	_content += "<h1>Test page</h1>\n";
 	_content += "<p>This is body of the test page...</p>\n";
 	_content += "<h2>Implemented request headers</h2>\n";
 	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
 	{
-		_content += "<pre>";
-		_content += (*it).first;
-		_content += ":";
-		_content += (*it).second;
-		_content += "</pre>\n";
+		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
 	}
 	_content += "<em><small>Test C++ Http Servergg</small></em>\n";
 
 
 	_raw_response += "HTTP/1.1 ";
 	_raw_response += libft::ultostr_base(_request->_status_code, 10);
-//	_raw_response += "201";
 	_raw_response += " ";
 	_raw_response += _reason_phrase;
 	_raw_response += "\r\n";
@@ -107,9 +101,6 @@ void Response::generateGetResponse() {
 	_raw_response += libft::ultostr_base(_content.length(), 10);
 	_raw_response += "\r\n\r\n";
 	_raw_response += _content;
-
-	std::cout << _raw_response << std::endl;
-
 
 
 

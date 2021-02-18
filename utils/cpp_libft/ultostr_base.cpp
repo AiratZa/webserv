@@ -8,7 +8,7 @@
 namespace libft {
 	static int count_num(unsigned long n, int base)
 	{
-		int		i;
+		int i;
 
 		i = 1;
 		while ((n = n / base) != 0)
@@ -22,10 +22,11 @@ namespace libft {
 	 */
 	std::string ultostr_base(unsigned long n, int base)
 	{
-		std::string	s;
-		int		num;
+		std::string s;
+		int num;
 
 		num = count_num(n, base);
+		s.resize(num);
 		while (num--) {
 			s[num] = n % base + '0';
 			if (s[num] > '9')
