@@ -47,7 +47,9 @@ public:
 
     std::list<int>& getReadClients(void) { return _clients_read; }
 
-    int checkFullRequest(std::string const& req);
+    //skarry:
+    int     checkFullRequest(std::string const& req);
+    void    readError(std::list<int>::iterator & it);
 
 private:
     int _listener;
