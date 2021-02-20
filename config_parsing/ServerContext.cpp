@@ -13,10 +13,12 @@ const std::list<std::string>& ServerContext::getServerNames(void) const {
     return _server_names;
 }
 
-LocationContext* ServerContext::addLocation(const std::string& uri) {
-    LocationContext* tmp = new LocationContext(uri, *this);
+LocationContext* ServerContext::addLocation(const std::list<std::string>& location_uri_params) {
+    LocationContext* tmp = new LocationContext(location_uri_params, *this);
+    _locations.push_back(tmp);
     return tmp;
 }
+
 
 void ServerContext::addHostPort(const std::string& host, int port) {
     if (_hosts_ports.find(host) == _hosts_ports.end()) {
@@ -43,6 +45,8 @@ void ServerContext::addServerNames(std::list<std::string>& server_names) {
         ++it;
     }
 }
+
+
 
 
 

@@ -43,14 +43,18 @@ include_directories(google_test/googletest/include)
 
 set(CONFIG_TESTS_PATH "config_parsing/test_configs/")
 set(CONFIG_DIRECTIVES_TESTS_PATH ${CONFIG_TESTS_PATH}directives/)
+set(CONFIG_CONTEXTS_TESTS_PATH ${CONFIG_TESTS_PATH}contexts/)
 
 # Config tests
+file(GLOB TEST_CONTEXTS ${CONFIG_CONTEXTS_TESTS_PATH}test_location.cpp
+        )
+
 file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_error_page.cpp
         )
 
-set (TEST_FILES ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )
+set (TEST_FILES ${TEST_CONTEXTS} ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )
 
 set_source_files_properties(${CONFIG_PARSING_SRCS} ${TEST_FILES} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
 

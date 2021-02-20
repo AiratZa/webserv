@@ -202,7 +202,7 @@ void Config::parseInsideServerContext(ServerContext* current_server) {
 void Config::parseInsideLocationContext(ServerContext* current_server) {
     const std::string& const_config_text = _getConfigText();
     std::string tmp_word;
-    std::string location_uri;
+    std::list<std::string> location_uri_params;
     std::list<std::string>::const_iterator tmp_it;
 
 
@@ -210,9 +210,12 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
         _badConfigError("AFTER 'location' KEYWORD EXPECTED LOCATION URI FOR ROUTING");
     }
 
-    location_uri = libft::get_next_word(const_config_text.substr(_tmp_len));
-    _tmp_len += location_uri.size();
-    _locationUriChecks(location_uri); //THROW EXCEPTION IF ERROR OCCURRED
+    while (! (tmp_word = libft::get_next_word(const_config_text.substr(_tmp_len))).empty()) { //while returns words
+        location_uri_params.push_back(tmp_word);
+        _tmp_len += tmp_word.size();
+    }
+
+    location_uri_params = _locationKeywordHandler(location_uri_params); // THROW EXCEPTION IF ERROR OCCURRED
 
     if ((_is_eof_reached = _skipSpacesInConfig()) || \
                 (const_config_text[_tmp_len] != '{') ) {
@@ -220,7 +223,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
     }
     _tmp_len++; //skip found '{' symbol
 
-    LocationContext* current_location = current_server->addLocation(location_uri);
+    LocationContext* current_location = current_server->addLocation(location_uri_params);
 
     while (TRUE) {
         //skip spaces and check EOF
@@ -361,16 +364,31 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
 
 // SIGNLE PART CONFIG CHECKS
 
-void Config::_locationUriChecks(const std::string& location_uri) {
-    if (!location_uri.size()) {
-        _badConfigError("LOCATION URI AFTER 'location' KEYWORD IS INVALID");
+std::list<std::string>  Config::_locationKeywordHandler(const std::list<std::string>& context_params) const {
+    std::size_t params_len = context_params.size();
+
+    if (!params_len || (params_len > 2)) {
+        _badConfigError("invalid number of arguments in \"location\" directive");
     }
+
+    std::list<std::string>::const_iterator it = context_params.begin();
+
+    if (params_len == 2) {
+        if (*it != "=") {
+            _badConfigError("invalid location modifier \"" + *it + "\"");
+        }
+        return context_params; // returns same thing ["=", "uri"]
+    }
+    // check for "=" modifier at same string as uri (like "=/")
+
+    if ((*it)[0] == '=') {
+        std::list<std::string> tmp;
+        tmp.push_back("=");
+        tmp.push_back((*it).substr(1)); // without "="
+        return tmp;
+    }
+    return context_params; //return just uri (list len = 1)
 }
-
-
-
-
-
 
 
 

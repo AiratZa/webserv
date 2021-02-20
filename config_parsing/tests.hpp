@@ -10,7 +10,7 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 // server_name LIST
 
 //TODO
-// 1. ERROR_PAGE
+// 1. ERROR_PAGE +-
 // 2. LOCATION
 // 3. INDEX
 // 4. LIMIT_EXCEPT
@@ -21,31 +21,31 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 // error_page map<error_code(string), std::map<param_key(string), param_value(string)> >
 // example error_page 404 = /404.php;
 
-map<error_code, std::map<param_key, param_value > >
+//map<error_code, std::map<param_key, param_value > >
+//
+//{ 404: {
+//    'uri_to_redirect': "/404.php",
+//    'change_error_code': "="
+//    }
+//};
+//
+//
+//Директивы наследуются с предыдущего уровня конфигурации при условии, что на данном уровне не описаны свои директивы error_page.
+//
+//Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
+//и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
+//
+//error_page 404 = /404.php;
 
-{ 404: {
-    'uri_to_redirect': "/404.php",
-    'change_error_code': "="
-    }
-};
 
 
-Директивы наследуются с предыдущего уровня конфигурации при условии, что на данном уровне не описаны свои директивы error_page.
+//!!! DONE 3. ERROR PAGE (may be inside location and server)
+//!!! DONE error_page код ... [=[ответ]] uri;
 
-Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
-и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
+//!!! DONE Для 1 кода используется только первая установка
+//!!! DONE         установки могут быть на сколько угодно строках
 
-error_page 404 = /404.php;
-
-
-
-3. ERROR PAGE (may be inside location and server)
-error_page код ... [=[ответ]] uri;
-
-Для 1 кода используется только первая установка
-        установки могут быть на сколько угодно строках
-
-value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
+//!!! DONE value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
 
 ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
 
@@ -70,15 +70,35 @@ server {
 
 2. SET DEFAULT FOR FIRST
 
+
+
+
 4. location
 
 modificators https://www.journaldev.com/26342/nginx-location-directive
-none: If no modifiers are present in a location block then the requested URI will be matched against the beginning of the requested URI.
+none: If no modifiers are present in a location block then the requested URI
+will be matched against the beginning of the requested URI.
 =: The equal sign is used to match a location block exactly against a requested URI.
 
 
-MULTIPLE PARAM IS INVALID
-invalid location modifier "/directory/"
+ location / {}
+
+ location / {}
+
+  duplicate location "/" in /etc/nginx/nginx.conf:38
+
+ !!!!!
+ BUT THIS IS OK
+
+ location =/ {}
+
+ location / { }
+
+
+
+
+
+
 
 5. 	client_max_body_size
 

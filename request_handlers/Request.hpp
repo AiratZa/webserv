@@ -5,6 +5,8 @@
 #include <map>
 #include <set>
 
+#include <climits>
+
 class Request {
 
 	public:

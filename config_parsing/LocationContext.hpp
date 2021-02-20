@@ -13,7 +13,9 @@ class ServerContext;
 
 class LocationContext : public AContext {
 public:
-    LocationContext(const std::string& uri, const ServerContext& serv_context);
+    LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context);
+
+    const std::string getLocationPath(void) const;
 
     virtual void setLocationUri() { };
 
@@ -22,6 +24,7 @@ public:
 
 private:
     LocationContext() { }
+    bool _is_exact; //is contains "=" modifier
     std::string _uri;
 
 };

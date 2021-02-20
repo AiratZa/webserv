@@ -27,7 +27,12 @@ public:
     void set_server_names_were_updated(bool value) { is_server_names_were_updated = value; }
     void clear_server_names(void) { _server_names.clear(); }
 
-    LocationContext* addLocation(const std::string& uri);
+
+    const std::list<LocationContext*>& getLocationsList(void) const {
+        return _locations;
+    }
+
+    LocationContext* addLocation(const std::list<std::string>& location_uri_params);
 
     void addHostPort(const std::string& host, int port);
     void addServerNames(std::list<std::string>& server_names);

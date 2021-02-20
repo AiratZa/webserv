@@ -54,6 +54,21 @@ friend class test_case_name##_##test_name##_Test
 
 class Config {
 
+// LOCATION CONTEXT FRIEND TEST CLASSES BEGINS
+
+    //Negative scenarios
+    FRIEND_TEST(LocationContextTests, innvalid_location_modifier_neg);
+    FRIEND_TEST(LocationContextTests, invalid_number_of_arguments_neg);
+
+
+    //Positive scenarios
+//    FRIEND_TEST(ListenDirectiveHostTests, localhost);
+
+// LOCATION CONTEXT FRIEND TEST CLASSES ENDS
+
+
+
+
 // LISTEN DIRECTIVE FRIEND TEST CLASSES BEGINS
 
     //Negative scenarios
@@ -152,7 +167,9 @@ private:
 
 
     // SIGNLE PART CONFIG CHECKS
-    void _locationUriChecks(const std::string& location_uri);
+//    void _locationUriChecks(const std::string& location_uri);
+    std::list<std::string>  _locationKeywordHandler(const std::list<std::string>& context_params) const;
+
     const Pair<std::string, int > _listenKeywordHandler(const std::list<std::string>& directive_params);
     std::list<std::string> _serverNameKeywordHandler(const std::list<std::string>& directive_params);
     std::map<int, std::map<std::string, std::string> >  _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);

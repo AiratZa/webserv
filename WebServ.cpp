@@ -40,6 +40,16 @@ WebServ::WebServ(const std::string& config_file_path) {
             std::cout << "SERVER LEVEL ERROR_PAGES: "  << (*it)->getErrorPagesDirectiveInfo() << std::endl;
             std::cout << "____________________________________________" << std::endl;
 
+            const std::list<LocationContext*>& locations =  (*it)->getLocationsList();
+            std::list<LocationContext*>::const_iterator loc_it = locations.begin();
+
+            std::cout << "LOCATIONS URI IN SERVER: ";
+            while (loc_it != locations.end()) {
+                std::cout << " [" << (*loc_it)->getLocationPath() << "] ";
+                ++loc_it;
+            }
+            std::cout << std::endl << "____________________________________________" << std::endl;
+
             Server *temp = new Server(*(*it));
             delete *it;
             addServer(temp);
