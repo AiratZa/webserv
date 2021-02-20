@@ -116,7 +116,7 @@ int Server::checkFullRequest(std::string const& req) {
             encoding = encoding.substr(0, encoding.find("\r\n"));
             if (encoding.find("chunked"))
                 while (!body.empty()) {
-                    if ((length = libft::atoi(body.c_str())) == 0 && body.find("0\r\n\r\n") == 0) //TODO: use libft::strtoul_base(body.c_str(), 16) instead
+                    if ((length = libft::strtoul_base(body, 16)) == 0 && body.find("0\r\n\r\n") == 0)
                         return 1;
                     if (body.length() >= length + 5)
                         body = body.substr(body.find("\r\n") + 2 + length);
@@ -126,7 +126,7 @@ int Server::checkFullRequest(std::string const& req) {
         }
         else if (std::string::npos != header.find("content-length:")) {
             pointer = header.find("content-length:") + 15;
-            length = libft::atoi(header.substr(pointer, header.length()).c_str()); //TODO: use libft::strtoul_base(header.substr(pointer, header.length()), 10) instead
+            length = libft::strtoul_base(header.substr(pointer, header.length()), 10);
             if (body.length() == length)
                 return 1;
         }
@@ -151,6 +151,12 @@ void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std:
     }
 }
 
+void        Server::readError(std::list<int>::iterator & it) {
+    close(*it);
+    delete _client_requests[*it];
+    it = _clients_read.erase(it);
+}
+
 void Server::handleRequests(fd_set* globalReadSetPtr) {
     char buf[BUFFER_LENGHT];
     int bytes_read;
@@ -161,10 +167,8 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
     while (it != _clients_read.end() ) {
         if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
             bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
-            if (bytes_read == 0 || (get_time() - time[*it]) > TIME_OUT) { // Соединение разорвано, удаляем сокет из множества //TODO: not to check timeout if we already get data from client
-                close(*it);
-                delete _client_requests[*it]; // should use iterator before erasing it
-                it = _clients_read.erase(it);
+            if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
+                readError(it);
                 continue;
             }
             else if (bytes_read < 0)
@@ -173,18 +177,23 @@ void Server::handleRequests(fd_set* globalReadSetPtr) {
                 time[*it] = get_time();
             buf[bytes_read] = '\0';
 
-            _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем // TODO: catch std::bad_alloc and if thrown set request->_status_code to some value and clear request data
-//			_client_requests[*it]->_status_code = 500;
+            try {
+                _client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
+            } catch (std::bad_alloc const& e) {
+			    _client_requests[*it]->_status_code = 500;
+                readError(it);
+                continue;
+            }
             if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
 //                std::cout << _client_requests[*it]->getRawRequest() << std::endl;
                 _clients_write.push_back(*it);
                  it = _clients_read.erase(it);
-            } //TODO: else increase it, according to checklist: "there should be only one read or write per client per select"
+            }
+            else
+                ++it;
         } else {
             if ((get_time() - time[*it]) > TIME_OUT) {
-                close(*it);
-                it = _clients_read.erase(it);
-                delete _client_requests[*it];
+                readError(it);
                 continue;
             }
             ++it;
