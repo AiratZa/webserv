@@ -59,10 +59,13 @@ class Config {
     //Negative scenarios
     FRIEND_TEST(LocationContextTests, innvalid_location_modifier_neg);
     FRIEND_TEST(LocationContextTests, invalid_number_of_arguments_neg);
-
+    FRIEND_TEST(LocationContextTests, negative_scenarios_with_config_context_1);
+    FRIEND_TEST(LocationContextTests, negative_scenarios_with_config_context_2);
 
     //Positive scenarios
-//    FRIEND_TEST(ListenDirectiveHostTests, localhost);
+    FRIEND_TEST(LocationContextTests, positive_scenarios);
+    FRIEND_TEST(LocationContextTests, positive_scenarios_with_config_context_1);
+    FRIEND_TEST(LocationContextTests, positive_scenarios_with_config_context_2);
 
 // LOCATION CONTEXT FRIEND TEST CLASSES ENDS
 

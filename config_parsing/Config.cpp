@@ -224,6 +224,12 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
     _tmp_len++; //skip found '{' symbol
 
     LocationContext* current_location = current_server->addLocation(location_uri_params);
+    if (current_location == NULL) {
+        if (location_uri_params.size() == 2)
+            _badConfigError("duplicate location \"= " + location_uri_params.back() + "\"");
+        else
+            _badConfigError("duplicate location \"" + location_uri_params.back() + "\"");
+    }
 
     while (TRUE) {
         //skip spaces and check EOF

@@ -13,7 +13,30 @@ const std::list<std::string>& ServerContext::getServerNames(void) const {
     return _server_names;
 }
 
+bool ServerContext::_is_location_exist(const std::list<std::string>& location_uri_params) {
+    std::string str_for_search;
+    if (location_uri_params.size() == 2) {
+        str_for_search = "= " + location_uri_params.back();
+    } else {
+        str_for_search = location_uri_params.back();
+    }
+
+    const std::list<LocationContext*>& locations = this->getLocationsList();
+
+    std::list<LocationContext*>::const_iterator it_l = locations.begin();
+    while (it_l != locations.end()) {
+        if ((*it_l)->getLocationPath() == str_for_search){
+            return true;
+        }
+        ++it_l;
+    }
+    return false;
+}
+
+
 LocationContext* ServerContext::addLocation(const std::list<std::string>& location_uri_params) {
+    if (_is_location_exist(location_uri_params))
+        return NULL;
     LocationContext* tmp = new LocationContext(location_uri_params, *this);
     _locations.push_back(tmp);
     return tmp;

@@ -65,7 +65,7 @@ struct ErrorPageDirectiveParsingNegativeTests : ErrorPageDirectiveParsingTests {
 TEST_P(ErrorPageDirectiveParsingNegativeTests, NegativeScenarios)
 {
     const ConfigParams& param =  GetParam();
-    std::string conf_file_name = std::string(CONFIG_TEST_ROOT_PATH) + "/directives/tmp_config.conf";
+    std::string conf_file_name = std::string(CONFIG_TEST_ROOT_PATH) + "/tmp_config.conf";
     createTestConfigFromString(conf_file_name, param.conf_text);
 
     EXPECT_THROW({ Config conf = Config(conf_file_name); }, Config::BadConfigException);

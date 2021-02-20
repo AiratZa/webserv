@@ -43,6 +43,9 @@ private:
     std::list<std::string> _server_names;
 
     bool is_server_names_were_updated;
+
+    bool _is_location_exist(const std::list<std::string>& location_uri_params);
+
 };
 
 #endif //WEBSERV_SERVERCONTEXT_HPP

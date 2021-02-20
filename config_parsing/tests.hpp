@@ -3,42 +3,27 @@
 
 https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 
-//!!! DONE: LISTEN DIRECTIVE
-//listen - map<host, list<port> >
-
-//!!! DONE: SERVER_NAME DIRECTIVE
-// server_name LIST
-
 //TODO
 // 1. ERROR_PAGE +-
-// 2. LOCATION
+// 2. LOCATION ++
+// Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
+// и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
 // 3. INDEX
 // 4. LIMIT_EXCEPT
 // 5. client_max_body_size
 // 6. alias
 // 7. MAYBE root
 
-// error_page map<error_code(string), std::map<param_key(string), param_value(string)> >
-// example error_page 404 = /404.php;
-
-//map<error_code, std::map<param_key, param_value > >
-//
-//{ 404: {
-//    'uri_to_redirect': "/404.php",
-//    'change_error_code': "="
-//    }
-//};
-//
-//
-//Директивы наследуются с предыдущего уровня конфигурации при условии, что на данном уровне не описаны свои директивы error_page.
-//
-//Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
-//и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
-//
-//error_page 404 = /404.php;
 
 
+//!!! DONE: LISTEN DIRECTIVE
+//listen - map<host, list<port> >
 
+//!!! DONE: SERVER_NAME DIRECTIVE
+// server_name LIST
+
+//!!! DONE ERROR_PAGE
+// //Директивы наследуются с предыдущего уровня конфигурации при условии, что на данном уровне не описаны свои директивы error_page.
 //!!! DONE 3. ERROR PAGE (may be inside location and server)
 //!!! DONE error_page код ... [=[ответ]] uri;
 
@@ -47,58 +32,39 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 
 //!!! DONE value "600" must be between 300 and 599 in /etc/nginx/nginx.conf:38
 
-ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
+//!!! DONE ЕСЛИ ВНУТРИ LOCATION ЕСТЬ ПЕРЕОПРДЕЛЕНИЕ ЛЮБОЙ ОШИБКИ, ТО ВСЕ ВНЕШНИЙ ПЕРЕОПРЕДЕЛЕНИЯ УЖЕ НЕ ИДУТ В СЧЕТ
 
 
-/*
-server {
 
-    listen 127.0.0.1:8080;
-    server_name example.com [www.example.com];
+//!!! DONE LOCATION
 
-    error_page 500 502 503 504 /50x.html;
+// location
+//
+//        modificators https://www.journaldev.com/26342/nginx-location-directive
+//none: If no modifiers are present in a location block then the requested URI
+//        will be matched against the beginning of the requested URI.
+//=: The equal sign is used to match a location block exactly against a requested URI.
+//
+//
+//location / {}
+//
+//location / {}
+//
+//duplicate location "/" in /etc/nginx/nginx.conf:38
+//
+//!!!!!
+//BUT THIS IS OK
+//
+//location =/ {}
+//
+//location / { }
 
-    location / {
 
-        error_page 500 502 503 504 /50x.html;
-    }
-}
-*/
 
 /*
 1. server may be empty but it will do nothing
 
 2. SET DEFAULT FOR FIRST
-
-
-
-
-4. location
-
-modificators https://www.journaldev.com/26342/nginx-location-directive
-none: If no modifiers are present in a location block then the requested URI
-will be matched against the beginning of the requested URI.
-=: The equal sign is used to match a location block exactly against a requested URI.
-
-
- location / {}
-
- location / {}
-
-  duplicate location "/" in /etc/nginx/nginx.conf:38
-
- !!!!!
- BUT THIS IS OK
-
- location =/ {}
-
- location / { }
-
-
-
-
-
-
 
 5. 	client_max_body_size
 
