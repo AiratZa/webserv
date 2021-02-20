@@ -52,6 +52,8 @@ file(GLOB TEST_CONTEXTS ${CONFIG_CONTEXTS_TESTS_PATH}test_location.cpp
 file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_server_name.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_error_page.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_index.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_limit_except.cpp
         )
 
 set (TEST_FILES ${TEST_CONTEXTS} ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )

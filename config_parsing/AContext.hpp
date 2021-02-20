@@ -14,7 +14,7 @@
 
 class AContext {
 public:
-    AContext() : _is_error_pages_info_was_updated(false) { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
+    AContext() { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
     virtual ~AContext(void) { };
 
     virtual void setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {
@@ -30,7 +30,14 @@ public:
         }
     }
 
+    virtual void setIndexDirectiveInfo(std::list<std::string>& index_paths) {
+        _index_pages.splice(_index_pages.end(), index_paths);
+    }
+
+
     virtual const std::map<int, std::map<std::string, std::string> >& getErrorPagesDirectiveInfo(void) const { return _error_pages_info; }
+
+    virtual const std::list<std::string>& getIndexPagesDirectiveInfo(void) const { return _index_pages; }
 
 protected:
 
@@ -43,7 +50,6 @@ protected:
     bool _autoindex;
     std::list<std::string> _index_pages;
 
-    bool _is_error_pages_info_was_updated;
     std::map<int, std::map<std::string, std::string> > _error_pages_info;
 
 };

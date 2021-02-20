@@ -154,13 +154,6 @@ TEST(LocationContextTests, positive_scenarios)
 }
 
 
-
-
-
-
-
-
-
 TEST(LocationContextTests, positive_scenarios_with_config_context_1)
 {
     std::string conf_text = "server {"

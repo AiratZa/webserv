@@ -4,11 +4,14 @@
 
 #include "LocationContext.hpp"
 
-LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context) {
+LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
+                    : _is_error_pages_info_was_updated(false) {
     _is_exact = (location_uri_params.size() == 2);
     _uri = location_uri_params.back();
 
     _error_pages_info = serv_context.getErrorPagesDirectiveInfo();
+    _index_pages = serv_context.getIndexPagesDirectiveInfo();
+
 }
 
 const std::string LocationContext::getLocationPath(void) const {
@@ -27,3 +30,19 @@ void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std
     AContext::setErrorPageDirectiveInfo(error_page_info);
 }
 
+void LocationContext::setIndexDirectiveInfo(std::list<std::string>& index_paths) {
+    if (!_is_index_pages_info_was_updated) {
+        _is_index_pages_info_was_updated = true;
+        _index_pages.clear();
+    }
+    AContext::setIndexDirectiveInfo(index_paths);
+}
+
+
+bool LocationContext::setLimitedMethodsInfo(const std::list<std::string>& limited_methods) {
+    if (!_limited_methods.empty()) {
+        return false;
+    }
+    _limited_methods = limited_methods;
+    return true;
+}

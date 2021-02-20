@@ -39,13 +39,19 @@ WebServ::WebServ(const std::string& config_file_path) {
             std::cout << "____________________________________________" << std::endl;
             std::cout << "SERVER LEVEL ERROR_PAGES: "  << (*it)->getErrorPagesDirectiveInfo() << std::endl;
             std::cout << "____________________________________________" << std::endl;
+            std::cout << "SERVER LEVEL INDEX DIRECTIVE PARAMS: "  << (*it)->getIndexPagesDirectiveInfo() << std::endl;
+            std::cout << "____________________________________________" << std::endl;
 
             const std::list<LocationContext*>& locations =  (*it)->getLocationsList();
             std::list<LocationContext*>::const_iterator loc_it = locations.begin();
 
-            std::cout << "LOCATIONS URI IN SERVER: ";
+            std::cout << "LOCATIONS URI IN SERVER: " << std::endl;
             while (loc_it != locations.end()) {
-                std::cout << " [" << (*loc_it)->getLocationPath() << "] ";
+                std::cout << "      LOCATION [" << (*loc_it)->getLocationPath() << "]" << std::endl;
+                std::cout << "      LOCATION LEVEL ERROR_PAGES: "  << (*loc_it)->getErrorPagesDirectiveInfo() << std::endl;
+                std::cout << "      ____________________________________________" << std::endl;
+                std::cout << "      LOCATION LEVEL INDEX DIRECTIVE PARAMS: "  << (*loc_it)->getIndexPagesDirectiveInfo() << std::endl;
+                std::cout << "      ____________________________________________" << std::endl;
                 ++loc_it;
             }
             std::cout << std::endl << "____________________________________________" << std::endl;
@@ -98,7 +104,7 @@ Server* WebServ::getServerByPosition(int i) {
 }
 
 void WebServ::serveConnections() {
-	while(TRUE) {
+	while(true) {
 
 		FD_ZERO(getReadSetPtr());
 		FD_ZERO(getWriteSetPtr());

@@ -59,13 +59,9 @@ class Config {
     //Negative scenarios
     FRIEND_TEST(LocationContextTests, innvalid_location_modifier_neg);
     FRIEND_TEST(LocationContextTests, invalid_number_of_arguments_neg);
-    FRIEND_TEST(LocationContextTests, negative_scenarios_with_config_context_1);
-    FRIEND_TEST(LocationContextTests, negative_scenarios_with_config_context_2);
 
     //Positive scenarios
     FRIEND_TEST(LocationContextTests, positive_scenarios);
-    FRIEND_TEST(LocationContextTests, positive_scenarios_with_config_context_1);
-    FRIEND_TEST(LocationContextTests, positive_scenarios_with_config_context_2);
 
 // LOCATION CONTEXT FRIEND TEST CLASSES ENDS
 
@@ -130,6 +126,10 @@ class Config {
 // ERROR_PAGE DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
+// INDEX DIRECTIVE FRIEND TEST CLASSES BEGINS
+    //// ERROR_PAGE TESTS ARE NOT NEEDED FRIENDSHIP :D
+// INDEX DIRECTIVE FRIEND TEST CLASSES ENDS
+
 
 
 
@@ -177,24 +177,25 @@ private:
     std::list<std::string> _serverNameKeywordHandler(const std::list<std::string>& directive_params);
     std::map<int, std::map<std::string, std::string> >  _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    void _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::list<std::string> _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    void _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::list<std::string> _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     const std::string parseHost(const std::string& param) const;
     int parsePort(const std::string& param) const;
 
     bool is_correct_serv_name(const std::string& serv_name) const;
-    std::string checkAndRemoveQuotes(const std::string& serv_name) const;
+    std::string checkAndRemoveQuotes(const std::string& param) const;
     std::size_t parse_until_quote_be_closed(const std::string& serv_name, std::size_t tmp_pos, char found_quote) const;
-    void find_first_occured_quote(const std::string& serv_name, std::size_t pos_to_start_search,
-                                          int *found_pos, char *found_quote) const;
+    void find_first_occured_quote(const std::string& param, std::size_t pos_to_start_search,
+                                  int *found_pos, char *found_quote) const;
 
 
     const std::string _checkForChangeErrorCodeParam(const std::list<std::string>& directive_params) const;
     int _checkErrorCodeThatShouldBeChanged(const std::string& error_code_str) const;
+
 
 
 
@@ -213,7 +214,9 @@ private:
 
     std::map<std::string, bool> _isMultipleParamDirective;
 
+
     std::list<ServerContext*> _servers;
+
 
 
 };

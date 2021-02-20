@@ -13,13 +13,13 @@
 #include <map>
 #include <sys/time.h>
 
-#define TRUE 1
-#define FALSE 1
 
 namespace utils {
     void exitWithLog(void);
     void exitWithLog(const std::string& errorLog);
     std::string			setDate(void);
+
+    bool isHttpMethod(const std::string& value);
 
     template <class Container, class Value>
     bool is_exists_in_container(const Container& container_to_search_in, const Value& value_to_search) {

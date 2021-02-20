@@ -8,7 +8,7 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 // 2. LOCATION ++
 // Если ошибочный ответ обрабатывается проксированным сервером или FastCGI/uwsgi/SCGI/gRPC-сервером,
 // и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
-// 3. INDEX
+// 3. INDEX ++
 // 4. LIMIT_EXCEPT
 // 5. client_max_body_size
 // 6. alias
@@ -60,6 +60,40 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 //location / { }
 
 
+
+//11. https://nginx.org/ru/docs/http/ngx_http_index_module.html
+//
+//МОЖЕТ БЫТЬ НЕСКОЛЬКО, ДОБАВЛЯЮТСЯ ДРУГ ЗА ДРУГОМ, НЕ ПЕРЕЗАПИСЫВАЕТСЯ НИЧЕГО
+// NGINX старается найти соответствующий файл и без слеша на конце и если что редиректит с кодом  301
+//Модуль ngx_http_index_module обслуживает запросы, оканчивающиеся слэшом (‘/’). Такие запросы также могут обслуживаться модулями ngx_http_autoindex_module и ngx_http_random_index_module.
+//
+//Пример конфигурации
+//location / {
+//index index.$geo.html index.html;
+//}
+//Директивы
+//        Синтаксис:	index файл ...;
+//Умолчание:
+//index index.html;
+//Контекст:	http, server, location
+//        Определяет файлы, которые будут использоваться в качестве индекса. В имени файла можно использовать переменные. Наличие файлов проверяется в порядке их перечисления. В конце списка может стоять файл с абсолютным путём. Пример:
+//
+//index index.$geo.html index.0.html /index.html;
+//Необходимо иметь в виду, что при использовании индексного файла делается внутреннее перенаправление и запрос может быть обработан уже в другом location’е. Например, в такой конфигурации:
+//
+//location = / {
+//index index.html;
+//}
+//
+//location / {
+//...
+//}
+//запрос “/” будет фактически обработан во втором location’е как “/index.html”.
+
+
+
+
+////==============================================================
 
 /*
 1. server may be empty but it will do nothing
@@ -113,6 +147,30 @@ CANT BE DUBLICATED
   </html>
 
 
+
+// invalid number of arguments in "limit_except"
+//
+//            limit_except  {
+//                deny all;
+//            }
+
+
+________
+
+//THIS IS OK
+//            limit_except  POST POST {
+//                deny all;
+//            }
+
+____________-
+
+invalid method "TRACE"
+
+    limit_except  TRACE POST {
+        deny all;
+    }
+
+
 9.
 
 Синтаксис:	alias путь;
@@ -140,31 +198,3 @@ autoindex off;
 
 
 
-11. https://nginx.org/ru/docs/http/ngx_http_index_module.html
-
-МОЖЕТ БЫТЬ НЕСКОЛЬКО, ДОБАВЛЯЮТСЯ ДРУГ ЗА ДРУГОМ, НЕ ПЕРЕЗАПИСЫВАЕТСЯ НИЧЕГО
-
-Модуль ngx_http_index_module обслуживает запросы, оканчивающиеся слэшом (‘/’). Такие запросы также могут обслуживаться модулями ngx_http_autoindex_module и ngx_http_random_index_module.
-
-Пример конфигурации
-location / {
-    index index.$geo.html index.html;
-}
-Директивы
-Синтаксис:	index файл ...;
-Умолчание:
-index index.html;
-Контекст:	http, server, location
-Определяет файлы, которые будут использоваться в качестве индекса. В имени файла можно использовать переменные. Наличие файлов проверяется в порядке их перечисления. В конце списка может стоять файл с абсолютным путём. Пример:
-
-index index.$geo.html index.0.html /index.html;
-Необходимо иметь в виду, что при использовании индексного файла делается внутреннее перенаправление и запрос может быть обработан уже в другом location’е. Например, в такой конфигурации:
-
-location = / {
-    index index.html;
-}
-
-location / {
-    ...
-}
-запрос “/” будет фактически обработан во втором location’е как “/index.html”.

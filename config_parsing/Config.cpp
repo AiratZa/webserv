@@ -19,6 +19,7 @@ const std::list<ServerContext*>& Config::getServersList(void) const {
     return _servers;
 }
 
+
 void Config::_fillAllowedContextForKeyWords(void) {
     // SERVER CONTEXT
     _serverContext.push_back(LOCATION_KW); //!!! CONTEXT !!!
@@ -105,7 +106,7 @@ void Config::splitConfigTextIntoBlocks(void) {
 
     std::string tmpWord;
 
-    while (TRUE) {
+    while (true) {
 
         //skip spaces
         if ((_is_eof_reached = _skipSpacesInConfig())) {
@@ -150,7 +151,7 @@ void Config::parseInsideServerContext(ServerContext* current_server) {
     std::list<std::string>::const_iterator tmp_it;
 
 
-    while (TRUE) {
+    while (true) {
         //skip spaces and check EOF
         if ((_is_eof_reached = _skipSpacesInConfig())) {
             break;
@@ -231,7 +232,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
             _badConfigError("duplicate location \"" + location_uri_params.back() + "\"");
     }
 
-    while (TRUE) {
+    while (true) {
         //skip spaces and check EOF
         if ((_is_eof_reached = _skipSpacesInConfig())) {
             break;
@@ -284,7 +285,7 @@ std::list<std::string> Config::parseMultipleParamDirective(const std::string &ke
 
     std::string tmpWord;
 
-    while(TRUE) {
+    while(true) {
         //CHECK PARAM SETTING IS FINISHED
         if (const_config_text[_tmp_len] == ';') {
             break;
@@ -296,6 +297,12 @@ std::list<std::string> Config::parseMultipleParamDirective(const std::string &ke
         }
         //get next word
         tmpWord = libft::get_next_word(const_config_text.substr(_tmp_len));
+        if (!tmpWord.size()) {
+            if (params.empty())
+                _badConfigError("invalid number of arguments in \"" + keyword + "\"");
+            else
+                _badConfigError("';' SEMICOLON SYMBOL AFTER " + keyword + " DIRECTIVE SETTINGS IS NOT FOUND");
+        }
         _tmp_len += tmpWord.size();
         params.push_back(tmpWord);
     }
@@ -325,7 +332,7 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
     //CHECK PARAM SETTING IS FINISHED
     if (const_config_text[_tmp_len] != ';') {
-        _badConfigError("INVALID NUMBER OF ARGUMETNS IN " + keyword  + " DIRECTIVE");
+        _badConfigError("INVALID NUMBER OF ARGUMENTS IN " + keyword  + " DIRECTIVE");
     }
     _tmp_len++;
     return params;
@@ -355,14 +362,21 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
     }
     else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW)
         _clientMaxBodySizeKeywordHandler(current_context, directive_params);
-    else if (directive_keyword == LIMIT_EXCEPT_KW)
-        _limitExceptKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == LIMIT_EXCEPT_KW) {
+        std::list<std::string> limited_methods = _limitExceptKeywordHandler(current_context, directive_params);
+        bool is_ok = static_cast<LocationContext*>(current_context)->setLimitedMethodsInfo(limited_methods);
+
+        if (!is_ok)
+            _badConfigError("\"limit_except\" directive is duplicate");
+    }
     else if (directive_keyword == ALIAS_KW)
         _aliasKeywordHandler(current_context, directive_params);
     else if (directive_keyword == AUTOINDEX_KW)
         _autoindexExceptKeywordHandler(current_context, directive_params);
-    else if (directive_keyword == INDEX_KW)
-        _indexExceptKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == INDEX_KW) {
+        std::list<std::string> index_paths = _indexExceptKeywordHandler(current_context, directive_params);
+        current_context->setIndexDirectiveInfo(index_paths);
+    }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
 }
@@ -597,11 +611,11 @@ std::size_t Config::parse_until_quote_be_closed(const std::string& serv_name, st
     return found_pos;
 }
 
-void Config::find_first_occured_quote(const std::string& serv_name, std::size_t pos_to_start_search,
+void Config::find_first_occured_quote(const std::string& param, std::size_t pos_to_start_search,
                                       int *found_pos, char *found_quote) const {
 
-    std::size_t found_pos_single_quotes = serv_name.find('\'', pos_to_start_search);
-    std::size_t found_pos_double_quotes = serv_name.find('"', pos_to_start_search);
+    std::size_t found_pos_single_quotes = param.find('\'', pos_to_start_search);
+    std::size_t found_pos_double_quotes = param.find('"', pos_to_start_search);
 
     if ( (found_pos_single_quotes == std::string::npos) || \
             (found_pos_double_quotes == std::string::npos) ) {
@@ -630,29 +644,29 @@ void Config::find_first_occured_quote(const std::string& serv_name, std::size_t 
 }
 
 
-std::string Config::checkAndRemoveQuotes(const std::string& serv_name) const {
-    std::size_t len = serv_name.length();
+std::string Config::checkAndRemoveQuotes(const std::string& param) const {
+    std::size_t len = param.length();
 
     char found_quote;
     int found_pos;
 
-    find_first_occured_quote(serv_name, 0, &found_pos, &found_quote);
+    find_first_occured_quote(param, 0, &found_pos, &found_quote);
     if (found_pos == (-1)) { //if quotes are not found
-        return serv_name;
+        return param;
     }
 
     std::size_t tmp_pos = found_pos;
     if (found_pos != 0) {
         while (tmp_pos < len) {
-            find_first_occured_quote(serv_name, tmp_pos, &found_pos, &found_quote);
+            find_first_occured_quote(param, tmp_pos, &found_pos, &found_quote);
             if (found_pos == (-1)) { //if quotes are not found
-                return serv_name;
+                return param;
             }
             tmp_pos = found_pos;
-            tmp_pos = parse_until_quote_be_closed(serv_name, tmp_pos, found_quote); //if closed quote is not found throw Exception
+            tmp_pos = parse_until_quote_be_closed(param, tmp_pos, found_quote); //if closed quote is not found throw Exception
             tmp_pos++; // pass closing quote
         }
-        return serv_name; // nginx dont remove quotes inside string
+        return param; // nginx dont remove quotes inside string
     }
     else { //param starts from quote, it should be finished by this qoute and no one symbol after it is closed
         std::string unexpected_eof_log = "unexpected end of file, expecting \";\" or \"}\"";
@@ -660,11 +674,11 @@ std::string Config::checkAndRemoveQuotes(const std::string& serv_name) const {
             _badConfigError(unexpected_eof_log);
         }
 
-        std::size_t found_pos_close_quote = serv_name.find(found_quote, 1);
+        std::size_t found_pos_close_quote = param.find(found_quote, 1);
         if (found_pos_close_quote != (len -1)) {
             _badConfigError(unexpected_eof_log);
         }
-        return serv_name.substr(1, len - 2); //return string without border quotes
+        return param.substr(1, len - 2); //return string without border quotes
     }
 }
 
@@ -806,10 +820,30 @@ void Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const s
     std::cout << "client_max_body_size :"<<  "SIZE DIGITS: " << size << " | MEASURE: " << sub_str << std::endl;   //TODO: need to delete after test
 }
 
-void Config::_limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+
+
+std::list<std::string> Config::_limitExceptKeywordHandler(AContext* current_context,
+                                                          const std::list<std::string>& directive_params) {
     (void)current_context;
-    std::cout << "limit_except: ";
-    std::cout << directive_params; //TODO: need to delete after test
+
+    std::size_t len = directive_params.size();
+
+    if (!len) {
+        _badConfigError("invalid number of arguments in \"limit_except\" directive");
+    }
+
+    std::list<std::string> return_value;
+    std::list<std::string>::const_iterator it = directive_params.begin();
+    while (it != directive_params.end()) {
+        std::string tmp = checkAndRemoveQuotes(*it);
+        if (!utils::isHttpMethod(tmp)) {
+            _badConfigError("invalid methods \"" + tmp + "\"");
+        }
+        return_value.push_back(tmp);
+        ++it;
+    }
+
+    return return_value;
 }
 
 void Config::_aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
@@ -824,10 +858,27 @@ void Config::_autoindexExceptKeywordHandler(AContext* current_context, const std
     std::cout << directive_params; //TODO: need to delete after test
 }
 
-void Config::_indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
-    (void)current_context;
-    std::cout << "index: ";
-    std::cout << directive_params; //TODO: need to delete after test
+
+
+
+std::list<std::string> Config::_indexExceptKeywordHandler(AContext* current_context,
+                                                          const std::list<std::string>& directive_params) {
+    (void) current_context;
+
+    std::size_t len = directive_params.size();
+
+    if (!len) {
+        _badConfigError("invalid number of arguments in \"index\" directive");
+    }
+
+    std::list<std::string> return_value;
+    std::list<std::string>::const_iterator it = directive_params.begin();
+    while (it != directive_params.end()) {
+        return_value.push_back(checkAndRemoveQuotes(*it));
+        ++it;
+    }
+
+    return return_value;
 }
 
 
