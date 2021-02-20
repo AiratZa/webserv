@@ -360,8 +360,12 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
         std::map<int, std::map<std::string, std::string> > error_page_conf = _errorPageKeywordHandler(current_context, directive_params);
         current_context->setErrorPageDirectiveInfo(error_page_conf);
     }
-    else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW)
-        _clientMaxBodySizeKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW) {
+        long long max_body_size_bytes = _clientMaxBodySizeKeywordHandler(current_context, directive_params);
+        bool is_ok = current_context->setClientMaxBodySize(max_body_size_bytes);
+        if (!is_ok)
+            _badConfigError("\"client_max_body_size\" directive is duplicate");
+    }
     else if (directive_keyword == LIMIT_EXCEPT_KW) {
         std::list<std::string> limited_methods = _limitExceptKeywordHandler(current_context, directive_params);
         bool is_ok = static_cast<LocationContext*>(current_context)->setLimitedMethodsInfo(limited_methods);
@@ -804,20 +808,69 @@ std::map<int, std::map<std::string, std::string> >  Config::_errorPageKeywordHan
 
 
 
+long long checkAndConvertToBytes(signed long long nbr, char measure_unit) {
+    unsigned int scale;
+    unsigned int max_bytes_scale;
+    long long max_bytes = 999999999999999999;
+
+    switch (measure_unit) {
+        case 'K':
+        case 'k':
+            scale = 1024;
+            max_bytes_scale = 1000;
+            break;
+        case 'M':
+        case 'm':
+            scale = 1024 * 1024;
+            max_bytes_scale = 1000000;
+            break;
+        case 'G':
+        case 'g':
+            scale = 1024 * 1024 * 1024;
+            max_bytes_scale = 1000000000;
+            break;
+        default:
+            scale = -1;
+            max_bytes_scale = 1;
+    }
+    if ((scale * nbr) > (max_bytes / max_bytes_scale))
+        return -1;
+    return nbr * scale;
+}
 
 
 
 
 
 
-void Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+unsigned long long Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
-    const std::string tmp = *(directive_params.begin());
-    int size = libft::atoi(tmp.c_str());
-    if (size < 0)
-        _badConfigError("\"client_max_body_size\" directive invalid value");
-    std::string sub_str =  tmp.substr(libft::unsigned_number_len(size, 10));
-    std::cout << "client_max_body_size :"<<  "SIZE DIGITS: " << size << " | MEASURE: " << sub_str << std::endl;   //TODO: need to delete after test
+    std::size_t len = directive_params.size();
+
+    if (len != 1)
+        _badConfigError("invalid number of arguments in \"client_max_body_size\" directive");
+
+    const std::string param = directive_params.front();
+    const std::string invalid_value_log = "\"client_max_body_size\" directive invalid value";
+    signed long long nbr = libft::stoll_base(param, 10);
+
+    if ((nbr < 0) || (nbr > 999999999999999999)) {
+        _badConfigError(invalid_value_log);
+    }
+
+    unsigned int nbr_len = libft::unsigned_number_len(nbr, 10);
+    if ((nbr_len != (param.size() - 1)) || (nbr_len != param.size())) {
+        // without 1 char for measure unit
+        _badConfigError(invalid_value_log);
+    }
+    if (nbr_len == param.size()) {
+        return nbr; //it is already in bytes
+    }
+    long long bytes = checkAndConvertToBytes(nbr, param[param.size()-1]);
+    if (bytes < 0) {
+        _badConfigError(invalid_value_log);
+    }
+    return bytes;
 }
 
 

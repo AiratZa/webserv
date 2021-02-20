@@ -11,6 +11,7 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
 
     _error_pages_info = serv_context.getErrorPagesDirectiveInfo();
     _index_pages = serv_context.getIndexPagesDirectiveInfo();
+    _client_max_body_size = serv_context.getClientMaxBodySizeInfo();
 
 }
 

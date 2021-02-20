@@ -27,8 +27,6 @@ public:
 
     const std::list<std::string>& getLimitedMethods(void) const {return _limited_methods;};
 
-
-
 private:
     LocationContext() { }
     bool _is_exact; //is contains "=" modifier

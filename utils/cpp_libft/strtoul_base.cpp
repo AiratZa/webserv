@@ -4,7 +4,6 @@
 
 #include "libft.hpp"
 #include <string>
-#include <climits>
 #include <iostream>
 
 namespace libft {
@@ -62,5 +61,8 @@ namespace libft {
 		}
 		return (res);
 	}
+
+
+
 }
 

@@ -14,7 +14,7 @@
 
 class AContext {
 public:
-    AContext() { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
+    AContext() : _is_client_max_body_size_already_set(false) { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
     virtual ~AContext(void) { };
 
     virtual void setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {
@@ -39,6 +39,16 @@ public:
 
     virtual const std::list<std::string>& getIndexPagesDirectiveInfo(void) const { return _index_pages; }
 
+    virtual bool setClientMaxBodySize(long long bytes) {
+        if (_is_client_max_body_size_already_set)
+            return false;
+        _client_max_body_size = bytes;
+        _is_client_max_body_size_already_set = true;
+        return true;
+    }
+
+    virtual long long getClientMaxBodySizeInfo(void) const { return _client_max_body_size; }
+
 protected:
 
     virtual void addErrorPage(int error_code, const std::map<std::string, std::string>& error_page_info) {
@@ -46,11 +56,13 @@ protected:
     }
 
     std::map<std::string, std::list<std::string> > _error_page; // error_codes, response_code, redirect_uri
-    int _client_max_body_size; // converted in bytes;
+    long long _client_max_body_size; // converted in bytes;
+    bool _is_client_max_body_size_already_set;
     bool _autoindex;
     std::list<std::string> _index_pages;
 
     std::map<int, std::map<std::string, std::string> > _error_pages_info;
+
 
 };
 

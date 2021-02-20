@@ -4,7 +4,7 @@
 
 #include "libft.hpp"
 
-unsigned int libft::unsigned_number_len(unsigned int number, unsigned int base) {
+unsigned int libft::unsigned_number_len(unsigned long long number, unsigned int base) {
     unsigned int number_of_digits = 0;
 
     do {
