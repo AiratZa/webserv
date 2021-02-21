@@ -197,6 +197,11 @@ invalid number of arguments in "client_max_body_size" directive
 
 ////==============================================================
 
+
+
+
+
+
 /*
 1. server may be empty but it will do nothing
 
@@ -216,6 +221,24 @@ location /i/ {
 
 "alias" directive is duplicate in /etc/nginx/nginx.conf:78
 БЕЗ ДУБЛЕЙ
+
+
+ -------
+
+ invalid number of arguments in "alias" directive
+
+             alias ;
+             alias / /;
+
+---------
+
+ OK
+ alias /;
+
+ ------------
+
+
+
 
 10.
 

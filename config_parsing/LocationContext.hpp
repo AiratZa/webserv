@@ -27,6 +27,11 @@ public:
 
     const std::list<std::string>& getLimitedMethods(void) const {return _limited_methods;};
 
+    bool setAliasPath(const std::string& alias);
+
+    const std::string& getAliasPath(void) const { return _alias_path; }
+
+
 private:
     LocationContext() { }
     bool _is_exact; //is contains "=" modifier
@@ -36,6 +41,9 @@ private:
     bool _is_index_pages_info_was_updated;
 
     std::list<std::string> _limited_methods;
+
+    std::string _alias_path;
+    bool _is_alias_path_already_was_set;
 
 
 };

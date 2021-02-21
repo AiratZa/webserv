@@ -170,7 +170,6 @@ private:
 
 
     // SIGNLE PART CONFIG CHECKS
-//    void _locationUriChecks(const std::string& location_uri);
     std::list<std::string>  _locationKeywordHandler(const std::list<std::string>& context_params) const;
 
     const Pair<std::string, int > _listenKeywordHandler(const std::list<std::string>& directive_params);
@@ -178,7 +177,7 @@ private:
     std::map<int, std::map<std::string, std::string> >  _errorPageKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     unsigned long long _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    void _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::string _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     void _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 

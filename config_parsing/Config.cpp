@@ -323,6 +323,9 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
     //get next word
     tmpWord = libft::get_next_word(const_config_text.substr(_tmp_len));
+    if (tmpWord.empty()) {
+        _badConfigError("invalid number of arguments in \"" + keyword + "\" directive" );
+    }
     _tmp_len += tmpWord.size();
     params.push_back(tmpWord);
 
@@ -373,8 +376,13 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
         if (!is_ok)
             _badConfigError("\"limit_except\" directive is duplicate");
     }
-    else if (directive_keyword == ALIAS_KW)
-        _aliasKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == ALIAS_KW) {
+        std::string alias = _aliasKeywordHandler(current_context, directive_params);
+        bool is_ok = static_cast<LocationContext*>(current_context)->setAliasPath(alias);
+
+        if (!is_ok)
+            _badConfigError("\"alias\" directive is duplicate");
+    }
     else if (directive_keyword == AUTOINDEX_KW)
         _autoindexExceptKeywordHandler(current_context, directive_params);
     else if (directive_keyword == INDEX_KW) {
@@ -903,10 +911,13 @@ std::list<std::string> Config::_limitExceptKeywordHandler(AContext* current_cont
     return return_value;
 }
 
-void Config::_aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+std::string Config::_aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
-    std::cout << "alias: ";
-    std::cout << directive_params; //TODO: need to delete after test
+    std::size_t len = directive_params.size();
+    if (len != 1) {
+        _badConfigError("invalid number of arguments in \"alias\" directive");
+    }
+    return checkAndRemoveQuotes(directive_params.front());
 }
 
 void Config::_autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {

@@ -5,7 +5,9 @@
 #include "LocationContext.hpp"
 
 LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
-                    : _is_error_pages_info_was_updated(false) {
+                    : _is_error_pages_info_was_updated(false),
+                      _alias_path(""),
+                      _is_alias_path_already_was_set(false){
     _is_exact = (location_uri_params.size() == 2);
     _uri = location_uri_params.back();
 
@@ -45,5 +47,14 @@ bool LocationContext::setLimitedMethodsInfo(const std::list<std::string>& limite
         return false;
     }
     _limited_methods = limited_methods;
+    return true;
+}
+
+bool LocationContext::setAliasPath(const std::string& alias) {
+    if (_is_alias_path_already_was_set) {
+        return false;
+    }
+    _alias_path = alias;
+    _is_alias_path_already_was_set = true;
     return true;
 }
