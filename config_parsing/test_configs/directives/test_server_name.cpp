@@ -14,6 +14,14 @@ TEST(ServerNameDirectiveTests, more_than_1_asterisk)
     ServerContext serv_context;
     std::list<std::string> serv_names;
 
+    serv_names.push_back("www.hello*");
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    serv_names.clear();
+
+    serv_names.push_back("*hello.com");
+    EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
+    serv_names.clear();
+
     serv_names.push_back("*.hello.*");
     EXPECT_THROW(conf._checkAndSetParams(&serv_context, &serv_context, SERVER_NAME_KW, serv_names), Config::BadConfigException );
     serv_names.clear();

@@ -24,7 +24,15 @@ set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
         config_parsing/AContext.hpp config_parsing/ServerContext.cpp config_parsing/LocationContext.cpp)
 
 
-set (PROJECT_SRCS  Server.cpp WebServ.cpp request_handlers/Request.cpp response/Response.cpp ${CONFIG_PARSING_SRCS})
+set (PROJECT_SRCS  Server.cpp
+        WebServ.cpp
+        WebServ_Router.cpp
+        ServerListener.cpp
+        ServerListener_HandleRequests.cpp
+        ServerListener_HandleResponses.cpp
+        request_handlers/Request.cpp
+        response/Response.cpp
+        ${CONFIG_PARSING_SRCS})
 
 add_executable(webserv main.cpp ${PROJECT_SRCS} )
 
