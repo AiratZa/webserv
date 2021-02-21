@@ -75,16 +75,18 @@ std::map<int,std::string> Response::initStatusCodes() {
 	return status_codes;
 }
 
-Response::Response(Request* request, int socket) : _request(request), _socket(socket), _reason_phrase("OK"), _raw_response(""), _content("") { };
+Response::Response(Request* request, int socket, Server* server) :
+				_request(request), _socket(socket), _status_code(request->_status_code),
+				_reason_phrase("OK"), _raw_response(""), _content(""), _server(server) { };
 
 Response::~Response(void) { };
 
 
 void Response::generateStatusLine() {
 	_raw_response += "HTTP/1.1 ";
-	_raw_response += libft::ultostr_base(_request->_status_code, 10);
+	_raw_response += libft::ultostr_base(_status_code, 10);
 	_raw_response += " ";
-	_raw_response += Response::status_codes[_request->_status_code];
+	_raw_response += Response::status_codes[_status_code];
 	_raw_response += "\r\n";
 }
 
@@ -97,8 +99,8 @@ void Response::generateHeaders() {
 
 
 
-void Response::generateResponseByStatusCode(int status_code) {
-	_content.append(libft::ultostr_base(status_code, 10)).append(" ").append(Response::status_codes[status_code]);
+void Response::generateResponseByStatusCode() {
+	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
 
 	generateStatusLine();
 	generateHeaders();
@@ -106,6 +108,10 @@ void Response::generateResponseByStatusCode(int status_code) {
 }
 
 void Response::generateGetResponse() {
+//	choose server config that matches host header or default server;
+//	choose config by matching locations if there is;
+//	run cgi or read file or reply with 404 or so;
+
 	_content += "<title>Test C++ HTTP Server</title>\n";
 	_content += "<h1>Test page</h1>\n";
 	_content += "<p>This is body of the test page...</p>\n";
@@ -114,7 +120,7 @@ void Response::generateGetResponse() {
 	{
 		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
 	}
-	_content += "<em><small>Test C++ Http Servergg</small></em>\n";
+	_content += "<em><small>Test C++ Http Server</small></em>\n";
 
 	generateStatusLine();
 	generateHeaders();
@@ -163,10 +169,11 @@ void Response::generateResponse() {
 		} else if (_request->_method == "PUT") {
 			generatePutResponse();
 		} else {
-			generateResponseByStatusCode(501); // 501 Not Implemented
+			_status_code = 501; // 501 Not Implemented
 		}
-	} else {
-		generateResponseByStatusCode(_request->_status_code);
+	}
+	if (!_request->isStatusCodeOk()) {
+		generateResponseByStatusCode();
 	}
 }
 

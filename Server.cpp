@@ -214,7 +214,7 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 			request->parse();
 			checkRequest(request);
 
-			Response response(request, fd);
+			Response response(request, fd, this);
 			response.generateResponse();
 			response.sendResponse();
 

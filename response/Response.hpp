@@ -9,10 +9,11 @@
 #include <sys/socket.h>
 #include <string>
 #include <set>
+#include "../Server.hpp"
 
 class Response {
 public:
-	Response(Request* request, int socket);
+	Response(Request* request, int socket, Server* server);
 
 	~Response(void);
 
@@ -22,7 +23,7 @@ public:
 	void generateHeadResponse();
 	void generatePutResponse();
 	void generateResponse();
-	void generateResponseByStatusCode(int status_code);
+	void generateResponseByStatusCode();
 	void generateStatusLine();
 	void generateHeaders();
 	void generateContent();
@@ -39,11 +40,12 @@ private:
 	Request* _request;
 	int _socket;
 	std::string _http_version;
-//	int _status_code;
+	int _status_code;
 	std::string _reason_phrase;
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
 	std::string _content;
+	Server* _server;
 
 };
 
