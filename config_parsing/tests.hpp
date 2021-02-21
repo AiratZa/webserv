@@ -10,7 +10,7 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 // и этот сервер может вернуть разные коды ответов, например, 200, 302, 401 или 404, то можно выдавать возвращаемый им код:
 // 3. INDEX ++
 // 4. LIMIT_EXCEPT++
-// 5. client_max_body_size
+// 5. client_max_body_size++
 // 6. alias
 // 7. AUTOINDEX
 // 8. MAYBE root
@@ -149,13 +149,7 @@ ____________-
 //    }
 
 
-////==============================================================
-
 /*
-1. server may be empty but it will do nothing
-
-2. SET DEFAULT FOR FIRST
-
 5. 	client_max_body_size
 
 Синтаксис:	client_max_body_size размер;
@@ -199,7 +193,14 @@ invalid number of arguments in "client_max_body_size" directive
 
               client_max_body_size 1m;
             client_max_body_size 1m;
+ */
 
+////==============================================================
+
+/*
+1. server may be empty but it will do nothing
+
+2. SET DEFAULT FOR FIRST
 
 9.
 

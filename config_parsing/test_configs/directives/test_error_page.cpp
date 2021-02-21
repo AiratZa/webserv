@@ -74,6 +74,8 @@ TEST_P(ErrorPageDirectiveParsingNegativeTests, NegativeScenarios)
 INSTANTIATE_TEST_CASE_P(TestFromWhatErrorSingleValueChange, ErrorPageDirectiveParsingNegativeTests, testing::Values(
         ConfigParams("server{error_page 299 www.example.com;}"),
         ConfigParams("server{error_page -1 www.example.com;}"),
+        ConfigParams("server{error_page 499 www.example.com;}"),
+        ConfigParams("server{error_page 600 www.example.com;}"),
         ConfigParams("server{error_page a356 www.example.com;}")
     )
 );
@@ -94,7 +96,7 @@ INSTANTIATE_TEST_CASE_P(TestWhatErrorChangeToChange, ErrorPageDirectiveParsingNe
         ConfigParams("server{error_page 500 =404 =-500 www.example.com;}"),
         ConfigParams("server{error_page 500 ! www.example.com;}"),
         ConfigParams("server{error_page 500 =-1 www.example.com;}"),
-        ConfigParams("server{error_page 404 =9999999999999999990 www.example.com;}")
+        ConfigParams("server{error_page 404 =9223372036854775808 www.example.com;}")
 )
 );
 
@@ -131,8 +133,8 @@ INSTANTIATE_TEST_CASE_P(TestWhatErrorChangeToChange, ErrorPageDirectiveParsingPo
         ConfigParams("server{error_page 500 = www.example.com;}", 500, -1, -1, "=", "www.example.com"),
         ConfigParams("server{error_page 500 404 = www.example.com;}", 500, 404, -1, "=", "www.example.com"),
         ConfigParams("server{error_page 500 404 =0 www.example.com;}", 500, 404, -1, "=0", "www.example.com"),
-        ConfigParams("server{error_page 404 =999999999999999999 www.example.com;}", 404, -1, -1, "=999999999999999999", "www.example.com"),
-        ConfigParams("server{error_page 404 500 =999999999999999999 www.example.com;}", 404, 500, -1, "=999999999999999999", "www.example.com")
+        ConfigParams("server{error_page 404 =9223372036854775807 www.example.com;}", 404, -1, -1, "=9223372036854775807", "www.example.com"),
+        ConfigParams("server{error_page 404 500 =9223372036854775807 www.example.com;}", 404, 500, -1, "=9223372036854775807", "www.example.com")
 )
 );
 

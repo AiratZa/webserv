@@ -736,7 +736,9 @@ const std::string Config::_checkForChangeErrorCodeParam(const std::list<std::str
     } else {
         std::string invalid_value_log = "invalid value ";
 
-        if (last_minus_one_pos_param.size() > 19) {
+        libft::stoll_base(last_minus_one_pos_param.substr(1), 10); //check for maximum (LLONG_MAX + 1)
+        if (errno == ERANGE){
+            errno = 0;
             _badConfigError(invalid_value_log + last_minus_one_pos_param);
         }
         std::string::iterator it_2 = last_minus_one_pos_param.begin();
@@ -759,7 +761,12 @@ int Config::_checkErrorCodeThatShouldBeChanged(const std::string& error_code_str
     std::string must_between_err_log = " must be between 300 and 599 in \"error_page\" directive";
     int err_code = libft::atoi(error_code_str.c_str());
 
-    if ((err_code < 300) || (err_code > 599)) {
+    if ((err_code < 300) || (err_code > 599) || (err_code == 499)) {
+        /*
+         * 499 CLIENT CLOSED REQUEST
+         * A non-standard status code introduced by nginx for the case when a client closes
+         * the connection while nginx is processing the request.
+         */
         _badConfigError(error_code_str + must_between_err_log);
     }
     if ( (len != 3) || (libft::unsigned_number_len(err_code, 10) != len) ) {
