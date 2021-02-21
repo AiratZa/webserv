@@ -6,8 +6,7 @@
 
 long long libft::stoll_base(const std::string& str, int base)
 {
-    signed long long	nb;
-    long	tmp;
+    long long	nb;
     int		i;
     int		minus;
 
@@ -25,12 +24,15 @@ long long libft::stoll_base(const std::string& str, int base)
         i++;
     while ((str[i] >= '0') && (str[i] <= '9'))
     {
-        tmp = nb;
-        nb = nb * 10 + (str[i++] - '0');
-        if (nb < tmp) {
+        nb = nb * 10 - (str[i++] - '0');
+        if ((nb < (-LLONG_MAX)) && !minus) {
             errno = ERANGE;
-            return ((minus) ? LLONG_MIN : LLONG_MAX);
+            return LLONG_MAX;
+        }
+        if ((nb == LLONG_MAX) && minus) {
+            errno = ERANGE;
+            return LLONG_MIN;
         }
     }
-    return ((minus) ? (signed long long)(-nb) : (signed long long)(nb));
+    return ((minus) ? (signed long long)(nb) : (signed long long)(-nb));
 }

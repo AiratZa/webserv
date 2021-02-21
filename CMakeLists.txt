@@ -127,3 +127,22 @@ add_executable( runUltostrBaseUnitTests ${TEST_FILES} ${PROJECT_SRCS})
 # Link test executable against gtest & gtest_main
 target_link_libraries(runUltostrBaseUnitTests gtest gtest_main)
 add_test( runUltostrBaseUnitTests runUltostrBaseUnitTests )
+
+
+# ===============================================================
+
+# Utils functions tests
+
+set(UTILS_TESTS_PATH "utils/tests")
+
+file(GLOB TEST_STR_TO_NBR ${UTILS_TESTS_PATH}/cpp_libft/test_stoll_base.cpp
+        )
+
+
+set_source_files_properties(${TEST_ENGINE} ${PROJECT_SRCS} PROPERTIES COMPILE_FLAGS -Wall -Wextra -Werror)
+
+add_executable( runUtilsUnitTests ${TEST_STR_TO_NBR} ${PROJECT_SRCS})
+
+# Link test executable against gtest & gtest_main
+target_link_libraries(runUtilsUnitTests gtest gtest_main)
+add_test( runUtilsUnitTests runUtilsUnitTests )
