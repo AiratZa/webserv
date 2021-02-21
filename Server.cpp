@@ -212,6 +212,7 @@ void Server::handleResponses(fd_set* globalWriteSetPtr) {
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
 			request = _client_requests[fd];
 			request->parse();
+			//TODO:configure server here becouse we need _client_max_body_size when reading request body
 			checkRequest(request);
 
 			Response response(request, fd, this);
