@@ -140,7 +140,7 @@ public:
     Config() { }
     Config(const std::string &path_to_config);
 
-    const std::list<ServerContext*>& getServersList(void) const;
+    std::list<ServerContext*>& getServersList(void);
 
     class BadConfigException : public std::exception {
 

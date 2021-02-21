@@ -19,12 +19,19 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/stoll_base.cpp
 
 
-SRCS = $(UTILS_SRCS) main.cpp WebServ.cpp Server.cpp\
+SRCS = $(UTILS_SRCS) main.cpp \
+    WebServ.cpp \
+    WebServ_Router.cpp \
+    Server.cpp\
+    ServerListener.cpp \
+    ServerListener_HandleRequests.cpp \
+    ServerListener_HandleResponses.cpp \
     config_parsing/Config.cpp \
     config_parsing/ServerContext.cpp \
     config_parsing/LocationContext.cpp \
     request_handlers/Request.cpp \
     response/Response.cpp
+
 
 OBJS = $(SRCS:.cpp=.o)
 

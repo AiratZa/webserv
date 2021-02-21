@@ -9,13 +9,14 @@ Config::Config(const std::string &path_to_config) {
     fillConfigTextFromFile(path_to_config);
     _len = _config_text.size();
     splitConfigTextIntoBlocks();
+
 }
 
 const std::string& Config::_getConfigText(void) const {
     return _config_text;
 }
 
-const std::list<ServerContext*>& Config::getServersList(void) const {
+std::list<ServerContext*>& Config::getServersList(void) {
     return _servers;
 }
 
@@ -595,7 +596,7 @@ bool Config::is_correct_serv_name(const std::string& serv_name) const {
         } else {
             tmp_serv_name = serv_name.substr(0, len - 1);
             if ((tmp_serv_name.find('*') != std::string::npos) || \
-                    tmp_serv_name[len - 2] != '.') {
+                    tmp_serv_name[tmp_serv_name.size() - 1] != '.') {
                     return false;
             }
         }

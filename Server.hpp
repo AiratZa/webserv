@@ -23,51 +23,67 @@
 #include "config_parsing/ServerContext.hpp"
 #include "utils/cpp_libft/libft.hpp"
 
+#include "response/Response.hpp"
+
 #define BUFFER_LENGHT 1024
 #define TIME_OUT 15
 
+
 class Server {
 public:
-    Server(int port);
-//    Server(ServerContext* config);
-    Server(const ServerContext server_context);
+
+    class Listener {
+
+    public:
+        Listener(const std::string& host, int port);
+
+        int getListener(void) const { return _listener; }
+
+        const std::list<int>& getReadClients(void) const { return _clients_read; }
+        const std::list<int>& getWriteClients(void) const { return _clients_write; }
+        void updateMaxFD(void);
+
+        void acceptConnection(void);
+
+        void processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr);
+        void handleRequests(fd_set* globalReadSetPtr);
+        void handleResponses(fd_set* globalWriteSetPtr);
+        void checkRequest(Request* request);
+
+        const int & getMaxFD() const { return _max_fd; }
+
+        //skarry:
+        int     checkFullRequest(std::string const& req);
+        void    readError(std::list<int>::iterator & it);
+
+
+    private:
+        int _listener;
+
+        struct sockaddr_in _addr;
+        const std::string _host;
+        const int _port;
+
+        std::list<int> _clients_read;
+        std::list<int> _clients_write;
+        std::map<int, Request *> _client_requests;
+
+        int _max_fd;
+
+        in_addr_t _getHostInetAddrFromStr(const std::string& host_str) const;
+    };
+
+
+    Server(ServerContext* server_context);
     ~Server() { };
 
-    const int & getListener(void) const { return _listener; };
-
-    void updateMaxFD(void);
-
-    const int & getMaxFD() const { return _max_fd; }
-
-    void acceptConnection(void);
-    void processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr);
-    void handleRequests(fd_set* globalReadSetPtr);
-    void handleResponses(fd_set* globalWriteSetPtr);
-	void checkRequest(Request* request);
-
-    std::list<int>& getReadClients(void) { return _clients_read; }
-
-    //skarry:
-    int     checkFullRequest(std::string const& req);
-    void    readError(std::list<int>::iterator & it);
-
-private:
-    int _listener;
-    struct sockaddr_in _addr;
-    int _port;
-
-    std::list<int> _clients_read;
-    std::list<int> _clients_write;
-
-    std::map<int, Request *> _client_requests;
-
-    int _max_fd;
+    const std::list<Listener*> & getListeners(void) const { return _listeners; };
 
 
     Server() { };
-
-    in_addr_t getHostInetAddrFromStr(const std::string& host_str) const;
-
+private:
+    std::list<Listener*> _listeners;
+    ServerContext* server_context;
 };
 
 #endif //WEBSERV_SERVER_HPP

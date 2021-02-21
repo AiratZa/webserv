@@ -4,6 +4,9 @@
 #include "utils/cpp_libft/libft.hpp"
 #include <iostream>
 
+#define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
+
+
 WebServ webserv;
 
 void intHandler(int signal) {
@@ -12,12 +15,10 @@ void intHandler(int signal) {
 	exit(EXIT_SUCCESS);
 }
 
+std::list<ServerContext*> WebServ::servers_list;
+
 int main(int argc, char *argv[])
 {
-//	std::string str("ffffffffffffffff");
-//
-//	std::cout << libft::strtoul_base(str, 16) << std::endl;
-//	return 0;
     std::string path_to_config;
     if  (argc == 2) {
         path_to_config = argv[1];
@@ -29,7 +30,20 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);
-	webserv = WebServ(path_to_config);
-	webserv.serveConnections();
+    try
+    {
+        Config _config = Config(path_to_config);
+        std::cout << std::endl << "===================================================" << std::endl << std::endl;
+
+        WebServ::servers_list = _config.getServersList();
+        webserv = WebServ(_config);
+        webserv.serveConnections();
+    }
+    catch (Config::BadConfigException & e)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+
     return 0;
 }
