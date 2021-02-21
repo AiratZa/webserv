@@ -178,7 +178,7 @@ private:
     unsigned long long _clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::string _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    void _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    bool _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 

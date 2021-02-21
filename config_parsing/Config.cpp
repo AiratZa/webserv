@@ -346,6 +346,8 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 void Config::_checkAndSetParams(ServerContext* current_server, AContext* current_context, const std::string& directive_keyword,
                         const std::list<std::string>& directive_params) {
     (void)current_server; // TODO: it will be needed when copy server(outside) directive MAYBE
+
+    bool checkIfParamWasNotAlreadySet = true;
     if (directive_keyword == LISTEN_KW) {
         Pair<std::string, int> host_and_port = _listenKeywordHandler(directive_params);
         static_cast<ServerContext*>(current_context)->addHostPort(host_and_port.first, host_and_port.second);
@@ -365,32 +367,30 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
     }
     else if (directive_keyword == CLIENT_MAX_BODY_SIZE_KW) {
         long long max_body_size_bytes = _clientMaxBodySizeKeywordHandler(current_context, directive_params);
-        bool is_ok = current_context->setClientMaxBodySize(max_body_size_bytes);
-        if (!is_ok)
-            _badConfigError("\"client_max_body_size\" directive is duplicate");
+        checkIfParamWasNotAlreadySet = current_context->setClientMaxBodySize(max_body_size_bytes);
     }
     else if (directive_keyword == LIMIT_EXCEPT_KW) {
         std::list<std::string> limited_methods = _limitExceptKeywordHandler(current_context, directive_params);
-        bool is_ok = static_cast<LocationContext*>(current_context)->setLimitedMethodsInfo(limited_methods);
-
-        if (!is_ok)
-            _badConfigError("\"limit_except\" directive is duplicate");
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setLimitedMethodsInfo(limited_methods);
     }
     else if (directive_keyword == ALIAS_KW) {
         std::string alias = _aliasKeywordHandler(current_context, directive_params);
-        bool is_ok = static_cast<LocationContext*>(current_context)->setAliasPath(alias);
-
-        if (!is_ok)
-            _badConfigError("\"alias\" directive is duplicate");
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setAliasPath(alias);
     }
-    else if (directive_keyword == AUTOINDEX_KW)
-        _autoindexExceptKeywordHandler(current_context, directive_params);
+    else if (directive_keyword == AUTOINDEX_KW) {
+        bool autoindex_option = _autoindexExceptKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = current_context->setAutoindex(autoindex_option);
+    }
     else if (directive_keyword == INDEX_KW) {
         std::list<std::string> index_paths = _indexExceptKeywordHandler(current_context, directive_params);
         current_context->setIndexDirectiveInfo(index_paths);
     }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
+
+    if (!checkIfParamWasNotAlreadySet) {
+        _badConfigError("\"" + directive_keyword +  "\" directive is duplicate");
+    }
 }
 
 
@@ -920,10 +920,25 @@ std::string Config::_aliasKeywordHandler(AContext* current_context, const std::l
     return checkAndRemoveQuotes(directive_params.front());
 }
 
-void Config::_autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+bool Config::_autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
-    std::cout << "autoindex: ";
-    std::cout << directive_params; //TODO: need to delete after test
+    if (directive_params.size() != 1) {
+        _badConfigError("invalid number of arguments in \"autoindex\" directive");
+    }
+
+    std::string without_quotes = checkAndRemoveQuotes(directive_params.front());
+    std::string valid_values[4] = {"on", "off",  "ON", "OFF"};
+
+    for (int i = 0; i < 4; i++) {
+        if (valid_values[i] == without_quotes) {
+            if ((i%2) == 0)
+                return true;
+            else
+                return false;
+        }
+    }
+    _badConfigError("invalid value \"" + directive_params.front() + "\" in \"autoindex\" directive, it must be \"on\" or \"off\" ");
+    return false;
 }
 
 

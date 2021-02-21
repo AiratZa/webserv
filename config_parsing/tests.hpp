@@ -11,8 +11,8 @@ https://nginx.org/ru/docs/http/ngx_http_core_module.html#server_name
 // 3. INDEX ++
 // 4. LIMIT_EXCEPT++
 // 5. client_max_body_size++
-// 6. alias
-// 7. AUTOINDEX
+// 6. alias ++
+// 7. AUTOINDEX ++
 // 8. MAYBE root
 
 
@@ -195,18 +195,9 @@ invalid number of arguments in "client_max_body_size" directive
             client_max_body_size 1m;
  */
 
-////==============================================================
-
-
-
-
 
 
 /*
-1. server may be empty but it will do nothing
-
-2. SET DEFAULT FOR FIRST
-
 9.
 
 Синтаксис:	alias путь;
@@ -237,10 +228,7 @@ location /i/ {
 
  ------------
 
-
-
-
-10.
+ 10.
 
 Синтаксис:	autoindex on | off;
 Умолчание:
@@ -250,5 +238,22 @@ autoindex off;
 
 "autoindex" directive is duplicate in /etc/nginx/nginx.conf:79
 
+
+    "invalid value \"ON \" in \"autoindex\" directive, it must be \"on\" or \"off\" ";
+    "autoindex OFF ON;"
+    "invalid number of arguments in \"autoindex\" directive "
+
+ */
+////==============================================================
+
+
+
+
+
+
+/*
+1. server may be empty but it will do nothing
+
+2. SET DEFAULT FOR FIRST
 
 
