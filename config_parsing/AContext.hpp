@@ -14,7 +14,7 @@
 
 class AContext {
 public:
-    AContext() : _is_client_max_body_size_already_set(false) { (void)_client_max_body_size; (void)_autoindex;};//TODO: DELETE AFTER TESTS
+    AContext() : _client_max_body_size(1024*1024), _is_client_max_body_size_already_set(false) { (void)_autoindex;};//TODO: DELETE AFTER TESTS
     virtual ~AContext(void) { };
 
     virtual void setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {

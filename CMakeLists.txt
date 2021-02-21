@@ -55,7 +55,9 @@ file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_error_page.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_index.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_limit_except.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_client_max_body_size.cpp
         )
+
 
 set (TEST_FILES ${TEST_CONTEXTS} ${TEST_DIRECTIVES} ${CONFIG_TESTS_PATH}fixtures.cpp )
 

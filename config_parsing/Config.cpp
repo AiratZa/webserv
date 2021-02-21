@@ -809,31 +809,26 @@ std::map<int, std::map<std::string, std::string> >  Config::_errorPageKeywordHan
 
 
 long long checkAndConvertToBytes(signed long long nbr, char measure_unit) {
-    unsigned int scale;
-    unsigned int max_bytes_scale;
-    long long max_bytes = 999999999999999999;
+    int scale;
+    long long max_bytes = LLONG_MAX;
 
     switch (measure_unit) {
         case 'K':
         case 'k':
             scale = 1024;
-            max_bytes_scale = 1000;
             break;
         case 'M':
         case 'm':
             scale = 1024 * 1024;
-            max_bytes_scale = 1000000;
             break;
         case 'G':
         case 'g':
             scale = 1024 * 1024 * 1024;
-            max_bytes_scale = 1000000000;
             break;
         default:
             scale = -1;
-            max_bytes_scale = 1;
     }
-    if ((scale * nbr) > (max_bytes / max_bytes_scale))
+    if (nbr > (max_bytes / scale))
         return -1;
     return nbr * scale;
 }
@@ -854,12 +849,14 @@ unsigned long long Config::_clientMaxBodySizeKeywordHandler(AContext* current_co
     const std::string invalid_value_log = "\"client_max_body_size\" directive invalid value";
     signed long long nbr = libft::stoll_base(param, 10);
 
-    if ((nbr < 0) || (nbr > 999999999999999999)) {
+    if ((nbr < 0) ||
+            ((nbr == LLONG_MAX) && (errno == ERANGE))) {
+        errno = 0;
         _badConfigError(invalid_value_log);
     }
 
     unsigned int nbr_len = libft::unsigned_number_len(nbr, 10);
-    if ((nbr_len != (param.size() - 1)) || (nbr_len != param.size())) {
+    if ((nbr_len != (param.size() - 1)) && (nbr_len != param.size())) {
         // without 1 char for measure unit
         _badConfigError(invalid_value_log);
     }
