@@ -30,6 +30,7 @@ void Server::Listener::handleResponses(fd_set* globalWriteSetPtr) {
             response.sendResponse();
 
             close(fd);
+			delete _client_requests[fd];
             _client_requests.erase(fd);
             it = _clients_write.erase(it);
 

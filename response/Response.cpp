@@ -8,9 +8,9 @@
 #include <set>
 #include "../utils/cpp_libft/libft.hpp"
 
-const std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
+std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
-const std::map<int, std::string> Response::status_codes = Response::initStatusCodes();
+std::map<int, std::string> Response::status_codes = Response::initStatusCodes();
 
 std::set<std::string> Response::initResponseHeaders() {
 	std::set<std::string> implemented_headers;
@@ -75,11 +75,40 @@ std::map<int,std::string> Response::initStatusCodes() {
 	return status_codes;
 }
 
-Response::Response(Request* request, int socket) : _request(request), _socket(socket), _reason_phrase("OK"), _raw_response(""), _content("") { };
+Response::Response(Request* request, int socket) :
+				_request(request), _socket(socket), _status_code(request->_status_code),
+				_reason_phrase("OK"), _raw_response(""), _content("") { };
 
 Response::~Response(void) { };
 
+
+void Response::generateStatusLine() {
+	_raw_response += "HTTP/1.1 ";
+	_raw_response += libft::ultostr_base(_status_code, 10);
+	_raw_response += " ";
+	_raw_response += Response::status_codes[_status_code];
+	_raw_response += "\r\n";
+}
+
+void Response::generateHeaders() {
+	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
+	_raw_response += "Content-Length: ";
+	_raw_response += libft::ultostr_base(_content.length(), 10);
+	_raw_response += "\r\n\r\n";
+}
+
+
+
+void Response::generateResponseByStatusCode() {
+	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
+
+	generateStatusLine();
+	generateHeaders();
+	_raw_response.append(_content);
+}
+
 void Response::generateGetResponse() {
+
 	_content += "<title>Test C++ HTTP Server</title>\n";
 	_content += "<h1>Test page</h1>\n";
 	_content += "<p>This is body of the test page...</p>\n";
@@ -88,20 +117,11 @@ void Response::generateGetResponse() {
 	{
 		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
 	}
-	_content += "<em><small>Test C++ Http Servergg</small></em>\n";
+	_content += "<em><small>Test C++ Http Server</small></em>\n";
 
-
-	_raw_response += "HTTP/1.1 ";
-	_raw_response += libft::ultostr_base(_request->_status_code, 10);
-	_raw_response += " ";
-	_raw_response += _reason_phrase;
-	_raw_response += "\r\n";
-	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
-	_raw_response += "Content-Length: ";
-	_raw_response += libft::ultostr_base(_content.length(), 10);
-	_raw_response += "\r\n\r\n";
+	generateStatusLine();
+	generateHeaders();
 	_raw_response += _content;
-
 
 
 //	std::stringstream response; // сюда будет записываться ответ клиенту
@@ -138,14 +158,19 @@ void Response::generatePutResponse() {
 }
 
 void Response::generateResponse() {
-	if (_request->_method == "GET") {
-		generateGetResponse();
-	} else if (_request->_method == "HEAD") {
-		generateHeadResponse();
-	} else if (_request->_method == "PUT") {
-		generatePutResponse();
-	} else {
-		return _request->setStatusCode(501); // 501 Not Implemented
+	if (_request->isStatusCodeOk()) {
+		if (_request->_method == "GET") {
+			generateGetResponse();
+		} else if (_request->_method == "HEAD") {
+			generateHeadResponse();
+		} else if (_request->_method == "PUT") {
+			generatePutResponse();
+		} else {
+			_status_code = 501; // 501 Not Implemented
+		}
+	}
+	if (!_request->isStatusCodeOk()) {
+		generateResponseByStatusCode();
 	}
 }
 
