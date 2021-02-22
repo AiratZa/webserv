@@ -15,6 +15,7 @@ class LocationContext : public AContext {
 public:
     LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context);
 
+    bool isExact(void) const { return _is_exact; }
     const std::string getLocationPath(void) const;
 
     virtual void setLocationUri() { };

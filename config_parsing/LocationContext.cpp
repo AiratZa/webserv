@@ -19,8 +19,6 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
 }
 
 const std::string LocationContext::getLocationPath(void) const {
-    if (_is_exact)
-        return "= " + _uri;
     return _uri;
 }
 

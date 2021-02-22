@@ -18,6 +18,13 @@ class LocationContext;
 class ServerContext : public AContext {
 
 public:
+
+    // 'R' stands for router using
+    const std::list<LocationContext*>& R_getExactLocationsList(void) const;
+    const std::list<LocationContext*>& R_getNonExactLocationsList(void) const;
+
+
+
     ServerContext() : is_server_names_were_updated(false) { _server_names.push_back("");  };
 
     const std::map<std::string, std::list<int> >&  getHostsAndPorts(void) const;
@@ -37,6 +44,9 @@ public:
     void addHostPort(const std::string& host, int port);
     void addServerNames(std::list<std::string>& server_names);
 
+    // AFTER PARSING
+    void structure_properties(void);
+
 private:
     std::list<LocationContext*> _locations;
     std::map<std::string, std::list<int> > _hosts_ports;
@@ -46,6 +56,13 @@ private:
 
     bool _is_location_exist(const std::list<std::string>& location_uri_params);
 
+
+    // AFTER PARSING
+    std::list<LocationContext*> _exact_locations;
+    std::list<LocationContext*> _non_exact_locations;
+
+
+    void _divideLocationExactNonExact(void);
 };
 
 #endif //WEBSERV_SERVERCONTEXT_HPP
