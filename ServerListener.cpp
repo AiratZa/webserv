@@ -61,7 +61,7 @@ void Server::Listener::updateMaxFD(void) {
 void Server::Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
     handleRequests(globalReadSetPtr);
     ////Router in developing. Deadline 22.02.2021
-    //    WebServ::route(_host, _port, "example.com"); ////TODO: 3rd param must be host(server name) from request header
+    WebServ::routeRequests(_host, _port, _client_requests);
     handleResponses(globalWriteSetPtr);
 }
 

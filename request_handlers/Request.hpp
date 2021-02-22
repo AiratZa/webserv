@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 
+#include "../config_parsing/Config.hpp"
 #include <climits>
 
 class Request {
@@ -52,7 +53,10 @@ class Request {
 
 		size_t _client_max_body_size; // need to use client_max_body_size from server config
 
+    void setHandlingServer(ServerContext* handling_server) { _handling_server = handling_server;} // Airat
 
+    private:
+        ServerContext* _handling_server; // Airat
 
 //		bool _is_chunked;
 //		bool _is_content_lenght;
