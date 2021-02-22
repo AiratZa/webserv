@@ -99,7 +99,7 @@ void WebServ::serveConnections() {
             while (it_l != listeners.end()) {
                 FD_SET((*it_l)->getListener(), getReadSetPtr());
                 setToReadFDSet((*it_l)->getReadClients());
-                setToWriteFDSet((*it_l)->getReadClients());
+                setToWriteFDSet((*it_l)->getWriteClients());
                 (*it_l)->updateMaxFD();
                 ++it_l;
             }

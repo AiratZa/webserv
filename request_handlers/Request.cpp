@@ -224,11 +224,7 @@ void Request::checkHeaders() {
 
 }
 
-void Request::parse() {
-	parseRequestLine();
-	if (isStatusCodeOk())
-		parseHeaders();
-
+void Request::parseBody() {
 	if (isStatusCodeOk()) {
 		if (_headers.count("transfer-encoding")) {
 			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"

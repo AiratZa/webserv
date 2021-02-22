@@ -26,7 +26,7 @@ class Request {
 		void parseChunkedContent();
 		void getContentByLength();
 		void parseHeaders();
-		void parse();
+		void parseBody();
 		void checkMethod();
 		void checkRequestTarget();
 		void checkHttpVersion();

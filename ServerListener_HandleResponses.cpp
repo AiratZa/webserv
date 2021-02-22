@@ -3,6 +3,7 @@
 //
 
 #include "Server.hpp"
+#include "WebServ.hpp"
 
 void Server::Listener::checkRequest(Request* request) {
     if (request->isStatusCodeOk()) {
@@ -22,7 +23,13 @@ void Server::Listener::handleResponses(fd_set* globalWriteSetPtr) {
         fd = *it;
         if (FD_ISSET(fd, globalWriteSetPtr)) {
             Request* request = _client_requests[fd];
-            request->parse();
+			request->parseRequestLine();
+			if (request->isStatusCodeOk())
+				request->parseHeaders();
+
+			WebServ::routeRequests(_host, _port, _client_requests);
+
+            request->parseBody();
             checkRequest(request);
 
             Response response(request, fd);
