@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <string>
 #include <set>
+#include <list>
 
 class Response {
 public:
@@ -43,4 +44,5 @@ private:
 
 };
 
+	std::string    parsURL(std::string url);
 #endif //RESPONSE_HPP
