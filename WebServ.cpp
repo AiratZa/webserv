@@ -62,8 +62,8 @@ void WebServ::setToWriteFDSet(const std::list<int>& clientsFD) {
 void WebServ::updateMaxFD(void) {
     _max_fd = 0;
     for(std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-        std::list<Server::Listener*> listeners = (*it)->getListeners();
-        std::list<Server::Listener*>::iterator it_l = listeners.begin();
+        std::list<Listener*> listeners = (*it)->getListeners();
+        std::list<Listener*>::iterator it_l = listeners.begin();
         while (it_l != listeners.end()) {
             int tmp = (*it_l)->getMaxFD();
             if (tmp > _max_fd)
@@ -94,8 +94,8 @@ void WebServ::serveConnections() {
 		for (int i = 0; i < getServersCount(); i++) {
 			Server *server = getServerByPosition(i);
 
-			std::list<Server::Listener*> listeners = server->getListeners();
-            std::list<Server::Listener*>::iterator it_l = listeners.begin();
+			std::list<Listener*> listeners = server->getListeners();
+            std::list<Listener*>::iterator it_l = listeners.begin();
             while (it_l != listeners.end()) {
                 FD_SET((*it_l)->getListener(), getReadSetPtr());
                 setToReadFDSet((*it_l)->getReadClients());
@@ -119,8 +119,8 @@ void WebServ::serveConnections() {
 		for (int i = 0; i < getServersCount(); i++) {
 			Server *server = getServerByPosition(i);
 
-            std::list<Server::Listener*> listeners = server->getListeners();
-            std::list<Server::Listener*>::iterator it_l = listeners.begin();
+            std::list<Listener*> listeners = server->getListeners();
+            std::list<Listener*>::iterator it_l = listeners.begin();
             while (it_l != listeners.end()) {
                 if (FD_ISSET((*it_l)->getListener(), getReadSetPtr())) {
                     // Поступил новый запрос на соединение, используем accept

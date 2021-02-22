@@ -4,8 +4,8 @@
 
 #include "Server.hpp"
 
-Server::Server(ServerContext* server_context)
-                : server_context(server_context) {
+Server::Server(ServerContext* server_context) {
+//                : server_context(server_context) {
     const std::map<std::string, std::list<int> >& hosts_n_ports = server_context->getHostsAndPorts();
 
     std::map<std::string, std::list<int> >::const_iterator map_it = hosts_n_ports.begin();
@@ -18,7 +18,7 @@ Server::Server(ServerContext* server_context)
 
         // listener initialization for every host:port combination
         while (ports_it != ports_ite) {
-            Server::Listener *listener_obj = new Server::Listener((*map_it).first, *ports_it);
+            Listener *listener_obj = new Listener((*map_it).first, *ports_it);
             _listeners.push_back(listener_obj);
             ++ports_it;
         }
