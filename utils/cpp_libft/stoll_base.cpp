@@ -6,7 +6,7 @@
 
 long long libft::stoll_base(const std::string& str, int base)
 {
-    (void)base;
+	(void)base;
 
     long long	nb;
     int		i;

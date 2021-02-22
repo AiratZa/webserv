@@ -16,7 +16,9 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/strtoul_base.cpp \
                 utils/cpp_libft/string_to_lower.cpp \
                 utils/cpp_libft/ultostr_base.cpp \
-                utils/cpp_libft/stoll_base.cpp
+                utils/cpp_libft/stoll_base.cpp \
+                utils/cpp_libft/percent_decode.cpp
+
 
 
 SRCS = $(UTILS_SRCS) main.cpp \
@@ -31,6 +33,7 @@ SRCS = $(UTILS_SRCS) main.cpp \
     config_parsing/LocationContext.cpp \
     request_handlers/Request.cpp \
     response/Response.cpp \
+    Listener.cpp \
     response/autoindex_handling/autoindex_handling.cpp
 
 

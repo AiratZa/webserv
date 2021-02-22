@@ -3,7 +3,34 @@
 //
 
 #include "ServerContext.hpp"
-//#include "ServerContext.hpp"
+
+const std::list<LocationContext*>& ServerContext::R_getExactLocationsList(void) const {
+    return _exact_locations;
+}
+
+const std::list<LocationContext*>& ServerContext::R_getNonExactLocationsList(void) const {
+    return _non_exact_locations;
+}
+
+void ServerContext::_divideLocationExactNonExact(void) {
+    std::list<LocationContext*>::const_iterator it = _locations.begin();
+    while (it != _locations.end()) {
+        if ((*it)->isExact()) {
+            _exact_locations.push_back(*it);
+        } else {
+            _non_exact_locations.push_back(*it);
+        }
+        ++it;
+    }
+}
+
+
+void ServerContext::structure_properties(void) {
+    _divideLocationExactNonExact();
+}
+
+
+
 
 const std::map<std::string, std::list<int> >&  ServerContext::getHostsAndPorts(void) const {
     return _hosts_ports;

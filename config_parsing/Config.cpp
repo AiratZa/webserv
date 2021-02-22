@@ -122,6 +122,7 @@ void Config::splitConfigTextIntoBlocks(void) {
             ServerContext *tmp_server = new ServerContext();
             _servers.push_back(tmp_server);
             parseInsideServerContext(tmp_server);
+            tmp_server->structure_properties();
         } else {
             if (tmpWord.size())
                 _badConfigError("WORD " + tmpWord + " NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");

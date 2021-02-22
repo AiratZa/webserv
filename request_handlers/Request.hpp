@@ -26,11 +26,11 @@ class Request {
 		void parseChunkedContent();
 		void getContentByLength();
 		void parseHeaders();
-		void parse();
-		void checkMethod();
-		void checkRequestTarget();
-		void checkHttpVersion();
-		void checkHeaders();
+		void parseBody();
+//		void checkMethod();
+//		void checkRequestTarget();
+//		void checkHttpVersion();
+//		void checkHeaders();
 
 	private:
 		static std::set<std::string> initRequestHeaders();
@@ -53,11 +53,12 @@ class Request {
 
 		size_t _client_max_body_size; // need to use client_max_body_size from server config
 
-    void setHandlingServer(ServerContext* handling_server) { _handling_server = handling_server;} // Airat
+    void setHandlingServer(ServerContext* handling_server); // Airat
+    void setHandlingLocation(LocationContext* location_to_route); // Airat
 
     private:
         ServerContext* _handling_server; // Airat
-
+        LocationContext* _handling_location; // Airat
 //		bool _is_chunked;
 //		bool _is_content_lenght;
 //		size_t _content_lenght;

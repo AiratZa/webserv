@@ -103,7 +103,36 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
     return default_serv;
 }
 
-// TODO: will be finished and tested by Airat (GDrake)
+LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Request* current_request) {
+    const std::list<LocationContext*>& exact = handling_server->R_getExactLocationsList();
+    std::list<LocationContext*>::const_iterator it_exact = exact.begin();
+    while (it_exact != exact.end()) {
+        if ((*it_exact)->getLocationPath() == current_request->_request_target) {
+            return (*it_exact); // exact route(location) is found
+        }
+        ++it_exact;
+    }
+
+    // Searching in Non Exact Locations
+    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
+    std::size_t target_len = current_request->_request_target.size();
+
+    while (target_len > 1) {
+        std::string target_substr = current_request->_request_target.substr(0, (target_len-1));
+
+        std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
+        while (it_non_exact != non_exact.end()) {
+            if ((*it_non_exact)->getLocationPath() == target_substr) {
+                return (*it_non_exact); // exact route(location) is found
+            }
+            ++it_non_exact;
+        }
+
+        target_len--;
+    }
+    return NULL; // Not match to locations (404 Not Found)
+}
+
 void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
     std::map<int, Request *>::iterator it_r = _clients_requests.begin();
 
@@ -114,9 +143,9 @@ void WebServ::routeRequests(const std::string& host, const int port, std::map<in
         ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
         current_request->setHandlingServer(handling_server);
 
-        // TODO: select route from handling server
+        LocationContext* location_to_route = searchForBestMatchLocation(handling_server, current_request);
+        current_request->setHandlingLocation(location_to_route);
 
         ++it_r;
     }
-
 }

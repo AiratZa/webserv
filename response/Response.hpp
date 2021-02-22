@@ -9,6 +9,10 @@
 #include <sys/socket.h>
 #include <string>
 #include <set>
+//#include "../Server.hpp"
+
+//class Server;
+#include <list>
 
 class Response {
 public:
@@ -22,25 +26,31 @@ public:
 	void generateHeadResponse();
 	void generatePutResponse();
 	void generateResponse();
+	void generateResponseByStatusCode();
+	void generateStatusLine();
+	void generateHeaders();
+	void generateContent();
 
 private:
 	static std::map<int,std::string> initStatusCodes();
 	static std::set<std::string> initResponseHeaders();
 
 public:
-	static const std::set<std::string> implemented_headers;
-	static const std::map<int, std::string> status_codes;
+	static std::set<std::string> implemented_headers;
+	static std::map<int, std::string> status_codes;
 
 private:
 	Request* _request;
 	int _socket;
 	std::string _http_version;
-//	int _status_code;
+	int _status_code;
 	std::string _reason_phrase;
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
 	std::string _content;
+//	Server* _server;
 
 };
 
+	std::string    parsURL(std::string url);
 #endif //RESPONSE_HPP
