@@ -8,7 +8,7 @@
 
 
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
-
+#define PREFIX_DEFAULT_PATH "./default_folder/" // From this path working root
 
 WebServ webserv;
 
@@ -50,21 +50,20 @@ int main(int argc, char *argv[])
 	signal(SIGINT, intHandler);
     checkAndSetTimeZoneCorrection();
 
-    write_html(); // TODO: Autoindex temp testing
-    dir_opers(); // TODO: Autoindex temp testing
-//    try
-//    {
-//        Config _config = Config(path_to_config);
-//        std::cout << std::endl << "===================================================" << std::endl << std::endl;
-//
-//        WebServ::servers_list = _config.getServersList();
-//        webserv = WebServ(_config);
-//        webserv.serveConnections();
-//    }
-//    catch (Config::BadConfigException & e)
-//    {
-//        exit(EXIT_FAILURE);
-//    }
+//    write_html(); // TODO: Autoindex temp testing
+    try
+    {
+        Config _config = Config(path_to_config);
+        std::cout << std::endl << "===================================================" << std::endl << std::endl;
+
+        WebServ::servers_list = _config.getServersList();
+        webserv = WebServ(_config);
+        webserv.serveConnections();
+    }
+    catch (Config::BadConfigException & e)
+    {
+        exit(EXIT_FAILURE);
+    }
 
 
     return 0;

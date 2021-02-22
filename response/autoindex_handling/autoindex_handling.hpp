@@ -28,6 +28,7 @@
 #include "../../WebServ.hpp"
 
 void write_html();
-void dir_opers();
+std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& root,
+                                                                     const std::string& uri);
 
 #endif //WEBSERV_AUTOINDEX_HANDLING_HPP
