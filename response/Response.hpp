@@ -12,6 +12,7 @@
 //#include "../Server.hpp"
 
 //class Server;
+#include <list>
 
 class Response {
 public:
@@ -51,4 +52,5 @@ private:
 
 };
 
+	std::string    parsURL(std::string url);
 #endif //RESPONSE_HPP

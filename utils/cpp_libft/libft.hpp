@@ -9,6 +9,7 @@
 #include <string>
 #include <climits>
 #include <cerrno>
+#include <map>
 
 namespace libft {
     int isspace(int ch);
@@ -27,6 +28,7 @@ namespace libft {
     long long stoll_base(const std::string& str, int base);
 	void string_to_lower(std::string & str);
 	std::string ultostr_base(unsigned long n, int base);
+    char			percent_decode(std::string const& str, int & start);
 }
 
 #endif //WEBSERV_LIBFT_HPP

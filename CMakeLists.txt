@@ -17,6 +17,7 @@ set(UTILS_SRCS utils/utils.cpp utils/utils.hpp
         utils/cpp_libft/string_to_lower.cpp
         utils/cpp_libft/ultostr_base.cpp
         utils/cpp_libft/stoll_base.cpp
+        utils/cpp_libft/percent_decode.cpp
         )
 
 
