@@ -104,7 +104,19 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
 }
 
 // TODO: will be finished and tested by Airat (GDrake)
-void WebServ::route(const std::string& host, const int port, const std::string& server_name) {
-    ServerContext* handling_server = findServerForHandlingRequest(host, port, server_name);
-    std::cout << handling_server->getServerNames() << std::endl;
+void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
+    std::map<int, Request *>::iterator it_r = _clients_requests.begin();
+
+    while (it_r != _clients_requests.end()) {
+        Request* current_request = (*it_r).second;
+        std::string host_from_header = current_request->_headers["host"];
+
+        ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
+        current_request->setHandlingServer(handling_server);
+
+        // TODO: select route from handling server
+
+        ++it_r;
+    }
+
 }

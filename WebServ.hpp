@@ -34,7 +34,7 @@ public:
                                                          const int port,
                                                          const std::string& server_name);
 
-    static void route(const std::string& host, const int port, const std::string& server_name);
+    static void routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests);
 
 	void stop();
 

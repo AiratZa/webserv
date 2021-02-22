@@ -31,6 +31,7 @@ int Server::Listener::checkFullRequest(std::string const& req) {
     size_t      length;
     int         pointer;
 
+    std::cout << req << std::endl;
     if (std::string::npos != req.find("\r\n\r\n")) {
         std::string header = req.substr(0, req.find("\r\n\r\n"));
         libft::string_to_lower(header);
