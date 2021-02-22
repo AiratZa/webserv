@@ -40,8 +40,14 @@ public:
 
     static std::list<ServerContext*> servers_list;
 
+    static int getCorrectionMinutesToGMT(void) { return correction_minutes_to_GMT;}
+    static void setCorrectionMinutesToGMT(int min) { correction_minutes_to_GMT = min;}
+
 private:
     std::vector<Server*> _servers;
+
+    static int correction_minutes_to_GMT; // TIMEZONE
+
 
     Config _config;
     // Для заполнения множества сокетов

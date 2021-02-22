@@ -30,7 +30,9 @@ SRCS = $(UTILS_SRCS) main.cpp \
     config_parsing/ServerContext.cpp \
     config_parsing/LocationContext.cpp \
     request_handlers/Request.cpp \
-    response/Response.cpp
+    response/Response.cpp \
+    response/autoindex_handling/autoindex_handling.cpp
+
 
 
 OBJS = $(SRCS:.cpp=.o)

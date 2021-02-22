@@ -4,6 +4,9 @@
 #include "utils/cpp_libft/libft.hpp"
 #include <iostream>
 
+#include "response/autoindex_handling/autoindex_handling.hpp" // TODO: will be removed after TESTS
+
+
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
 
 
@@ -15,7 +18,22 @@ void intHandler(int signal) {
 	exit(EXIT_SUCCESS);
 }
 
+void checkAndSetTimeZoneCorrection(void) {
+    struct timeval	current;
+    struct timezone tz;
+
+    if (gettimeofday(&current, &tz)) {
+        std::cout << strerror(errno) << std::endl;
+        exit(errno);
+    }
+
+    WebServ::setCorrectionMinutesToGMT(tz.tz_minuteswest);
+}
+
+
+
 std::list<ServerContext*> WebServ::servers_list;
+int WebServ::correction_minutes_to_GMT;
 
 int main(int argc, char *argv[])
 {
@@ -30,19 +48,23 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);
-    try
-    {
-        Config _config = Config(path_to_config);
-        std::cout << std::endl << "===================================================" << std::endl << std::endl;
+    checkAndSetTimeZoneCorrection();
 
-        WebServ::servers_list = _config.getServersList();
-        webserv = WebServ(_config);
-        webserv.serveConnections();
-    }
-    catch (Config::BadConfigException & e)
-    {
-        exit(EXIT_FAILURE);
-    }
+    write_html(); // TODO: Autoindex temp testing
+    dir_opers(); // TODO: Autoindex temp testing
+//    try
+//    {
+//        Config _config = Config(path_to_config);
+//        std::cout << std::endl << "===================================================" << std::endl << std::endl;
+//
+//        WebServ::servers_list = _config.getServersList();
+//        webserv = WebServ(_config);
+//        webserv.serveConnections();
+//    }
+//    catch (Config::BadConfigException & e)
+//    {
+//        exit(EXIT_FAILURE);
+//    }
 
 
     return 0;
