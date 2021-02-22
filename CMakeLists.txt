@@ -28,9 +28,10 @@ set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
 set (PROJECT_SRCS  Server.cpp
         WebServ.cpp
         WebServ_Router.cpp
-        ServerListener.cpp
-        ServerListener_HandleRequests.cpp
-        ServerListener_HandleResponses.cpp
+        Listener.cpp
+#        ServerListener.cpp
+#        ServerListener_HandleRequests.cpp
+#        ServerListener_HandleResponses.cpp
         request_handlers/Request.cpp
         response/Response.cpp
         ${CONFIG_PARSING_SRCS})

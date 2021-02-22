@@ -79,17 +79,6 @@ void Request::parseRequestLine() {
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 }
 
-
-
-//bool is_implemented_header(std::string field_name) {
-//	return (Request::implemented_headers.count(field_name));
-//}
-
-//bool is_appendable_header(std::string field_name) {
-//	return (field_name == "accept-charset" || field_name == "accept-language"
-//			|| field_name == "content-language" || field_name == "transfer-encoding");
-//}
-
 void Request::parseHeaders() {
 	std::string field_name;
 	std::string field_value;
@@ -133,10 +122,6 @@ void Request::parseHeaders() {
 		{
 			if (_headers.count(field_name)) {
 				_headers[field_name].append(",");
-//				if (is_appendable_header(field_name))
-//					_headers[field_name].append(",");
-//				else
-//					return setStatusCode(400);
 			}
 			_headers[field_name].append(field_value); // add field_name-field_value to map
 		}
@@ -151,13 +136,6 @@ bool Request::isStatusCodeOk() {
 		return false;
 	return true;
 }
-
-//bool check_chunk_length_field(std::string & chunk_length_field) {
-//	if (chunk_length_field.size() > 5
-//		|| chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
-//		return false;
-//	return true;
-//}
 
 /*
  * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
@@ -206,22 +184,6 @@ void Request::getContentByLength() {
 	_content.append(_raw_request.substr(0, content_length));
 	_raw_request.erase(0, content_length);
 	_raw_request.clear();
-}
-
-void Request::checkMethod() {
-
-}
-
-void Request::checkRequestTarget() {
-
-}
-
-void Request::checkHttpVersion() {
-
-}
-
-void Request::checkHeaders() {
-
 }
 
 void Request::parseBody() {

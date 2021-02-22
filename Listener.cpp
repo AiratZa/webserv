@@ -57,60 +57,6 @@ void Listener::updateMaxFD(void) {
 	_max_fd = max_tmp;
 }
 
-
-
-void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
-	handleRequests(globalReadSetPtr);
-	////Router in developing. Deadline 22.02.2021
-//    WebServ::routeRequests(_host, _port, _client_requests);
-	handleResponses(globalWriteSetPtr);
-}
-
-
-
-void Listener::checkRequest(Request* request) {
-	if (request->isStatusCodeOk()) {
-		request->checkMethod();
-		request->checkRequestTarget();
-		request->checkHttpVersion();
-		request->checkHeaders();
-	}
-}
-
-
-void Listener::handleResponses(fd_set* globalWriteSetPtr) {
-	std::list<int>::iterator it = _clients_write.begin();
-
-	int fd;
-	while (it != _clients_write.end()) {
-		fd = *it;
-		if (FD_ISSET(fd, globalWriteSetPtr)) {
-			Request* request = _client_requests[fd];
-			request->parseRequestLine();
-			if (request->isStatusCodeOk())
-				request->parseHeaders();
-
-			WebServ::routeRequests(_host, _port, _client_requests);
-
-			request->parseBody();
-			checkRequest(request);
-
-			Response response(request, fd);
-			response.generateResponse();
-			response.sendResponse();
-
-			close(fd);
-			delete _client_requests[fd];
-			_client_requests.erase(fd);
-			it = _clients_write.erase(it);
-
-		} else {
-			++it;
-		}
-	}
-}
-
-
 void Listener::acceptConnection(void) {
 	int sock = accept(_listener, NULL, NULL);
 	if(sock < 0)
@@ -126,6 +72,13 @@ void Listener::acceptConnection(void) {
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request();
+}
+
+void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
+	handleRequests(globalReadSetPtr);
+	////Router in developing. Deadline 22.02.2021
+//    WebServ::routeRequests(_host, _port, _client_requests);
+	handleResponses(globalWriteSetPtr);
 }
 
 void Listener::readError(std::list<int>::iterator & it) {
@@ -223,6 +176,37 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				readError(it);
 				continue;
 			}
+			++it;
+		}
+	}
+}
+
+void Listener::handleResponses(fd_set* globalWriteSetPtr) {
+	std::list<int>::iterator it = _clients_write.begin();
+
+	int fd;
+	while (it != _clients_write.end()) {
+		fd = *it;
+		if (FD_ISSET(fd, globalWriteSetPtr)) {
+			Request* request = _client_requests[fd];
+			request->parseRequestLine();
+			if (request->isStatusCodeOk())
+				request->parseHeaders();
+
+			WebServ::routeRequests(_host, _port, _client_requests);
+
+			request->parseBody();
+
+			Response response(request, fd);
+			response.generateResponse();
+			response.sendResponse();
+
+			close(fd);
+			delete _client_requests[fd];
+			_client_requests.erase(fd);
+			it = _clients_write.erase(it);
+
+		} else {
 			++it;
 		}
 	}

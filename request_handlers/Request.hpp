@@ -27,10 +27,10 @@ class Request {
 		void getContentByLength();
 		void parseHeaders();
 		void parseBody();
-		void checkMethod();
-		void checkRequestTarget();
-		void checkHttpVersion();
-		void checkHeaders();
+//		void checkMethod();
+//		void checkRequestTarget();
+//		void checkHttpVersion();
+//		void checkHeaders();
 
 	private:
 		static std::set<std::string> initRequestHeaders();
