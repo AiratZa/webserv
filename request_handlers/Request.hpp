@@ -56,6 +56,8 @@ class Request {
     void setHandlingServer(ServerContext* handling_server); // Airat
     void setHandlingLocation(LocationContext* location_to_route); // Airat
 
+	std::string    parsURL(std::string url);
+
     private:
         ServerContext* _handling_server; // Airat
         LocationContext* _handling_location; // Airat

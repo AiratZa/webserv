@@ -30,6 +30,7 @@ public:
 	void generateStatusLine();
 	void generateHeaders();
 	void generateContent();
+	void readFileToContent(std::string & filename);
 
 private:
 	static std::map<int,std::string> initStatusCodes();
@@ -50,7 +51,9 @@ private:
 	std::string _content;
 //	Server* _server;
 
+	std::string _root; // TODO:temporary
+
 };
 
-	std::string    parsURL(std::string url);
+
 #endif //RESPONSE_HPP

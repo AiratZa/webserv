@@ -215,3 +215,56 @@ void Request::setHandlingLocation(LocationContext* location_to_route) {
 //        _status_code = 404; // 404 Not Found
 //    }
 }
+
+std::string    Request::parsURL(std::string url) {
+	std::string res;
+	std::string tmp;
+	std::list<std::string>   path;
+	std::list<std::string>::iterator it = path.begin();
+	// _requestTarget = url
+	int count = 0;
+	int lenght = url.length();
+	while (count < lenght && url[count] != '/') {
+		res += url[count];
+		++count;
+	}
+	while (count < lenght) {
+		while (url[count] == '/') // if "//////"
+			++count;
+		if (url[count] == '.' && // if "/./" of "/."
+			(count + 1 == lenght || (count + 1 < lenght && url[count + 1] == '/')))
+			count += 1;
+		if (url[count] == '.' && // if "/../" or "/.."
+			((count + 2 < lenght && url[count + 1] == '.' && url[count + 2] == '/') ||
+			 (count + 2 == lenght && url[count + 1] == '.'))) {
+			if (!path.empty()) {
+				--it;
+				path.pop_back();
+			}
+			count += 2;
+		}
+		while (count < lenght && url[count] != '/') { //args write
+			if (url[count] == '%') {
+				char ch;
+				if ((ch = libft::percent_decode(url, count)) != '\0') {
+					tmp += ch;
+					continue;
+				}
+			}
+			tmp += url[count];
+			++count;
+		}
+		if (!tmp.empty()) { // args add
+			path.push_back(tmp);
+			tmp.clear();
+			++it;
+		}
+	}
+	it = path.begin();
+	while (it != path.end()) { // uri constructor
+		res += '/';
+		res += *it;
+		++it;
+	}
+	return res;
+}

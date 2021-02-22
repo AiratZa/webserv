@@ -77,7 +77,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket), _status_code(request->_status_code),
-				_reason_phrase("OK"), _raw_response(""), _content("") { };
+				_reason_phrase("OK"), _raw_response(""), _content(""), _root("nginx_etalon") { };
 
 Response::~Response(void) { };
 
@@ -107,17 +107,46 @@ void Response::generateResponseByStatusCode() {
 	_raw_response.append(_content);
 }
 
-void Response::generateGetResponse() {
+void Response::readFileToContent(std::string & filename) {
+	char buf[1024 + 1];
+	int ret;
+	int fd;
 
-	_content += "<title>Test C++ HTTP Server</title>\n";
-	_content += "<h1>Test page</h1>\n";
-	_content += "<p>This is body of the test page...</p>\n";
-	_content += "<h2>Implemented request headers</h2>\n";
-	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
-	{
-		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
+	fd = open(filename.c_str(), O_RDONLY);
+	while ((ret = read(fd, buf, 1024))) {
+		if (ret < 0)
+			utils::exitWithLog();
+		buf[ret] = '\0';
+		_content.append(buf);
 	}
-	_content += "<em><small>Test C++ Http Server</small></em>\n";
+}
+
+void Response::generateGetResponse() {
+	struct stat stat_buf;
+	std::string filename;
+
+	filename = _root + _request->_request_target;
+
+	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
+		if (S_ISDIR(stat_buf.st_mode))
+			filename = _root + "/html/index.html";
+		readFileToContent(filename);
+	}
+	else {
+		filename = _root + "/html/index.html";
+		readFileToContent(filename);
+	}
+
+
+//	_content += "<title>Test C++ HTTP Server</title>\n";
+//	_content += "<h1>Test page</h1>\n";
+//	_content += "<p>This is body of the test page...</p>\n";
+//	_content += "<h2>Implemented request headers</h2>\n";
+//	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
+//	{
+//		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
+//	}
+//	_content += "<em><small>Test C++ Http Server</small></em>\n";
 
 	generateStatusLine();
 	generateHeaders();
@@ -177,57 +206,4 @@ void Response::generateResponse() {
 void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
 	send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
-}
-
-std::string    parsURL(std::string url) {
-    std::string res;
-    std::string tmp;
-    std::list<std::string>   path;
-    std::list<std::string>::iterator it = path.begin();
-    // _requestTarget = url
-    int count = 0;
-    int lenght = url.length();
-    while (count < lenght && url[count] != '/') {
-        res += url[count];
-        ++count;
-    }
-    while (count < lenght) {
-        while (url[count] == '/') // if "//////"
-            ++count;
-        if (url[count] == '.' && // if "/./" of "/."
-            (count + 1 == lenght || (count + 1 < lenght && url[count + 1] == '/')))
-            count += 1;
-        if (url[count] == '.' && // if "/../" or "/.."
-            ((count + 2 < lenght && url[count + 1] == '.' && url[count + 2] == '/') ||
-            (count + 2 == lenght && url[count + 1] == '.'))) {
-            if (!path.empty()) {
-                --it;
-                path.pop_back();
-            }
-            count += 2;
-        }
-        while (count < lenght && url[count] != '/') { //args write
-            if (url[count] == '%') {
-                char ch;
-                if ((ch = libft::percent_decode(url, count)) != '\0') {
-                    tmp += ch;
-                    continue;
-                }
-            }
-            tmp += url[count];
-            ++count;
-        }
-        if (!tmp.empty()) { // args add
-            path.push_back(tmp);
-            tmp.clear();
-            ++it;
-        }
-    }
-    it = path.begin();
-    while (it != path.end()) { // uri constructor
-        res += '/';
-        res += *it;
-        ++it;
-    }
-    return res;
 }
