@@ -27,12 +27,10 @@ public:
 	void generateStatusLine();
 	void generateHeaders();
 	void generateContent();
-	std::string normalizeUri();
 
 private:
 	static std::map<int,std::string> initStatusCodes();
 	static std::set<std::string> initResponseHeaders();
-	std::string normalizeUri(std::string & request_target);
 
 public:
 	static std::set<std::string> implemented_headers;
@@ -48,7 +46,6 @@ private:
 	std::string _raw_response;
 	std::string _content;
 	Server* _server;
-	std::string _uri;
 
 };
 

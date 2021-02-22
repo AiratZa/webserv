@@ -107,29 +107,7 @@ void Response::generateResponseByStatusCode() {
 	_raw_response.append(_content);
 }
 
-std::string Response::normalizeUri(std::string & request_target) {
-	return request_target;
-}
-
-void Request::configByHost(std::string & host) {
-	if (_request->_headers.count("host"))
-		if (_server_configs.count(_request->_headers["host"]))
-		{
-			client_max_body_size = _server_configs[_request->_headers["host"]].client_max_body_size;
-
-		}
-}
-
 void Response::generateGetResponse() {
-
-	configByHost();
-	_uri = normalizeUri(_request->_request_target);
-	configByLocation();
-
-
-//	choose server config that matches host header or default server;
-//	choose config by matching locations if there is;
-//	run cgi or read file or reply with 404 or so;
 
 	_content += "<title>Test C++ HTTP Server</title>\n";
 	_content += "<h1>Test page</h1>\n";
