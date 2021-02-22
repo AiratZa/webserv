@@ -1,0 +1,36 @@
+tmp			|	File type: directory
+
+test1			|	File type: regular file
+
+koi-utf			|	File type: regular file
+
+fastcgi.conf			|	File type: regular file
+
+data			|	File type: directory
+
+uwsgi_params			|	File type: regular file
+
+".html			|	File type: regular file
+
+directory			|	File type: regular file
+
+koi-win			|	File type: regular file
+
+fastcgi_params			|	File type: regular file
+
+.			|	File type: directory
+
+win-utf			|	File type: regular file
+
+mime.types			|	File type: regular file
+
+test			|	File type: regular file
+
+nginx.conf			|	File type: regular file
+
+py.py			|	File type: regular file
+
+..			|	File type: directory
+
+scgi_params			|	File type: regular file
+
