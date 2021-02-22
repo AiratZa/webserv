@@ -117,11 +117,11 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
     const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
     std::size_t target_len = current_request->_request_target.size();
 
-    while (target_len != 1) {
+    while (target_len > 1) {
         std::string target_substr = current_request->_request_target.substr(0, (target_len-1));
 
         std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
-        while (it_non_exact != exact.end()) {
+        while (it_non_exact != non_exact.end()) {
             if ((*it_non_exact)->getLocationPath() == target_substr) {
                 return (*it_non_exact); // exact route(location) is found
             }
