@@ -188,11 +188,13 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
 			Request* request = _client_requests[fd];
 			request->parseRequestLine();
-			if (request->isStatusCodeOk())
-				request->parseHeaders();
+//			if (request->isStatusCodeOk())
+			request->parseHeaders();
 
-			request->_request_target = request->parsURL(request->_request_target);
-			WebServ::routeRequests(_host, _port, _client_requests);
+			if (request->isStatusCodeOk()) {
+				request->_request_target = request->parsURL(request->_request_target);
+				WebServ::routeRequests(_host, _port, _client_requests);
+			}
 
 			request->parseBody();
 

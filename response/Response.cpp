@@ -134,13 +134,35 @@ void Response::generateStatusLine() {
 	_raw_response += "\r\n";
 }
 
+//implemented_headers.insert("allow"); // Allow: OPTIONS, GET, HEAD
+//implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
+//implemented_headers.insert("content-length"); // Content-Length: 1348
+//implemented_headers.insert("content-location");
+//implemented_headers.insert("content-type"); // Content-Type: text/html;charset=utf-8
+//implemented_headers.insert("date"); // Date: Tue, 15 Nov 1994 08:12:31 GMT
+//implemented_headers.insert("last-modified");
+//implemented_headers.insert("location"); // Location: http://example.com/about.html#contacts
+//implemented_headers.insert("retry-after");
+//implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
+//implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
+//implemented_headers.insert("www-authenticate");
+
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
+	_raw_response += "server: webserv\r\n";
+//	_raw_response += "date: ";
+//	_raw_response += getDate();
+//	_raw_response += "\r\n";
 	_raw_response += _content_type;
 	_raw_response += _allow;
 	_raw_response += "Content-Length: ";
 	_raw_response += libft::ultostr_base(_content.length(), 10);
-	_raw_response += "\r\n\r\n";
+	_raw_response += "\r\n";
+	//	_raw_response += "last-modified: ";
+//	_raw_response += getDate();
+//	_raw_response += "\r\n";
+	_raw_response += "Content-Language: en\r\n";
+	_raw_response += "\r\n";
 }
 
 void Response::generateResponseByStatusCode() {

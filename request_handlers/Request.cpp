@@ -89,6 +89,8 @@ void Request::parseRequestLine() {
 }
 
 void Request::parseHeaders() {
+	if (!isStatusCodeOk())
+		return ;
 	std::string field_name;
 	std::string field_value;
 	size_t field_name_length;
