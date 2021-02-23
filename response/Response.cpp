@@ -107,7 +107,48 @@ void Response::generateResponseByStatusCode() {
 	_raw_response.append(_content);
 }
 
+bool writeFileContentToString(const std::string& file_name, std::string& content) {
+    int file = open(file_name.c_str(), O_RDONLY);
+    if (file == -1)
+        return false;
+
+    // reading file line by line
+    char *str;
+    int ret;
+
+    while ((ret = get_next_line(file, &str)) == 1) {
+        content += str;
+        delete str;
+    }
+    content += str;
+    delete str;
+    close(file);
+    return true;
+}
+
+bool Response::setIndexFileContentToResponseContent(void) {
+    std::string root_path = _request->getAbsoluteRootPathForRequest() + _request->_request_target;
+
+    const std::list<std::string>& index_pages = _request->getIndexPagesListForRequest();
+
+    std::list<std::string>::const_iterator it = index_pages.begin();
+
+    std::string file_content = "";
+    while (it != index_pages.end()) {
+        std::string file_name = root_path + (*it);
+        if (writeFileContentToString(file_name, file_content)) {
+            _content += file_content;
+            return true;
+        }
+        ++it;
+    }
+    return false;
+}
+
 void Response::generateGetResponse() {
+    std::cout << "TARGET: " <<_request->_request_target << std::endl;
+    std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
+    setIndexFileContentToResponseContent();
 
 	_content += "<title>Test C++ HTTP Server</title>\n";
 	_content += "<h1>Test page</h1>\n";

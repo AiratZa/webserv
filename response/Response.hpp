@@ -13,6 +13,8 @@
 
 //class Server;
 #include <list>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 class Response {
 public:
@@ -30,6 +32,8 @@ public:
 	void generateStatusLine();
 	void generateHeaders();
 	void generateContent();
+
+
 
 private:
 	static std::map<int,std::string> initStatusCodes();
@@ -49,6 +53,9 @@ private:
 	std::string _raw_response;
 	std::string _content;
 //	Server* _server;
+
+
+    bool setIndexFileContentToResponseContent(void); // Airat
 
 };
 

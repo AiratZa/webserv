@@ -57,7 +57,14 @@ class Request {
 
     void setHandlingServer(ServerContext* handling_server); // Airat
     void setHandlingLocation(LocationContext* location_to_route); // Airat
-    void setAbsoluteRootPathForRequest(void);
+    void setAbsoluteRootPathForRequest(void); // Airat
+
+    const std::string& getAbsoluteRootPathForRequest(void) const { // Airat
+        return _absolute_root_path_for_request;
+    }
+
+    const std::list<std::string>& getIndexPagesListForRequest(void) const; // Airat
+
 
     private:
         ServerContext* _handling_server; // Airat

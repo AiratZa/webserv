@@ -243,3 +243,9 @@ void Request::setAbsoluteRootPathForRequest(void) {
         _absolute_root_path_for_request = globalRootPath + cont_root_path;
     }
 }
+
+const std::list<std::string>& Request::getIndexPagesListForRequest(void) const {
+    if (_handling_location)
+        return _handling_location->getIndexPagesDirectiveInfo();
+    return _handling_server->getIndexPagesDirectiveInfo();
+}
