@@ -208,10 +208,27 @@ void Response::generateHeadResponse() {
 }
 
 void Response::generatePutResponse() {
+    std::cout << "HELLO TARGET: " <<_request->_request_target << std::endl;
+    std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
+    setIndexFileContentToResponseContent();
 
+    _content += "<title>Test C++ HTTP Server</title>\n";
+    _content += "<h1>Test page</h1>\n";
+    _content += "<p>This is body of the test page...</p>\n";
+    _content += "<h2>Implemented request headers</h2>\n";
+    for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
+    {
+        _content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
+    }
+    _content += "<em><small>Test C++ Http Server</small></em>\n";
+
+    generateStatusLine();
+    generateHeaders();
+    _raw_response += _content;
 }
 
 void Response::generateResponse() {
+    if ()
 	if (_request->isStatusCodeOk()) {
 		if (_request->_method == "GET") {
 			generateGetResponse();
