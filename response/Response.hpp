@@ -34,6 +34,8 @@ public:
 	void generateContent();
 	void readFileToContent(std::string & filename);
 	bool isStatusCodeOk();
+	void generateAutoindex();
+	void setContentTypeByFilename(std::string & filename);
 
 
 
@@ -57,6 +59,9 @@ private:
 //	Server* _server;
 
 	std::string _root; // TODO:temporary
+
+private: // headers
+	std::string _content_type;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 
