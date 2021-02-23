@@ -285,10 +285,11 @@ void Request::setAbsoluteRootPathForRequest(void) {
     if (_handling_location) {
         cont_root_path = _handling_location->getAliasPath();
         if (!cont_root_path.empty()) {
+            _absolute_root_path_for_request = cont_root_path;
             _is_alias_path = true;
             return ;
         } else {
-            cont_root_path = _handling_location->getRootPath();
+            cont_root_path = _handling_location->getRootPath() + _handling_location->getLocationPath();
         }
     } else {
         cont_root_path = _handling_server->getRootPath();
