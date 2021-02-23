@@ -210,8 +210,10 @@ void Request::setHandlingServer(ServerContext* handling_server){
 
 void Request::setHandlingLocation(LocationContext* location_to_route) {
     _handling_location = location_to_route;
-//    if (!_handling_location) // location is not found
-//    {
+//    if (!_handling_location){
+        /* location is not found
+         *
+        */
 //        _status_code = 404; // 404 Not Found
 //    }
 }

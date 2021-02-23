@@ -8,7 +8,7 @@
 
 
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
-#define PREFIX_DEFAULT_PATH "./default_folder/" // From this path working root
+#define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root
 
 WebServ webserv;
 
@@ -23,17 +23,25 @@ void checkAndSetTimeZoneCorrection(void) {
     struct timezone tz;
 
     if (gettimeofday(&current, &tz)) {
-        std::cout << strerror(errno) << std::endl;
-        exit(errno);
+        utils::exitWithLog();
     }
 
     WebServ::setCorrectionMinutesToGMT(tz.tz_minuteswest);
 }
 
+// set global root path
+void setGlobalRootPath(void) {
+    char *absolute_path = getcwd(NULL, 0);
+    if (!absolute_path) {
+        utils::exitWithLog();
+    }
 
+    WebServ::setWebServRootPath(std::string(absolute_path) + PREFIX_DEFAULT_PATH);
+}
 
 std::list<ServerContext*> WebServ::servers_list;
 int WebServ::correction_minutes_to_GMT;
+std::string WebServ::_webserv_root_path;
 
 int main(int argc, char *argv[])
 {
@@ -48,9 +56,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);
+
     checkAndSetTimeZoneCorrection();
+    setGlobalRootPath();
 
 //    write_html(); // TODO: Autoindex temp testing
+
     try
     {
         Config _config = Config(path_to_config);

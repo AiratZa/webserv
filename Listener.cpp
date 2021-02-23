@@ -76,9 +76,7 @@ void Listener::acceptConnection(void) {
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
 	handleRequests(globalReadSetPtr);
-	////Router in developing. Deadline 22.02.2021
-//    WebServ::routeRequests(_host, _port, _client_requests);
-	handleResponses(globalWriteSetPtr);
+	handleResponses(globalWriteSetPtr); // Routing is made inside handling Responses
 }
 
 void Listener::readError(std::list<int>::iterator & it) {
