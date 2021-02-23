@@ -289,7 +289,7 @@ void Request::setAbsoluteRootPathForRequest(void) {
             _is_alias_path = true;
             return ;
         } else {
-            cont_root_path = _handling_location->getRootPath();
+            cont_root_path = _handling_location->getRootPath() + _handling_location->getLocationPath();
         }
     } else {
         cont_root_path = _handling_server->getRootPath();
