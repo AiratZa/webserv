@@ -36,6 +36,7 @@ public:
 	bool isStatusCodeOk();
 	void generateAutoindex();
 	void setContentTypeByFilename(std::string & filename);
+	bool isMethodAllowed();
 
 
 
@@ -62,6 +63,7 @@ private:
 
 private: // headers
 	std::string _content_type;
+	std::string _allow;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 

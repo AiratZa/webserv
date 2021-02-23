@@ -137,6 +137,7 @@ void Response::generateStatusLine() {
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
 	_raw_response += _content_type;
+	_raw_response += _allow;
 	_raw_response += "Content-Length: ";
 	_raw_response += libft::ultostr_base(_content.length(), 10);
 	_raw_response += "\r\n\r\n";
@@ -189,15 +190,47 @@ void Response::setContentTypeByFilename(std::string & filename) {
 		else if (ext == ".html")
 			_content_type = "Content-Type: text/html; charset=utf-8\r\n";
 		else if (ext == ".jpg")
-			_content_type = "Content-Type: image/jpeg; charset=utf-8\r\n";
+			_content_type = "Content-Type: image/jpeg;\r\n";
 		else
 			_content_type = "Content-Type: application/octet-stream\r\n";
 	}
 }
 
+bool Response::isMethodAllowed() {
+//	std::cout << "_request->_handling_location " << _request->_handling_location << std::endl;
+	if (!_request->_handling_location)
+		return true;
+	std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
+
+//	std::cout << "allowed_methods.empty() " << allowed_methods.empty() << std::endl;
+	if (allowed_methods.empty())
+		return true;
+	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+		if (*it == "GET")
+			return true;
+	}
+	return false;
+}
+
 void Response::generateGetResponse() {
 	struct stat stat_buf;
 	std::string filename;
+
+
+//	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
+	if (!isMethodAllowed()) {
+		std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
+		_allow = "Allow: ";
+		for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+			_allow += *it;
+			_allow += ",";
+		}
+		_allow.erase(_allow.size() - 1, 1);
+		_allow += "\r\n";
+		_status_code = 405;
+		return ;
+	}
+
 
 //	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
 //	std::cout << "_request->_handling_location->getAliasPath() " << _request->_handling_location->getAliasPath() << std::endl;
