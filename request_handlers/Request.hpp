@@ -58,7 +58,7 @@ class Request {
 
 	std::string    parsURL(std::string url);
 
-    private:
+    public:
         ServerContext* _handling_server; // Airat
         LocationContext* _handling_location; // Airat
 //		bool _is_chunked;

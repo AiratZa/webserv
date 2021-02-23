@@ -31,6 +31,7 @@ public:
 	void generateHeaders();
 	void generateContent();
 	void readFileToContent(std::string & filename);
+	bool isStatusCodeOk();
 
 private:
 	static std::map<int,std::string> initStatusCodes();

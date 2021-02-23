@@ -121,6 +121,12 @@ void Response::readFileToContent(std::string & filename) {
 	}
 }
 
+bool Response::isStatusCodeOk() {
+	if (_status_code != 200)
+		return false;
+	return true;
+}
+
 void Response::generateGetResponse() {
 	struct stat stat_buf;
 	std::string filename;
@@ -128,54 +134,29 @@ void Response::generateGetResponse() {
 	filename = _root + _request->_request_target;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
-		if (S_ISDIR(stat_buf.st_mode))
-			filename = _root + "/html/index.html";
-		readFileToContent(filename);
-	}
-	else {
-		filename = _root + "/html/index.html";
-		readFileToContent(filename);
+		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
+			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo();
+			for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
+				filename += *it;
+				if (stat(filename.c_str(), &stat_buf) == 0) {
+					break ;
+				}
+			}
+		}
+		if (S_ISREG(stat_buf.st_mode))
+			readFileToContent(filename);
+		else
+			_status_code = 403;
+	} else {
+		_status_code = 404;
 	}
 
-
-//	_content += "<title>Test C++ HTTP Server</title>\n";
-//	_content += "<h1>Test page</h1>\n";
-//	_content += "<p>This is body of the test page...</p>\n";
-//	_content += "<h2>Implemented request headers</h2>\n";
-//	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
-//	{
-//		_content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
-//	}
-//	_content += "<em><small>Test C++ Http Server</small></em>\n";
+	if (!isStatusCodeOk())
+		return generateResponseByStatusCode();
 
 	generateStatusLine();
 	generateHeaders();
 	_raw_response += _content;
-
-
-//	std::stringstream response; // сюда будет записываться ответ клиенту
-//	std::stringstream response_body; // тело ответа
-//
-//	// формируем тело ответа (HTML)
-//	response_body << "<title>Test C++ HTTP Server</title>\n"
-//				  << "<h1>Test page</h1>\n"
-//				  << "<p>This is body of the test page...</p>\n"
-//				  << "<h2>Implemented request headers</h2>\n";
-//	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
-//	{
-//		response_body << "<pre>" << (*it).first << ":" << (*it).second << "</pre>\n";
-//	}
-//	response_body << "<em><small>Test C++ Http Servergg</small></em>\n";
-//
-//	// Формируем весь ответ вместе с заголовками
-//	response << "HTTP/1.1 200 OK\r\n"
-//			 << "Version: HTTP/1.1\r\n"
-//			 << "Content-Type: text/html; charset=utf-8\r\n"
-//			 << "Content-Length: " << response_body.str().length()
-//			 << "\r\n\r\n"
-//			 << response_body.str();
-//
-//	_raw_response = response.str();
 }
 
 void Response::generateHeadResponse() {
