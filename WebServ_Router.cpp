@@ -133,20 +133,32 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
     return NULL; // Not match to locations (404 Not Found)
 }
 
+void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request) {
+    std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
+
+    std::string host_from_header;
+    if (it != _client_request->_headers.end()) {
+        host_from_header = it->second;
+    }
+
+    ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
+    _client_request->setHandlingServer(handling_server);
+
+    LocationContext* location_to_route = searchForBestMatchLocation(handling_server, _client_request);
+    _client_request->setHandlingLocation(location_to_route);
+
+    _client_request->setAbsoluteRootPathForRequest();
+}
+
 void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
     std::map<int, Request *>::iterator it_r = _clients_requests.begin();
 
     while (it_r != _clients_requests.end()) {
         Request* current_request = (*it_r).second;
-        std::string host_from_header = current_request->_headers["host"];
-
-        ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
-        current_request->setHandlingServer(handling_server);
-
-        LocationContext* location_to_route = searchForBestMatchLocation(handling_server, current_request);
-        current_request->setHandlingLocation(location_to_route);
-
-        current_request->setAbsoluteRootPathForRequest();
+        WebServ::routeRequest(host, port, current_request);
         ++it_r;
     }
 }
+
+
+

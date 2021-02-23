@@ -34,6 +34,10 @@ public:
 	int     checkFullRequest(std::string const& req);
 	void    readError(std::list<int>::iterator & it);
 
+	// Airat (GDrake)
+    bool readAndSetHeaderInfoInRequest(Request* request_obj);
+    bool continueReadBody(Request* request_obj);
+    bool processHeaderInfoForActions(int client_socket);
 
 private:
 	int _listener;

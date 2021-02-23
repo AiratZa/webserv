@@ -78,9 +78,41 @@ class Request {
 //		size_t _content_lenght;
 
 
-    // reading from client reformating
+    bool isHeaderWasRead(void) const { return _header_was_read; }
+    void setHeaderWasRead(void) { _header_was_read = true; }
+
+
+    int getHeaderContentLength(void) const {
+        std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
+        if (it == _headers.end())
+            return -1;
+        return libft::strtoul_base((*it).second, 10);
+    }
+
+    const std::string getRawBody(void) const {
+        if (!_header_end_pos)
+            return "";
+        try {
+            return _raw_request.substr(_header_end_pos + 4);
+        }
+        catch (const std::out_of_range& oor) {
+            return "";
+        }
+    }
+
+    void setHeaderEndPos(std::size_t val) { _header_end_pos = val;}
+
+
+    bool isMethodLimited(const std::string& method) const;
+    void handleExpectHeader(void);
+
     private:
-        bool _header_is_read;
+
+        std::size_t _header_end_pos;
+        bool _header_was_read;
+
+
+
 
 };
 

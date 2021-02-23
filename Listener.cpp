@@ -85,40 +85,84 @@ void Listener::readError(std::list<int>::iterator & it) {
 	it = _clients_read.erase(it);
 }
 
-int Listener::checkFullRequest(std::string const& req) {
-	size_t      length;
-	int         pointer;
+// return TRUE if header was read else FALSE
+bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
+    const std::string& raw_request = request_obj->getRawRequest();
 
-	std::cout << req << std::endl;
-	if (std::string::npos != req.find("\r\n\r\n")) {
-		std::string header = req.substr(0, req.find("\r\n\r\n"));
-		libft::string_to_lower(header);
-		std::string body = req.substr((req.find("\r\n\r\n") + 4), req.length());
-		if (std::string::npos != header.find("transfer-encoding:")) {
-			std::string encoding = header.substr(header.find("transfer-encoding:") + 18);
-			encoding = encoding.substr(0, encoding.find("\r\n"));
-			if (encoding.find("chunked"))
-				while (!body.empty()) {
-					if ((length = libft::strtoul_base(body, 16)) == 0 && body.find("0\r\n\r\n") == 0)
-						return 1;
-					if (body.length() >= length + 5)
-						body = body.substr(body.find("\r\n") + 2 + length);
-					else
-						break;
-				}
-		}
-		else if (std::string::npos != header.find("content-length:")) {
-			pointer = header.find("content-length:") + 15;
-			length = libft::strtoul_base(header.substr(pointer, header.length()), 10);
-			if (body.length() == length)
-				return 1;
-		}
-		else
-			return 1;
-	}
-	return 0;
+    std::size_t empty_line_pos = raw_request.find("\r\n\r\n");
+    if (std::string::npos != empty_line_pos) {
+        request_obj->setHeaderEndPos(empty_line_pos);
+        return true;
+    }
+    return false;
 }
 
+// return TRUE if length of body is reached else FALSE
+bool Listener::continueReadBody(Request* request_obj) {
+    const std::map<std::string, std::string>& headers = request_obj->_headers;
+
+    const std::string& body = request_obj->getRawBody();
+    int length;
+
+    // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
+    std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
+    if ((it != headers.end()) && ((*it).second == "chunked")) {
+        size_t      len;
+        std::string tmp_body = body;
+
+        while (!tmp_body.empty()) {
+            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
+                return true;
+            if (tmp_body.length() >= len + 5)
+                tmp_body = tmp_body.substr(tmp_body.find("\r\n") + 2 + len);
+            else
+                break;
+        }
+    }
+    else if ((length = request_obj->getHeaderContentLength()) >= 0) {
+        if (body.length() == static_cast<std::size_t>(length))
+            return true;
+        return false;
+    }
+    return true;
+}
+
+
+
+
+
+// returns TRUE if we are ready and need body and its length check, etc.
+bool Listener::processHeaderInfoForActions(int client_socket) {
+    Request* request = _client_requests[client_socket];
+
+    request->parseRequestLine();
+    if (request->isStatusCodeOk()) {
+        request->parseHeaders();
+        if (!request->isStatusCodeOk()) {
+            return false;
+        }
+    }
+    else {
+        return false;
+    }
+
+    WebServ::routeRequest(_host, _port, request);
+    if (request->isMethodLimited(request->_method)) {
+        request->_status_code = 403;
+    }
+
+    if (!request->isStatusCodeOk()) {
+        return false;
+    }
+
+    request->handleExpectHeader();
+
+    if (!request->isStatusCodeOk()) {
+        return false;
+    }
+
+    return true;
+}
 
 int			get_time(void)
 {
@@ -142,11 +186,17 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 	std::map<int, int> time;
 	set_time(time, it, _clients_read.end());
 
+
 	while (it != _clients_read.end() ) {
+
 		if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
+		    // Check client header info was read or not
+
+		    bool header_was_read_client = _client_requests[*it]->isHeaderWasRead();
+
 			bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
 			if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
-				readError(it);
+				readError(it); // ERASES iterator instance inside
 				continue;
 			}
 			else if (bytes_read < 0)
@@ -155,20 +205,53 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				time[*it] = get_time();
 			buf[bytes_read] = '\0';
 
-			try {
+			try
+			{
 				_client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-			} catch (std::bad_alloc const& e) {
+			}
+			catch (std::bad_alloc const& e)
+			{
 				_client_requests[*it]->_status_code = 500;
 				readError(it);
 				continue;
 			}
-			if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
-				_clients_write.push_back(*it);
-				it = _clients_read.erase(it);
+
+			// Behavior based on was or not read header
+			if (!header_was_read_client) {
+			    bool header_was_read = readAndSetHeaderInfoInRequest(_client_requests[*it]);
+			    if (header_was_read) {
+                    _client_requests[*it]->setHeaderWasRead();
+                    bool is_continue_read_body = processHeaderInfoForActions(*it);
+
+                    if (is_continue_read_body) {
+                        bool body_was_read = continueReadBody(_client_requests[*it]);
+                        if (body_was_read) {
+                            _clients_write.push_back(*it);
+                            it = _clients_read.erase(it);
+                        }
+                        else {
+                            ++it;
+                        }
+                    }
+                    else {
+                        _clients_write.push_back(*it);
+                        it = _clients_read.erase(it);
+                    }
+                }
+            }
+			else {
+			    bool body_was_read = continueReadBody(_client_requests[*it]);
+			    if (body_was_read) {
+                    _clients_write.push_back(*it);
+                    it = _clients_read.erase(it);
+			    }
+			    else {
+                    ++it;
+                }
 			}
-			else
-				++it;
-		} else {
+		}
+		// if not ready for reading (socket not in SET)
+		else {
 			if ((get_time() - time[*it]) > TIME_OUT) {
 				readError(it);
 				continue;
@@ -186,9 +269,10 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 		fd = *it;
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
 			Request* request = _client_requests[fd];
-			request->parseRequestLine();
-			if (request->isStatusCodeOk())
-				request->parseHeaders();
+			// moved to listenere opers
+//			request->parseRequestLine();
+//			if (request->isStatusCodeOk())
+//				request->parseHeaders();
 
 			request->_request_target = request->parsURL(request->_request_target);
 			WebServ::routeRequests(_host, _port, _client_requests);
