@@ -5,6 +5,7 @@
 #ifndef LISTENER_HPP
 #define LISTENER_HPP
 
+class Listener;
 #include <string>
 #include <list>
 #include <sys/socket.h>

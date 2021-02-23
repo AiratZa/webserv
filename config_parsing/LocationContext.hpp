@@ -10,6 +10,7 @@ class ServerContext;
 #include "AContext.hpp"
 #include "ServerContext.hpp"
 #include "../utils/utils.hpp"
+#include "Config.hpp"
 
 class LocationContext : public AContext {
 public:
@@ -31,6 +32,8 @@ public:
     const std::string& getAliasPath(void) const { return _alias_path; }
 
     const std::string getLocationPathForComparison(void) const;
+
+    virtual bool setRootPath(const std::string& root_path);
 
 private:
 

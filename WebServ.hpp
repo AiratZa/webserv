@@ -7,6 +7,7 @@
 
 #include <vector>
 
+class WebServ;
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 

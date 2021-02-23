@@ -29,6 +29,12 @@ const std::string LocationContext::getLocationPathForComparison(void) const {
     return _uri;
 }
 
+bool LocationContext::setRootPath(const std::string& root_path) {
+    if (!_alias_path.empty()) {
+        Config::_badConfigError("\"root\" directive is duplicate, \"alias\" directive was specified earlier");
+    }
+    return AContext::setRootPath(root_path);
+}
 
 void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {
     if (!_is_error_pages_info_was_updated) {
@@ -49,6 +55,10 @@ bool LocationContext::setLimitedMethodsInfo(const std::list<std::string>& limite
 }
 
 bool LocationContext::setAliasPath(const std::string& alias) {
+    if (_is_root_already_set) {
+        Config::_badConfigError("\"alias\" directive is duplicate, \"root\" directive was specified earlier");
+    }
+
     if (_is_alias_path_already_was_set) {
         return false;
     }

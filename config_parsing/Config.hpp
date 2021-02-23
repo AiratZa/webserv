@@ -147,6 +147,11 @@ public:
 
     };
 
+    static void _badConfigError(const std::string & error_text) {
+        std::cerr << error_text << std::endl;
+        throw Config::BadConfigException();
+    }
+
 
 
 private:
@@ -203,7 +208,6 @@ private:
     std::string _config_text;
     int _len;
 
-    void _badConfigError(const std::string & error_text) const;
 
     bool _is_eof_reached;
     int _tmp_len;

@@ -137,12 +137,6 @@ void Config::splitConfigTextIntoBlocks(void) {
 }
 
 
-void Config::_badConfigError(const std::string & error_text) const {
-    std::cerr << error_text << std::endl;
-    throw Config::BadConfigException();
-}
-
-
 void Config::parseInsideServerContext(ServerContext* current_server) {
     const std::string& const_config_text = _getConfigText();
 

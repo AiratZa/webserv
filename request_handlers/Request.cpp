@@ -37,8 +37,17 @@ std::set<std::string> Request::initRequestHeaders() {
 	return implemented_headers;
 }
 
-Request::Request() : _raw_request(""), _status_code(200), _client_max_body_size(0xfffff) { };
-Request::Request(const std::string& request) : _raw_request(request), _status_code(200), _client_max_body_size(0xfffff) { };
+Request::Request()
+    : _raw_request(""),
+    _status_code(200),
+    _client_max_body_size(0xfffff),
+    _is_alias_path(false) { };
+
+Request::Request(const std::string& request)
+        : _raw_request(request),
+        _status_code(200),
+        _client_max_body_size(0xfffff),
+        _is_alias_path(false) { };
 
 Request::~Request(void) { };
 
@@ -210,10 +219,27 @@ void Request::setHandlingServer(ServerContext* handling_server){
 
 void Request::setHandlingLocation(LocationContext* location_to_route) {
     _handling_location = location_to_route;
-//    if (!_handling_location){
-        /* location is not found
-         *
-        */
-//        _status_code = 404; // 404 Not Found
-//    }
+}
+
+void Request::setAbsoluteRootPathForRequest(void) {
+    std::string globalRootPath = WebServ::getWebServRootPath();
+    std::string cont_root_path;
+
+    if (_handling_location) {
+        cont_root_path = _handling_location->getAliasPath();
+        if (!cont_root_path.empty()) {
+            _is_alias_path = true;
+            return ;
+        } else {
+            cont_root_path = _handling_location->getRootPath();
+        }
+    } else {
+        cont_root_path = _handling_server->getRootPath();
+    }
+
+    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
+        _absolute_root_path_for_request = cont_root_path;
+    } else {
+        _absolute_root_path_for_request = globalRootPath + cont_root_path;
+    }
 }
