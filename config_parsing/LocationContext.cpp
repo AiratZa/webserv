@@ -47,10 +47,10 @@ void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std
 
 
 bool LocationContext::setLimitedMethodsInfo(const std::list<std::string>& limited_methods) {
-    if (!_limited_methods.empty()) {
+    if (!_limit_except_methods.empty()) {
         return false;
     }
-    _limited_methods = limited_methods;
+    _limit_except_methods = limited_methods;
     return true;
 }
 

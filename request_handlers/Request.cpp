@@ -33,7 +33,10 @@ std::set<std::string> Request::initRequestHeaders() {
 	implemented_headers.insert("last-modified");
 	implemented_headers.insert("referer"); // Referer: http://en.wikipedia.org/wiki/Main_Page
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
-	implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+    implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+
+    // sent by cURL with PUT request
+    implemented_headers.insert("expect"); // Expect: 100-continue
 	return implemented_headers;
 }
 

@@ -29,15 +29,7 @@ void checkAndSetTimeZoneCorrection(void) {
     WebServ::setCorrectionMinutesToGMT(tz.tz_minuteswest);
 }
 
-// set global root path
-void setGlobalRootPath(void) {
-    char *absolute_path = getcwd(NULL, 0);
-    if (!absolute_path) {
-        utils::exitWithLog();
-    }
 
-    WebServ::setWebServRootPath(std::string(absolute_path) + PREFIX_DEFAULT_PATH);
-}
 
 std::list<ServerContext*> WebServ::servers_list;
 int WebServ::correction_minutes_to_GMT;
@@ -46,20 +38,30 @@ std::string WebServ::_webserv_root_path;
 int main(int argc, char *argv[])
 {
     std::string path_to_config;
-    if  (argc == 2) {
-        path_to_config = argv[1];
-    } else if (argc == 1) {
-        path_to_config = CONFIG_FILE_DEFAULT_PATH;
-    } else {
+    if (argc > 2) {
         std::cout << "Please provide only 1 arg -> path to webserv config" << std::endl\
             << "or provide nothing and will be used CONFIG_FILE_DEFAULT_PATH" << std::endl;
         exit(EXIT_FAILURE);
     }
-	signal(SIGINT, intHandler);
 
+    signal(SIGINT, intHandler);
     checkAndSetTimeZoneCorrection();
-    setGlobalRootPath();
 
+
+    char *absolute_path = getcwd(NULL, 0);
+    if (!absolute_path) {
+        utils::exitWithLog();
+    }
+    std::string abs_path = std::string(absolute_path);
+    free(absolute_path);
+
+    WebServ::setWebServRootPath(std::string(abs_path) + PREFIX_DEFAULT_PATH);
+
+    if  (argc == 2) {
+        path_to_config = argv[1];
+    } else  {
+        path_to_config = CONFIG_FILE_DEFAULT_PATH;
+    }
 //    write_html(); // TODO: Autoindex temp testing
 
     try

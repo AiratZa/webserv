@@ -209,26 +209,65 @@ void Response::generateHeadResponse() {
 
 void Response::generatePutResponse() {
     std::cout << "HELLO TARGET: " <<_request->_request_target << std::endl;
+    for (int i = 0; i < 100; i++)
+        std::cout << std::endl;
     std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
-    setIndexFileContentToResponseContent();
-
-    _content += "<title>Test C++ HTTP Server</title>\n";
-    _content += "<h1>Test page</h1>\n";
-    _content += "<p>This is body of the test page...</p>\n";
-    _content += "<h2>Implemented request headers</h2>\n";
-    for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it)
-    {
-        _content.append("<pre>").append((*it).first).append(":").append((*it).second).append("</pre>\n");
-    }
-    _content += "<em><small>Test C++ Http Server</small></em>\n";
+//    setIndexFileContentToResponseContent();
 
     generateStatusLine();
     generateHeaders();
     _raw_response += _content;
 }
 
+/*
+ * return true if METHOD IS NOT ALLOWED BY CONFIG
+ * Author: Airat (GDrake)
+ */
+bool Response::_isMethodLimited(const std::string& method) {
+    if (_request->_handling_location) {
+        const std::list<std::string> limit_except = (_request->_handling_location)->getLimitExceptMethods();
+        if (limit_except.empty())
+            return false;
+
+        std::list<std::string>::const_iterator it = limit_except.begin();
+        while (it != limit_except.end()) {
+            if (method == (*it)) {
+                return false;
+            }
+            ++it;
+        }
+        return true;
+    }
+    return false;
+}
+
+/*
+ * RFC-7231 5.1.1 Expect
+ * Author: Airat (GDrake)
+ */
+void Response::_handleExpectHeader(void) {
+    const std::map<std::string, std::string>& headers = _request->_headers;
+
+    std::map<std::string, std::string>::const_iterator it = headers.find("expect");
+    if ( it != headers.end()) {
+        std::string value = (*it).second;
+        libft::string_to_lower(value);
+
+        if (value != "100-continue") {
+            _status_code = 417;
+        } else {
+            _status_code = 100;
+        }
+
+    }
+}
+
 void Response::generateResponse() {
-    if ()
+    if (_isMethodLimited(_request->_method)) {
+        _status_code = 403;
+        return ;
+    }
+//    _handleExpectHeader();
 	if (_request->isStatusCodeOk()) {
 		if (_request->_method == "GET") {
 			generateGetResponse();

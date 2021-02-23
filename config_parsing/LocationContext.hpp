@@ -25,7 +25,7 @@ public:
 
     bool setLimitedMethodsInfo(const std::list<std::string>& limited_methods);
 
-    const std::list<std::string>& getLimitedMethods(void) const {return _limited_methods;};
+    const std::list<std::string>& getLimitExceptMethods(void) const {return _limit_except_methods;};
 
     bool setAliasPath(const std::string& alias);
 
@@ -44,7 +44,7 @@ private:
 
     bool _is_error_pages_info_was_updated;
 
-    std::list<std::string> _limited_methods;
+    std::list<std::string> _limit_except_methods;
 
     std::string _alias_path;
     bool _is_alias_path_already_was_set;

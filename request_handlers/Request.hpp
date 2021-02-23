@@ -77,6 +77,11 @@ class Request {
 //		bool _is_content_lenght;
 //		size_t _content_lenght;
 
+
+    // reading from client reformating
+    private:
+        bool _header_is_read;
+
 };
 
 #endif

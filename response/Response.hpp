@@ -59,6 +59,9 @@ private:
 	std::string _root; // TODO:temporary
 
     bool setIndexFileContentToResponseContent(void); // Airat
+    bool _isMethodLimited(const std::string& method); // Airat
+
+    void _handleExpectHeader(void); // Airat
 
 };
 

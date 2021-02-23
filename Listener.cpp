@@ -163,7 +163,6 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				continue;
 			}
 			if (checkFullRequest(_client_requests[*it]->getRawRequest())) { //после последнего считывания проверяем все ли доставлено
-//                std::cout << _client_requests[*it]->getRawRequest() << std::endl;
 				_clients_write.push_back(*it);
 				it = _clients_read.erase(it);
 			}
