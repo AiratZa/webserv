@@ -17,7 +17,13 @@ public:
     AContext() : _client_max_body_size(1024*1024),
                 _is_client_max_body_size_already_set(false),
                 _autoindex(false),
-                 _is_autoindex_already_set(false){ };//TODO: DELETE AFTER TESTS
+                 _is_autoindex_already_set(false),
+                 _is_index_pages_info_was_updated(false),
+                 _root("html"),
+                 _is_root_already_set(false) {
+        _index_pages.push_back("index");
+        _index_pages.push_back("index.html");
+    };
     virtual ~AContext(void) { };
 
     virtual void setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {
@@ -34,6 +40,10 @@ public:
     }
 
     virtual void setIndexDirectiveInfo(std::list<std::string>& index_paths) {
+        if (!_is_index_pages_info_was_updated) {
+            _is_index_pages_info_was_updated = true;
+            _index_pages.clear();
+        }
         _index_pages.splice(_index_pages.end(), index_paths);
     }
 
@@ -50,6 +60,15 @@ public:
         return true;
     }
 
+    virtual bool setRootPath(const std::string& root_path) {
+        if (_is_root_already_set)
+            return false;
+        _root = root_path;
+        _is_root_already_set = true;
+        return true;
+    }
+
+
     virtual long long getClientMaxBodySizeInfo(void) const { return _client_max_body_size; }
 
     virtual bool isAutoindexEnabled(void) const { return _autoindex; }
@@ -62,6 +81,9 @@ public:
         _is_autoindex_already_set = true;
         return true;
     }
+
+    virtual const std::string& getRootPath(void) const { return _root; }
+
 
 
 protected:
@@ -77,6 +99,11 @@ protected:
     bool _autoindex;
     bool _is_autoindex_already_set;
     std::list<std::string> _index_pages;
+    bool _is_index_pages_info_was_updated;
+
+    std::string _root;
+    bool _is_root_already_set;
+
 
     std::map<int, std::map<std::string, std::string> > _error_pages_info;
 

@@ -7,6 +7,7 @@
 
 #include <vector>
 
+class WebServ;
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 
@@ -40,14 +41,29 @@ public:
 
     static std::list<ServerContext*> servers_list;
 
+    static int getCorrectionMinutesToGMT(void) { return correction_minutes_to_GMT;}
+    static void setCorrectionMinutesToGMT(int min) { correction_minutes_to_GMT = min;}
+
+    static const std::string& getWebServRootPath(void) {
+        return _webserv_root_path;
+    }
+
+    static void setWebServRootPath(const std::string& path) {
+        _webserv_root_path = path;
+    }
+
 private:
     std::vector<Server*> _servers;
+
+    static int correction_minutes_to_GMT; // TIMEZONE
+    static std::string _webserv_root_path;
 
     Config _config;
     // Для заполнения множества сокетов
     fd_set _readset;
     fd_set _writeset;
     int _max_fd;
+
 
 
 

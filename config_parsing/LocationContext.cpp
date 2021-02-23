@@ -15,6 +15,7 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
     _index_pages = serv_context.getIndexPagesDirectiveInfo();
     _client_max_body_size = serv_context.getClientMaxBodySizeInfo();
     _autoindex = serv_context.isAutoindexEnabled();
+    _root = serv_context.getRootPath();
 
 }
 
@@ -22,6 +23,18 @@ const std::string LocationContext::getLocationPath(void) const {
     return _uri;
 }
 
+const std::string LocationContext::getLocationPathForComparison(void) const {
+    if (_is_exact)
+        return "= " + _uri;
+    return _uri;
+}
+
+bool LocationContext::setRootPath(const std::string& root_path) {
+    if (!_alias_path.empty()) {
+        Config::_badConfigError("\"root\" directive is duplicate, \"alias\" directive was specified earlier");
+    }
+    return AContext::setRootPath(root_path);
+}
 
 void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std::string, std::string> >& error_page_info) {
     if (!_is_error_pages_info_was_updated) {
@@ -30,14 +43,6 @@ void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std
     }
 
     AContext::setErrorPageDirectiveInfo(error_page_info);
-}
-
-void LocationContext::setIndexDirectiveInfo(std::list<std::string>& index_paths) {
-    if (!_is_index_pages_info_was_updated) {
-        _is_index_pages_info_was_updated = true;
-        _index_pages.clear();
-    }
-    AContext::setIndexDirectiveInfo(index_paths);
 }
 
 
@@ -50,6 +55,10 @@ bool LocationContext::setLimitedMethodsInfo(const std::list<std::string>& limite
 }
 
 bool LocationContext::setAliasPath(const std::string& alias) {
+    if (_is_root_already_set) {
+        Config::_badConfigError("\"alias\" directive is duplicate, \"root\" directive was specified earlier");
+    }
+
     if (_is_alias_path_already_was_set) {
         return false;
     }

@@ -31,6 +31,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _serverContext.push_back(CLIENT_MAX_BODY_SIZE_KW); //UNIVERSAL
     _serverContext.push_back(AUTOINDEX_KW); //UNIVERSAL
     _serverContext.push_back(INDEX_KW); //UNIVERSAL
+    _serverContext.push_back(ROOT_KW); //UNIVERSAL
 
 
 
@@ -41,6 +42,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _locationContext.push_back(ALIAS_KW);
     _locationContext.push_back(AUTOINDEX_KW); //UNIVERSAL
     _locationContext.push_back(INDEX_KW); //UNIVERSAL
+    _locationContext.push_back(ROOT_KW); //UNIVERSAL
 
 
     _ite_server = _serverContext.end();
@@ -55,6 +57,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[CLIENT_MAX_BODY_SIZE_KW] = false;
     _isMultipleParamDirective[AUTOINDEX_KW] = false;
     _isMultipleParamDirective[ALIAS_KW] = false;
+    _isMultipleParamDirective[ROOT_KW] = false;
 
 
 }
@@ -131,12 +134,6 @@ void Config::splitConfigTextIntoBlocks(void) {
                                                                 "' NOT EXPECTED THERE IN 'server' CONTEXT LEVEL");
         }
     }
-}
-
-
-void Config::_badConfigError(const std::string & error_text) const {
-    std::cerr << error_text << std::endl;
-    throw Config::BadConfigException();
 }
 
 
@@ -384,8 +381,12 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
         checkIfParamWasNotAlreadySet = current_context->setAutoindex(autoindex_option);
     }
     else if (directive_keyword == INDEX_KW) {
-        std::list<std::string> index_paths = _indexExceptKeywordHandler(current_context, directive_params);
+        std::list<std::string> index_paths = _indexKeywordHandler(current_context, directive_params);
         current_context->setIndexDirectiveInfo(index_paths);
+    }
+    else if (directive_keyword == ROOT_KW) {
+        std::string root = _rootKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = current_context->setRootPath(root);
     }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
@@ -922,6 +923,16 @@ std::string Config::_aliasKeywordHandler(AContext* current_context, const std::l
     return checkAndRemoveQuotes(directive_params.front());
 }
 
+std::string Config::_rootKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+    std::size_t len = directive_params.size();
+    if (len != 1) {
+        _badConfigError("invalid number of arguments in \"root\" directive");
+    }
+    return checkAndRemoveQuotes(directive_params.front());
+}
+
+
 bool Config::_autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
     if (directive_params.size() != 1) {
@@ -946,7 +957,7 @@ bool Config::_autoindexExceptKeywordHandler(AContext* current_context, const std
 
 
 
-std::list<std::string> Config::_indexExceptKeywordHandler(AContext* current_context,
+std::list<std::string> Config::_indexKeywordHandler(AContext* current_context,
                                                           const std::list<std::string>& directive_params) {
     (void) current_context;
 

@@ -146,6 +146,7 @@ void WebServ::routeRequests(const std::string& host, const int port, std::map<in
         LocationContext* location_to_route = searchForBestMatchLocation(handling_server, current_request);
         current_request->setHandlingLocation(location_to_route);
 
+        current_request->setAbsoluteRootPathForRequest();
         ++it_r;
     }
 }

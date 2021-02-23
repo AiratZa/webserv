@@ -107,6 +107,36 @@ TEST(LocationContextTests, negative_scenarios_with_config_context_2)
     EXPECT_THROW({Config conf = Config(conf_file_name);}, Config::BadConfigException );
 }
 
+TEST(LocationContextTests, negative_scenarios_with_config_context_root_and_alias_together)
+{
+    std::string conf_text = "server {"
+                            "location =/abc {"
+                            "root /;"
+                            "alias /;"
+                            "}"
+                            "}";
+
+    std::string conf_file_name = std::string(CONFIG_TEST_ROOT_PATH) + "/tmp_config.conf";
+    createTestConfigFromString(conf_file_name, conf_text);
+
+    EXPECT_THROW({Config conf = Config(conf_file_name);}, Config::BadConfigException );
+}
+
+TEST(LocationContextTests, negative_scenarios_with_config_context_alias_and_root_together)
+{
+    std::string conf_text = "server {"
+                            "location =/abc {"
+                            "alias /;"
+                            "root /;"
+                            "}"
+                            "}";
+
+    std::string conf_file_name = std::string(CONFIG_TEST_ROOT_PATH) + "/tmp_config.conf";
+    createTestConfigFromString(conf_file_name, conf_text);
+
+    EXPECT_THROW({Config conf = Config(conf_file_name);}, Config::BadConfigException );
+}
+
 //POSITIVE SCENARIOS LOCATION CONTEXT
 
 
@@ -175,10 +205,10 @@ TEST(LocationContextTests, positive_scenarios_with_config_context_1)
     EXPECT_EQ(locations.size(), 2);
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
-    EXPECT_EQ((*it_l)->getLocationPath(), "= /");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "= /");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/");
 }
 
 
@@ -204,13 +234,13 @@ TEST(LocationContextTests, positive_scenarios_with_config_context_2)
     EXPECT_EQ(locations.size(), 3);
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
-    EXPECT_EQ((*it_l)->getLocationPath(), "= /abc");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "= /abc");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/abc");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/abc");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/xyz");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/xyz");
 
 }
 

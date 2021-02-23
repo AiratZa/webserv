@@ -52,7 +52,7 @@ bool ServerContext::_is_location_exist(const std::list<std::string>& location_ur
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
     while (it_l != locations.end()) {
-        if ((*it_l)->getLocationPath() == str_for_search){
+        if ((*it_l)->getLocationPathForComparison() == str_for_search){
             return true;
         }
         ++it_l;

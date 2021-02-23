@@ -34,6 +34,7 @@ set (PROJECT_SRCS  Server.cpp
 #        ServerListener_HandleResponses.cpp
         request_handlers/Request.cpp
         response/Response.cpp
+        response/autoindex_handling/autoindex_handling.cpp
         ${CONFIG_PARSING_SRCS})
 
 add_executable(webserv main.cpp ${PROJECT_SRCS} )
@@ -68,6 +69,7 @@ file(GLOB TEST_DIRECTIVES ${CONFIG_DIRECTIVES_TESTS_PATH}test_listen.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_client_max_body_size.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_alias.cpp
         ${CONFIG_DIRECTIVES_TESTS_PATH}test_autoindex.cpp
+        ${CONFIG_DIRECTIVES_TESTS_PATH}test_root.cpp
         )
 
 

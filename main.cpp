@@ -4,8 +4,11 @@
 #include "utils/cpp_libft/libft.hpp"
 #include <iostream>
 
-#define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
+#include "response/autoindex_handling/autoindex_handling.hpp" // TODO: will be removed after TESTS
 
+
+#define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
+#define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root
 
 WebServ webserv;
 
@@ -15,7 +18,30 @@ void intHandler(int signal) {
 	exit(EXIT_SUCCESS);
 }
 
+void checkAndSetTimeZoneCorrection(void) {
+    struct timeval	current;
+    struct timezone tz;
+
+    if (gettimeofday(&current, &tz)) {
+        utils::exitWithLog();
+    }
+
+    WebServ::setCorrectionMinutesToGMT(tz.tz_minuteswest);
+}
+
+// set global root path
+void setGlobalRootPath(void) {
+    char *absolute_path = getcwd(NULL, 0);
+    if (!absolute_path) {
+        utils::exitWithLog();
+    }
+
+    WebServ::setWebServRootPath(std::string(absolute_path) + PREFIX_DEFAULT_PATH);
+}
+
 std::list<ServerContext*> WebServ::servers_list;
+int WebServ::correction_minutes_to_GMT;
+std::string WebServ::_webserv_root_path;
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +56,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 	signal(SIGINT, intHandler);
+
+    checkAndSetTimeZoneCorrection();
+    setGlobalRootPath();
+
+//    write_html(); // TODO: Autoindex temp testing
+
     try
     {
         Config _config = Config(path_to_config);

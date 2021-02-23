@@ -13,6 +13,8 @@
 
 //class Server;
 #include <list>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 class Response {
 public:
@@ -32,6 +34,8 @@ public:
 	void generateContent();
 	void readFileToContent(std::string & filename);
 	bool isStatusCodeOk();
+
+
 
 private:
 	static std::map<int,std::string> initStatusCodes();
@@ -53,6 +57,8 @@ private:
 //	Server* _server;
 
 	std::string _root; // TODO:temporary
+
+    bool setIndexFileContentToResponseContent(void); // Airat
 
 };
 

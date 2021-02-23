@@ -40,6 +40,7 @@
 #define ALIAS_KW "alias"
 #define AUTOINDEX_KW "autoindex"
 #define INDEX_KW "index"
+#define ROOT_KW "root"
 
 #define ERROR_PAGE_REDIRECT_URI "ERROR_PAGE_REDIRECT_URI"
 #define ERROR_PAGE_CHANGE_ERROR_CODE "ERROR_PAGE_CHANGE_ERROR_CODE"
@@ -146,6 +147,11 @@ public:
 
     };
 
+    static void _badConfigError(const std::string & error_text) {
+        std::cerr << error_text << std::endl;
+        throw Config::BadConfigException();
+    }
+
 
 
 private:
@@ -179,7 +185,8 @@ private:
     std::list<std::string> _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::string _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     bool _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    std::list<std::string> _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::list<std::string> _indexKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::string _rootKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     const std::string parseHost(const std::string& param) const;
@@ -201,7 +208,6 @@ private:
     std::string _config_text;
     int _len;
 
-    void _badConfigError(const std::string & error_text) const;
 
     bool _is_eof_reached;
     int _tmp_len;
