@@ -25,9 +25,6 @@ SRCS = $(UTILS_SRCS) main.cpp \
     WebServ.cpp \
     WebServ_Router.cpp \
     Server.cpp\
-    ServerListener.cpp \
-    ServerListener_HandleRequests.cpp \
-    ServerListener_HandleResponses.cpp \
     config_parsing/Config.cpp \
     config_parsing/ServerContext.cpp \
     config_parsing/LocationContext.cpp \
@@ -36,6 +33,9 @@ SRCS = $(UTILS_SRCS) main.cpp \
     Listener.cpp \
     response/autoindex_handling/autoindex_handling.cpp
 
+#     ServerListener.cpp \
+    ServerListener_HandleRequests.cpp \
+    ServerListener_HandleResponses.cpp \
 
 
 OBJS = $(SRCS:.cpp=.o)

@@ -175,10 +175,10 @@ TEST(LocationContextTests, positive_scenarios_with_config_context_1)
     EXPECT_EQ(locations.size(), 2);
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
-    EXPECT_EQ((*it_l)->getLocationPath(), "= /");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "= /");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/");
 }
 
 
@@ -204,13 +204,13 @@ TEST(LocationContextTests, positive_scenarios_with_config_context_2)
     EXPECT_EQ(locations.size(), 3);
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
-    EXPECT_EQ((*it_l)->getLocationPath(), "= /abc");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "= /abc");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/abc");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/abc");
 
     ++it_l;
-    EXPECT_EQ((*it_l)->getLocationPath(), "/xyz");
+    EXPECT_EQ((*it_l)->getLocationPathForComparison(), "/xyz");
 
 }
 

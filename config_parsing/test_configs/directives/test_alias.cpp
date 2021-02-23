@@ -76,7 +76,7 @@ TEST(AliasDirectiveTests, positive_scenarios_wtih_context)
     std::string conf_text = "server {"
                             "location =/ {"
                             "index index.html;"
-                            "alias /home;"
+                            "alias \"/home\";"
                             "}"
                             "}";
 

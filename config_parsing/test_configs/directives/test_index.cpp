@@ -94,5 +94,34 @@ TEST(IndexDirectiveTests, positive_scenarios_redifinition_wtih_context)
     EXPECT_EQ(*it_loc, "index1.html");
 }
 
+TEST(IndexDirectiveTests, positive_scenarios_default_values)
+{
+    std::string conf_text = "server {"
+                            "location =/abc {"
+                            "}"
+                            "}";
 
+    std::string conf_file_name = std::string(CONFIG_TEST_ROOT_PATH) + "/tmp_config.conf";
+    createTestConfigFromString(conf_file_name, conf_text);
+
+    Config conf = Config(conf_file_name);
+
+    const std::list<ServerContext*>& servers = conf.getServersList();
+    std::list<ServerContext*>::const_iterator it = servers.begin();
+
+    EXPECT_EQ(servers.size(), 1);
+
+    EXPECT_EQ((*it)->getIndexPagesDirectiveInfo().size(), 2);
+    EXPECT_EQ(((*it)->getIndexPagesDirectiveInfo().front()), "index");
+    EXPECT_EQ(((*it)->getIndexPagesDirectiveInfo().back()), "index.html");
+
+    const std::list<LocationContext*>& locations = (*it)->getLocationsList();
+    EXPECT_EQ(locations.size(), 1);
+
+    std::list<std::string> loc_level_indexes = (*locations.begin())->getIndexPagesDirectiveInfo();
+
+    EXPECT_EQ(loc_level_indexes.size(), 2);
+    EXPECT_EQ(loc_level_indexes.front(), "index");
+    EXPECT_EQ(loc_level_indexes.back(), "index.html");
+}
 

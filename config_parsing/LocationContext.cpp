@@ -15,10 +15,17 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
     _index_pages = serv_context.getIndexPagesDirectiveInfo();
     _client_max_body_size = serv_context.getClientMaxBodySizeInfo();
     _autoindex = serv_context.isAutoindexEnabled();
+    _root = serv_context.getRootPath();
 
 }
 
 const std::string LocationContext::getLocationPath(void) const {
+    return _uri;
+}
+
+const std::string LocationContext::getLocationPathForComparison(void) const {
+    if (_is_exact)
+        return "= " + _uri;
     return _uri;
 }
 
@@ -30,14 +37,6 @@ void LocationContext::setErrorPageDirectiveInfo(const std::map<int, std::map<std
     }
 
     AContext::setErrorPageDirectiveInfo(error_page_info);
-}
-
-void LocationContext::setIndexDirectiveInfo(std::list<std::string>& index_paths) {
-    if (!_is_index_pages_info_was_updated) {
-        _is_index_pages_info_was_updated = true;
-        _index_pages.clear();
-    }
-    AContext::setIndexDirectiveInfo(index_paths);
 }
 
 

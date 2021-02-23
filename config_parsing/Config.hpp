@@ -40,6 +40,7 @@
 #define ALIAS_KW "alias"
 #define AUTOINDEX_KW "autoindex"
 #define INDEX_KW "index"
+#define ROOT_KW "root"
 
 #define ERROR_PAGE_REDIRECT_URI "ERROR_PAGE_REDIRECT_URI"
 #define ERROR_PAGE_CHANGE_ERROR_CODE "ERROR_PAGE_CHANGE_ERROR_CODE"
@@ -179,7 +180,8 @@ private:
     std::list<std::string> _limitExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::string _aliasKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     bool _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    std::list<std::string> _indexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::list<std::string> _indexKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    std::string _rootKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     const std::string parseHost(const std::string& param) const;
