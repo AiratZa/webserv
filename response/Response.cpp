@@ -189,7 +189,7 @@ struct tm Response::_gmtime(time_t tv_sec) {
 	return calendar_time;
 };
 
-std::string Response::getDate() {
+std::string Response::getDateHeader() {
 	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
 	struct tm calendar_time;
 	struct timeval tv;
@@ -198,25 +198,35 @@ std::string Response::getDate() {
 	calendar_time = _gmtime(tv.tv_sec);
 	strftime(s, sizeof(s), "%a, %d %b %Y %H:%M:%S GMT", &calendar_time);
 
-	return s;
+	std::string date_header;
+	date_header.append("date: ").append(s).append("\r\n");
+	return date_header;
 }
 
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
 	_raw_response += "server: webserv\r\n";
-	_raw_response += "date: ";
-	_raw_response += getDate();
-	_raw_response += "\r\n";
+	_raw_response += getDateHeader();
 	_raw_response += _content_type;
 	_raw_response += _allow;
 	_raw_response += "Content-Length: ";
 	_raw_response += libft::ultostr_base(_content.length(), 10);
 	_raw_response += "\r\n";
-	//	_raw_response += "last-modified: ";
-//	_raw_response += getDate();
-//	_raw_response += "\r\n";
-	_raw_response += "Content-Language: en\r\n";
+	_raw_response += _last_modified;
+//	_raw_response += "Content-Language: en\r\n";
 	_raw_response += "\r\n";
+}
+
+std::string Response::getLastModifiedHeader(time_t tv_sec) {
+	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
+	struct tm calendar_time;
+
+	calendar_time = _gmtime(tv_sec);
+	strftime(s, sizeof(s), "%a, %d %b %Y %H:%M:%S GMT", &calendar_time);
+
+	std::string date_header;
+	date_header.append("last-modified: ").append(s).append("\r\n");
+	return date_header;
 }
 
 void Response::generateResponseByStatusCode() {
@@ -307,9 +317,6 @@ bool Response::isMethodAllowed() {
 }
 
 void Response::generateGetResponse() {
-	struct stat stat_buf;
-	std::string filename;
-
 //	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
@@ -331,11 +338,14 @@ void Response::generateGetResponse() {
 //	std::cout << "_request->_handling_location->getLocationPathForComparison() " << _request->_handling_location->getLocationPathForComparison() << std::endl;
 //	std::cout << "_request->_handling_server->getRootPath() " << _request->_handling_server->getRootPath() << std::endl;
 
+	struct stat stat_buf;
+	std::string filename;
+
 	filename = _root + _request->_request_target;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
-			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo();
+			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
 					filename += *it;
@@ -348,6 +358,7 @@ void Response::generateGetResponse() {
 		if (S_ISREG(stat_buf.st_mode)) {
 			readFileToContent(filename);
 			setContentTypeByFilename(filename);
+			_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
 				generateAutoindex();

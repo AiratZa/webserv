@@ -38,7 +38,9 @@ public:
 	void generateAutoindex();
 	void setContentTypeByFilename(std::string & filename);
 	bool isMethodAllowed();
-	std::string getDate();
+
+	std::string getDateHeader();
+	std::string getLastModifiedHeader(time_t tv_sec);
 
 private:
 	struct tm _getCalendarTime(time_t tv_sec);
@@ -70,6 +72,7 @@ private:
 private: // headers
 	std::string _content_type;
 	std::string _allow;
+	std::string _last_modified;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 
