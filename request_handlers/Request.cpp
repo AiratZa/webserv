@@ -230,7 +230,8 @@ void Request::setHandlingLocation(LocationContext* location_to_route) {
     _handling_location = location_to_route;
 }
 
-std::string    Request::parsURL(std::string url) {
+void    Request::parsURL() {
+	std::string url = _request_target;
 	std::string res;
 	std::string tmp;
 	std::list<std::string>   path;
@@ -252,7 +253,7 @@ std::string    Request::parsURL(std::string url) {
 			((count + 2 < lenght && url[count + 1] == '.' && url[count + 2] == '/') ||
 			 (count + 2 == lenght && url[count + 1] == '.'))) {
 			if (!path.empty()) {
-				--it;
+//				--it;
 				path.pop_back();
 			}
 			count += 2;
@@ -260,10 +261,20 @@ std::string    Request::parsURL(std::string url) {
 		while (count < lenght && url[count] != '/') { //args write
 			if (url[count] == '%') {
 				char ch;
-				if ((ch = libft::percent_decode(url, count)) != '\0') {
+				std::string hex_str = url.substr(count + 1, 2);
+				libft::string_to_lower(hex_str);
+				if (hex_str.find_first_not_of("0123456789abcdef") == std::string::npos && hex_str != "00") {
+					ch  = libft::strtoul_base(hex_str, 16);
 					tmp += ch;
+					count += 3;
 					continue;
+				} else {
+					return setStatusCode(400);
 				}
+//				if ((ch = libft::percent_decode(url, count)) != '\0') {
+//					tmp += ch;
+//					continue;
+//				}
 			}
 			tmp += url[count];
 			++count;
@@ -271,7 +282,7 @@ std::string    Request::parsURL(std::string url) {
 		if (!tmp.empty()) { // args add
 			path.push_back(tmp);
 			tmp.clear();
-			++it;
+//			++it;
 		}
 	}
 	it = path.begin();
@@ -280,7 +291,8 @@ std::string    Request::parsURL(std::string url) {
 		res += *it;
 		++it;
 	}
-	return res;
+
+	_request_target = res;
 }
 
 void Request::setAbsoluteRootPathForRequest(void) {

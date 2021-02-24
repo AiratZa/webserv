@@ -66,7 +66,7 @@ class Request {
     const std::list<std::string>& getIndexPagesListForRequest(void) const; // Airat
 
 
-	std::string    parsURL(std::string url);
+	void    parsURL();
 
     public:
         ServerContext* _handling_server; // Airat
