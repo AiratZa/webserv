@@ -221,10 +221,6 @@ void Request::setHandlingServer(ServerContext* handling_server){
 
 void Request::setHandlingLocation(LocationContext* location_to_route) {
     _handling_location = location_to_route;
-//    if (!_handling_location) // location is not found
-//    {
-//        _status_code = 404; // 404 Not Found
-//    }
 }
 
 void    Request::parsURL() {
@@ -259,7 +255,6 @@ void    Request::parsURL() {
 			if (url[count] == '%') {
 				char ch;
 				std::string hex_str = url.substr(count + 1, 2);
-//				std::cout << hex_str << std::endl;
 				libft::string_to_lower(hex_str);
 				if (hex_str.find_first_not_of("0123456789abcdef") == std::string::npos && hex_str != "00") {
 					ch  = libft::strtoul_base(hex_str, 16);
@@ -290,12 +285,7 @@ void    Request::parsURL() {
 		++it;
 	}
 
-	if (res == "")
-		_request_target = "/";
-	else
-		_request_target = res;
-//	std::cout << "_request_target " << _request_target << std::endl;
-//	return res;
+	_request_target = res;
 }
 
 void Request::setAbsoluteRootPathForRequest(void) {

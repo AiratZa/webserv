@@ -178,8 +178,6 @@ struct tm Response::_getCalendarTime(time_t tv_sec) {
 	calendar_time.tm_wday = (days >= -4 ? (days + 4) % 7 : (days + 5) % 7 + 6);
 //	calendar_time.tm_yday = doy;
 //	calendar_time.tm_isdst = 0;
-//	std::cout << "calendar_time: " << calendar_time.tm_wday << " " << calendar_time.tm_mday << " " << calendar_time.tm_mon << " " << calendar_time.tm_year << std::endl;
-//	std::cout << "calendar_time: " << calendar_time.tm_hour << " " << calendar_time.tm_min << " " << calendar_time.tm_sec << " " << calendar_time.tm_yday << std::endl;
 	return calendar_time;
 }
 
@@ -300,16 +298,13 @@ void Response::setContentTypeByFilename(std::string & filename) {
  *
  */
 bool Response::isMethodAllowed() {
-//	std::cout << "_request->_handling_location " << _request->_handling_location << std::endl;
 	if (!_request->_handling_location)
 		return true;
 	std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
 
-//	std::cout << "allowed_methods.empty() " << allowed_methods.empty() << std::endl;
 	if (allowed_methods.empty())
 		return true;
 	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
-//		std::cout << *it << std::endl;
 		if (*it == _request->_method)
 			return true;
 	}
@@ -326,7 +321,6 @@ void Response::generateGetResponse() {
 }
 
 void Response::generateHeadResponse() {
-//	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
 		_allow = "Allow: ";
@@ -355,15 +349,18 @@ void Response::generateHeadResponse() {
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
 			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
+
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
-					filename += *it;
-					if (stat(filename.c_str(), &stat_buf) == 0) {
+					if (stat((filename + "/" + *it).c_str(), &stat_buf) == 0) {
+						filename += "/";
+						filename += *it;
 						break ;
 					}
 				}
 			}
 		}
+
 		if (S_ISREG(stat_buf.st_mode)) {
 			readFileToContent(filename);
 			setContentTypeByFilename(filename);
