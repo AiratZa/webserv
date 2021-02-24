@@ -230,7 +230,7 @@ std::string Response::getLastModifiedHeader(time_t tv_sec) {
 }
 
 void Response::generateResponseByStatusCode() {
-	_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+	_content_type = "Content-Type: text/html\r\n";
 	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
 
 	generateStatusLine();
@@ -272,9 +272,9 @@ void Response::setContentTypeByFilename(std::string & filename) {
 	else {
 		ext = filename.substr(dot_pos);
 		if (ext == ".txt")
-			_content_type = "Content-Type: text/plain; charset=utf-8\r\n";
+			_content_type = "Content-Type: text/plain\r\n";
 		else if (ext == ".html")
-			_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+			_content_type = "Content-Type: text/html\r\n";
 		else if (ext == ".jpg")
 			_content_type = "Content-Type: image/jpeg;\r\n";
 		else
@@ -310,13 +310,22 @@ bool Response::isMethodAllowed() {
 		return true;
 	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
 //		std::cout << *it << std::endl;
-		if (*it == "GET")
+		if (*it == _request->_method)
 			return true;
 	}
 	return false;
 }
 
 void Response::generateGetResponse() {
+	generateHeadResponse();
+
+	if (!isStatusCodeOk())
+		return ;
+
+	_raw_response += _content;
+}
+
+void Response::generateHeadResponse() {
 //	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitedMethods();
@@ -362,7 +371,7 @@ void Response::generateGetResponse() {
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
 				generateAutoindex();
-				_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+				_content_type = "Content-Type: text/html\r\n";
 			} else {
 				_status_code = 403;
 			}
@@ -379,11 +388,6 @@ void Response::generateGetResponse() {
 
 	generateStatusLine();
 	generateHeaders();
-	_raw_response += _content;
-}
-
-void Response::generateHeadResponse() {
-
 }
 
 void Response::generatePutResponse() {
