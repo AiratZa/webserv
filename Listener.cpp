@@ -192,8 +192,10 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			request->parseHeaders();
 
 			if (request->isStatusCodeOk()) {
-				request->_request_target = request->parsURL(request->_request_target);
-				WebServ::routeRequests(_host, _port, _client_requests);
+				request->parsURL();
+//				std::cout << "request->_request_target: " << request->_request_target << std::endl;
+				if (request->isStatusCodeOk())
+					WebServ::routeRequests(_host, _port, _client_requests);
 			}
 
 			request->parseBody();

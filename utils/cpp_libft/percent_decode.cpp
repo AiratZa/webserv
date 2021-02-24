@@ -5,6 +5,9 @@
 #include <vector>
 #include "libft.hpp"
 
+/*
+ * TODO: any code with % should be substituted with char
+ */
 char			libft::percent_decode(std::string const& str, int & start)
 {
     std::string value[18] = {
