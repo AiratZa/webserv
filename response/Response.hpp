@@ -15,6 +15,7 @@
 #include <list>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <time.h>
 
 class Response {
 public:
@@ -37,6 +38,11 @@ public:
 	void generateAutoindex();
 	void setContentTypeByFilename(std::string & filename);
 	bool isMethodAllowed();
+	std::string getDate();
+
+private:
+	struct tm _getCalendarTime(time_t tv_sec);
+	struct tm _gmtime(time_t tv_sec);
 
 
 

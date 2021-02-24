@@ -7,6 +7,7 @@
 #include <string>
 #include <set>
 #include "../utils/cpp_libft/libft.hpp"
+#include <time.h>
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -82,43 +83,43 @@ Response::Response(Request* request, int socket) :
 Response::~Response(void) { };
 
 
-bool writeFileContentToString(const std::string& file_name, std::string& content) {
-    int file = open(file_name.c_str(), O_RDONLY);
-    if (file == -1)
-        return false;
-
-    // reading file line by line
-    char *str;
-    int ret;
-
-    while ((ret = get_next_line(file, &str)) == 1) {
-        content += str;
-        delete str;
-    }
-    content += str;
-    delete str;
-    close(file);
-    return true;
-}
-
-bool Response::setIndexFileContentToResponseContent(void) {
-    std::string root_path = _request->getAbsoluteRootPathForRequest() + _request->_request_target;
-
-    const std::list<std::string>& index_pages = _request->getIndexPagesListForRequest();
-
-    std::list<std::string>::const_iterator it = index_pages.begin();
-
-    std::string file_content = "";
-    while (it != index_pages.end()) {
-        std::string file_name = root_path + (*it);
-        if (writeFileContentToString(file_name, file_content)) {
-            _content += file_content;
-            return true;
-        }
-        ++it;
-    }
-    return false;
-}
+//bool writeFileContentToString(const std::string& file_name, std::string& content) {
+//    int file = open(file_name.c_str(), O_RDONLY);
+//    if (file == -1)
+//        return false;
+//
+//    // reading file line by line
+//    char *str;
+//    int ret;
+//
+//    while ((ret = get_next_line(file, &str)) == 1) {
+//        content += str;
+//        delete str;
+//    }
+//    content += str;
+//    delete str;
+//    close(file);
+//    return true;
+//}
+//
+//bool Response::setIndexFileContentToResponseContent(void) {
+//    std::string root_path = _request->getAbsoluteRootPathForRequest() + _request->_request_target;
+//
+//    const std::list<std::string>& index_pages = _request->getIndexPagesListForRequest();
+//
+//    std::list<std::string>::const_iterator it = index_pages.begin();
+//
+//    std::string file_content = "";
+//    while (it != index_pages.end()) {
+//        std::string file_name = root_path + (*it);
+//        if (writeFileContentToString(file_name, file_content)) {
+//            _content += file_content;
+//            return true;
+//        }
+//        ++it;
+//    }
+//    return false;
+//}
 
 //void Response::generateGetResponse() {
 //	std::cout << "TARGET: " << _request->_request_target << std::endl;
@@ -147,12 +148,65 @@ void Response::generateStatusLine() {
 //implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
 //implemented_headers.insert("www-authenticate");
 
+
+/*
+ * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
+ * explanations http://howardhinnant.github.io/date_algorithms.html
+ */
+struct tm Response::_getCalendarTime(time_t tv_sec) {
+	struct tm calendar_time;
+	int days = tv_sec / 86400;
+	days += 719468;
+	int era = (days >= 0 ? days : days - 146096) / 146097;
+	int doe = days - era * 146097;          // [0, 146096]
+	int yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;  // [0, 399]
+	int y = yoe + era * 400;
+	int doy = doe - (365 * yoe + yoe / 4 - yoe / 100);                // [0, 365]
+	int mp = (5 * doy + 2) / 153;                                   // [0, 11]
+	int d = doy - (153 * mp + 2) / 5 + 1;                             // [1, 31]
+	int m = mp + (mp < 10 ? 3 : -9);                            // [1, 12]
+
+	calendar_time.tm_sec = tv_sec % 60;
+	calendar_time.tm_min = tv_sec % 3600 / 60;
+	calendar_time.tm_hour = tv_sec % 86400 / 3600;
+
+	calendar_time.tm_mday = d;
+	calendar_time.tm_mon = m - 1;
+	calendar_time.tm_year = y + (m <= 2) - 1900;
+
+	days = tv_sec / 86400;
+	calendar_time.tm_wday = (days >= -4 ? (days + 4) % 7 : (days + 5) % 7 + 6);
+//	calendar_time.tm_yday = doy;
+//	calendar_time.tm_isdst = 0;
+//	std::cout << "calendar_time: " << calendar_time.tm_wday << " " << calendar_time.tm_mday << " " << calendar_time.tm_mon << " " << calendar_time.tm_year << std::endl;
+//	std::cout << "calendar_time: " << calendar_time.tm_hour << " " << calendar_time.tm_min << " " << calendar_time.tm_sec << " " << calendar_time.tm_yday << std::endl;
+	return calendar_time;
+}
+
+struct tm Response::_gmtime(time_t tv_sec) {
+	struct tm calendar_time;
+	calendar_time = _getCalendarTime(tv_sec);
+	return calendar_time;
+};
+
+std::string Response::getDate() {
+	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
+	struct tm calendar_time;
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	calendar_time = _gmtime(tv.tv_sec);
+	strftime(s, sizeof(s), "%a, %d %b %Y %H:%M:%S GMT", &calendar_time);
+
+	return s;
+}
+
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
 	_raw_response += "server: webserv\r\n";
-//	_raw_response += "date: ";
-//	_raw_response += getDate();
-//	_raw_response += "\r\n";
+	_raw_response += "date: ";
+	_raw_response += getDate();
+	_raw_response += "\r\n";
 	_raw_response += _content_type;
 	_raw_response += _allow;
 	_raw_response += "Content-Length: ";
@@ -218,6 +272,23 @@ void Response::setContentTypeByFilename(std::string & filename) {
 	}
 }
 
+
+/*
+ * TODO: case1:
+ *         location /html/ {
+ *           index index.html;
+ *           limit_except PUT;
+ *        }
+ *        _request->_handling_location is NULL somehow
+ *        doesnt work index directive
+ *
+ * TODO: case2:
+ *    location / {
+ *    limit_except PUT;
+ *    }
+ *    doesnt work for files in subfolders
+ *
+ */
 bool Response::isMethodAllowed() {
 //	std::cout << "_request->_handling_location " << _request->_handling_location << std::endl;
 	if (!_request->_handling_location)
@@ -228,6 +299,7 @@ bool Response::isMethodAllowed() {
 	if (allowed_methods.empty())
 		return true;
 	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+//		std::cout << *it << std::endl;
 		if (*it == "GET")
 			return true;
 	}
@@ -237,7 +309,6 @@ bool Response::isMethodAllowed() {
 void Response::generateGetResponse() {
 	struct stat stat_buf;
 	std::string filename;
-
 
 //	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
 	if (!isMethodAllowed()) {
@@ -252,7 +323,6 @@ void Response::generateGetResponse() {
 		_status_code = 405;
 		return ;
 	}
-
 
 //	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
 //	std::cout << "_request->_handling_location->getAliasPath() " << _request->_handling_location->getAliasPath() << std::endl;
