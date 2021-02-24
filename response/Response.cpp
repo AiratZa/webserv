@@ -82,45 +82,6 @@ Response::Response(Request* request, int socket) :
 Response::~Response(void) { };
 
 
-void Response::generateStatusLine() {
-	_raw_response += "HTTP/1.1 ";
-	_raw_response += libft::ultostr_base(_status_code, 10);
-	_raw_response += " ";
-	_raw_response += Response::status_codes[_status_code];
-	_raw_response += "\r\n";
-}
-
-void Response::generateHeaders() {
-	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
-	_raw_response += "Content-Length: ";
-	_raw_response += libft::ultostr_base(_content.length(), 10);
-	_raw_response += "\r\n\r\n";
-}
-
-
-
-void Response::generateResponseByStatusCode() {
-	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
-
-	generateStatusLine();
-	generateHeaders();
-	_raw_response.append(_content);
-}
-
-void Response::readFileToContent(std::string & filename) {
-	char buf[1024 + 1];
-	int ret;
-	int fd;
-
-	fd = open(filename.c_str(), O_RDONLY);
-	while ((ret = read(fd, buf, 1024))) {
-		if (ret < 0)
-			utils::exitWithLog();
-		buf[ret] = '\0';
-		_content.append(buf);
-	}
-}
-
 bool writeFileContentToString(const std::string& file_name, std::string& content) {
     int file = open(file_name.c_str(), O_RDONLY);
     if (file == -1)
@@ -165,38 +126,175 @@ bool Response::setIndexFileContentToResponseContent(void) {
 //	setIndexFileContentToResponseContent();
 //}
 
+void Response::generateStatusLine() {
+	_raw_response += "HTTP/1.1 ";
+	_raw_response += libft::ultostr_base(_status_code, 10);
+	_raw_response += " ";
+	_raw_response += Response::status_codes[_status_code];
+	_raw_response += "\r\n";
+}
+
+//implemented_headers.insert("allow"); // Allow: OPTIONS, GET, HEAD
+//implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
+//implemented_headers.insert("content-length"); // Content-Length: 1348
+//implemented_headers.insert("content-location");
+//implemented_headers.insert("content-type"); // Content-Type: text/html;charset=utf-8
+//implemented_headers.insert("date"); // Date: Tue, 15 Nov 1994 08:12:31 GMT
+//implemented_headers.insert("last-modified");
+//implemented_headers.insert("location"); // Location: http://example.com/about.html#contacts
+//implemented_headers.insert("retry-after");
+//implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
+//implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
+//implemented_headers.insert("www-authenticate");
+
+void Response::generateHeaders() {
+//	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
+	_raw_response += "server: webserv\r\n";
+//	_raw_response += "date: ";
+//	_raw_response += getDate();
+//	_raw_response += "\r\n";
+	_raw_response += _content_type;
+	_raw_response += _allow;
+	_raw_response += "Content-Length: ";
+	_raw_response += libft::ultostr_base(_content.length(), 10);
+	_raw_response += "\r\n";
+	//	_raw_response += "last-modified: ";
+//	_raw_response += getDate();
+//	_raw_response += "\r\n";
+	_raw_response += "Content-Language: en\r\n";
+	_raw_response += "\r\n";
+}
+
+void Response::generateResponseByStatusCode() {
+	_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
+
+	generateStatusLine();
+	generateHeaders();
+	_raw_response.append(_content);
+}
+
+
 bool Response::isStatusCodeOk() {
 	if (_status_code != 200)
 		return false;
 	return true;
 }
 
+void Response::readFileToContent(std::string & filename) {
+	char buf[1024 + 1];
+	int ret;
+	int fd;
+
+	fd = open(filename.c_str(), O_RDONLY);
+	while ((ret = read(fd, buf, 1024))) {
+		if (ret < 0)
+			utils::exitWithLog();
+		_content.append(buf, ret);
+	}
+}
+
+void Response::generateAutoindex() { // TODO:replace by normal autoindex
+	_content = "generated autoindex";
+}
+
+void Response::setContentTypeByFilename(std::string & filename) {
+	std::string ext;
+	size_t dot_pos;
+
+	dot_pos = filename.rfind('.');
+	if (dot_pos == std::string::npos)
+		_content_type = "Content-Type: application/octet-stream\r\n";
+	else {
+		ext = filename.substr(dot_pos);
+		if (ext == ".txt")
+			_content_type = "Content-Type: text/plain; charset=utf-8\r\n";
+		else if (ext == ".html")
+			_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+		else if (ext == ".jpg")
+			_content_type = "Content-Type: image/jpeg;\r\n";
+		else
+			_content_type = "Content-Type: application/octet-stream\r\n";
+	}
+}
+
+bool Response::isMethodAllowed() {
+//	std::cout << "_request->_handling_location " << _request->_handling_location << std::endl;
+	if (!_request->_handling_location)
+		return true;
+	std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
+
+//	std::cout << "allowed_methods.empty() " << allowed_methods.empty() << std::endl;
+	if (allowed_methods.empty())
+		return true;
+	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+		if (*it == "GET")
+			return true;
+	}
+	return false;
+}
+
 void Response::generateGetResponse() {
 	struct stat stat_buf;
 	std::string filename;
+
+
+//	std::cout << "isMethodAllowed " << isMethodAllowed() << std::endl;
+	if (!isMethodAllowed()) {
+		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
+		_allow = "Allow: ";
+		for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+			_allow += *it;
+			_allow += ",";
+		}
+		_allow.erase(_allow.size() - 1, 1);
+		_allow += "\r\n";
+		_status_code = 405;
+		return ;
+	}
+
+
+//	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
+//	std::cout << "_request->_handling_location->getAliasPath() " << _request->_handling_location->getAliasPath() << std::endl;
+//	std::cout << "_request->_handling_location->getLocationPath() " << _request->_handling_location->getLocationPath() << std::endl;
+//	std::cout << "_request->_handling_location->getRootPath() " << _request->_handling_location->getRootPath() << std::endl;
+//	std::cout << "_request->_handling_location->getLocationPathForComparison() " << _request->_handling_location->getLocationPathForComparison() << std::endl;
+//	std::cout << "_request->_handling_server->getRootPath() " << _request->_handling_server->getRootPath() << std::endl;
 
 	filename = _root + _request->_request_target;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
 			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo();
-			for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
-				filename += *it;
-				if (stat(filename.c_str(), &stat_buf) == 0) {
-					break ;
+			if (!index_list.empty()) {
+				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
+					filename += *it;
+					if (stat(filename.c_str(), &stat_buf) == 0) {
+						break ;
+					}
 				}
 			}
 		}
-		if (S_ISREG(stat_buf.st_mode))
+		if (S_ISREG(stat_buf.st_mode)) {
 			readFileToContent(filename);
-		else
-			_status_code = 403;
+			setContentTypeByFilename(filename);
+		} else if (S_ISDIR(stat_buf.st_mode)) {
+			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
+				generateAutoindex();
+				_content_type = "Content-Type: text/html; charset=utf-8\r\n";
+			} else {
+				_status_code = 403;
+			}
+		} else {
+			_status_code = 403; // TODO:check what code to return if file is not a directory and not a regular file
+		}
 	} else {
 		_status_code = 404;
 	}
 
 	if (!isStatusCodeOk())
-		return generateResponseByStatusCode();
+		return ;
+//		return generateResponseByStatusCode();
 
 	generateStatusLine();
 	generateHeaders();
@@ -235,7 +333,7 @@ void Response::generateResponse() {
 			_status_code = 501; // 501 Not Implemented
 		}
 	}
-	if (!_request->isStatusCodeOk()) {
+	if (!isStatusCodeOk()) {
 		generateResponseByStatusCode();
 	}
 }
