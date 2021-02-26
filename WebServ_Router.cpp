@@ -136,9 +136,14 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request) {
     std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
 
+//    std::cout << "_client_request->_headers.size() " << _client_request->_headers.size() << std::endl;
+
     std::string host_from_header;
     if (it != _client_request->_headers.end()) {
-        host_from_header = it->second;
+//        host_from_header = it->second;
+        host_from_header = it->second.substr(0, it->second.find(':')); //jnannie: header contains host:port so we must remove port
+    } else { // jnannie: header "host" must be, rfc7230 5.4
+    	return _client_request->setStatusCode(400);
     }
 
     ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);

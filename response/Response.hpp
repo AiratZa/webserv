@@ -38,9 +38,11 @@ public:
 	void generateAutoindex();
 	void setContentTypeByFilename(std::string & filename);
 	bool isMethodAllowed();
+//	void setStatusCode(int status_code);
 
 	std::string getDateHeader();
 	std::string getLastModifiedHeader(time_t tv_sec);
+	std::string getLocationHeader();
 
 private:
 	struct tm _getCalendarTime(time_t tv_sec);
@@ -60,7 +62,7 @@ private:
 	Request* _request;
 	int _socket;
 	std::string _http_version;
-	int _status_code;
+//	int _status_code;
 	std::string _reason_phrase;
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
@@ -73,6 +75,7 @@ private: // headers
 	std::string _content_type;
 	std::string _allow;
 	std::string _last_modified;
+	std::string _location;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 

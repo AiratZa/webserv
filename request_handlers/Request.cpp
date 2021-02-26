@@ -43,7 +43,7 @@ std::set<std::string> Request::initRequestHeaders() {
 Request::Request()
     : _raw_request(""),
     _status_code(200),
-    _client_max_body_size(0xfffff),
+//    _client_max_body_size(0xfffff),
     _is_alias_path(false),
       _header_end_pos(0),
       _header_was_read(false) {  };
@@ -51,7 +51,7 @@ Request::Request()
 Request::Request(const std::string& request)
         : _raw_request(request),
         _status_code(200),
-        _client_max_body_size(0xfffff),
+//        _client_max_body_size(0xfffff),
         _is_alias_path(false),
           _header_end_pos(0),
         _header_was_read(false){ };
@@ -68,6 +68,10 @@ void Request::setRawRequest(const std::string & request) {
 
 void Request::setStatusCode(int status_code) {
 	_status_code = status_code;
+}
+
+int Request::getStatusCode() {
+	return _status_code;
 }
 
 void Request::parseRequestLine() {
@@ -139,6 +143,8 @@ void Request::parseHeaders() {
 		if (Request::implemented_headers.count(field_name))
 		{
 			if (_headers.count(field_name)) {
+				if (field_name == "host")
+					return setStatusCode(400);
 				_headers[field_name].append(",");
 			}
 			_headers[field_name].append(field_value); // add field_name-field_value to map
@@ -163,6 +169,7 @@ void Request::parseChunkedContent() {
 	std::string start_line;
 	size_t chunk_length;
 	size_t sum_content_length = 0;
+	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
 
 	size_t start_line_length = _raw_request.find("\r\n");
 	while (_raw_request[0] != '0') {
@@ -179,7 +186,7 @@ void Request::parseChunkedContent() {
 		if (chunk_length == ULONG_MAX)
 			return setStatusCode(413); // 413 (Request Entity Too Large)
 		sum_content_length +=chunk_length;
-		if (_client_max_body_size && sum_content_length > _client_max_body_size)
+		if (client_max_body_size && sum_content_length > client_max_body_size)
 			return setStatusCode(413);
 
 		_raw_request.erase(0, start_line_length + 2); // remove start line
@@ -194,10 +201,12 @@ void Request::parseChunkedContent() {
 }
 
 void Request::getContentByLength() {
+	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+
 	size_t content_length = libft::strtoul_base(_headers["content-length"], 10);
 	if (content_length == ULONG_MAX)
 		return setStatusCode(413); // 413 (Request Entity Too Large)
-	if (_client_max_body_size && content_length > _client_max_body_size)
+	if (client_max_body_size && content_length > client_max_body_size)
 		return setStatusCode(413);
 	_content.append(_raw_request.substr(0, content_length));
 	_raw_request.erase(0, content_length);
@@ -293,6 +302,8 @@ void    Request::parsURL() {
 	}
 
 	_request_target = res;
+	if (url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
+		_request_target += '/';
 }
 
 void Request::setAbsoluteRootPathForRequest(void) {

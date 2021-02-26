@@ -65,6 +65,8 @@ void Config::_fillAllowedContextForKeyWords(void) {
 
 
 void Config::fillConfigTextFromFile(const std::string &path_to_config) {
+//	(void)path_to_config;
+//	int file = open("/Users/jnannie/Desktop/webserv/WEBSERV.CONF", O_RDONLY); // jnannie: for debug
     int file = open(path_to_config.c_str(), O_RDONLY);
     if (file < 0)
         utils::exitWithLog("Error happened when try to open config file :(");

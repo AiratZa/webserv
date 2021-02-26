@@ -22,6 +22,7 @@ class Request {
 
 
 		void setStatusCode(int status_code);
+		int getStatusCode();
 		void parseRequestLine();
 		void stringToLower(std::string & str);
 		bool isStatusCodeOk();
@@ -53,7 +54,7 @@ class Request {
 
 		std::string _content;
 
-		size_t _client_max_body_size; // need to use client_max_body_size from server config
+//		size_t _client_max_body_size; // need to use client_max_body_size from server config
 
     void setHandlingServer(ServerContext* handling_server); // Airat
     void setHandlingLocation(LocationContext* location_to_route); // Airat

@@ -101,7 +101,7 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
 
-    const std::string& body = request_obj->getRawBody();
+    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
     int length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
@@ -238,6 +238,8 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                         it = _clients_read.erase(it);
                     }
                 }
+			    else // jnannie: we can read and write only once according to checklist
+			    	++it;
             }
 			else {
 			    bool body_was_read = continueReadBody(_client_requests[*it]);

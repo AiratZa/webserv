@@ -77,7 +77,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 }
 
 Response::Response(Request* request, int socket) :
-				_request(request), _socket(socket), _status_code(request->_status_code),
+				_request(request), _socket(socket),
 				_reason_phrase("OK"), _raw_response(""), _content(""), _root(WebServ::getWebServRootPath()) { };
 
 Response::~Response(void) { };
@@ -129,9 +129,9 @@ Response::~Response(void) { };
 
 void Response::generateStatusLine() {
 	_raw_response += "HTTP/1.1 ";
-	_raw_response += libft::ultostr_base(_status_code, 10);
+	_raw_response += libft::ultostr_base(_request->getStatusCode(), 10);
 	_raw_response += " ";
-	_raw_response += Response::status_codes[_status_code];
+	_raw_response += Response::status_codes[_request->getStatusCode()];
 	_raw_response += "\r\n";
 }
 
@@ -201,20 +201,6 @@ std::string Response::getDateHeader() {
 	return date_header;
 }
 
-void Response::generateHeaders() {
-//	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
-	_raw_response += "server: webserv\r\n";
-	_raw_response += getDateHeader();
-	_raw_response += _content_type;
-	_raw_response += _allow;
-	_raw_response += "Content-Length: ";
-	_raw_response += libft::ultostr_base(_content.length(), 10);
-	_raw_response += "\r\n";
-	_raw_response += _last_modified;
-//	_raw_response += "Content-Language: en\r\n";
-	_raw_response += "\r\n";
-}
-
 std::string Response::getLastModifiedHeader(time_t tv_sec) {
 	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
 	struct tm calendar_time;
@@ -227,21 +213,51 @@ std::string Response::getLastModifiedHeader(time_t tv_sec) {
 	return date_header;
 }
 
+std::string Response::getLocationHeader() {
+	std::string location;
+
+	location += "location: ";
+	location += "http://";
+	location += _request->_headers["host"];
+//	location += "http://localhost:8080"; //TODO:get scheme, host and port from connection or smt
+	location += _request->_request_target;//getLocationHeader();
+	location += '/';
+	location += "\r\n";
+
+	return location;
+}
+
+void Response::generateHeaders() {
+//	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
+	_raw_response += "server: webserv\r\n";
+	_raw_response += getDateHeader();
+	_raw_response += _content_type;
+	_raw_response += _allow;
+	_raw_response += "Content-Length: ";
+	_raw_response += libft::ultostr_base(_content.length(), 10);
+	_raw_response += "\r\n";
+	_raw_response += _last_modified;
+	_raw_response += _location;
+//	_raw_response += "Content-Language: en\r\n";
+	_raw_response += "\r\n";
+}
+
 void Response::generateResponseByStatusCode() {
 	_content_type = "Content-Type: text/html\r\n";
-	_content.append(libft::ultostr_base(_status_code, 10)).append(" ").append(Response::status_codes[_status_code]);
+	_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]);
 
 	generateStatusLine();
 	generateHeaders();
 	_raw_response.append(_content);
+//	std::cout << "in Response::generateResponseByStatusCode()\n";
 }
 
 
-bool Response::isStatusCodeOk() {
-	if (_status_code != 200)
-		return false;
-	return true;
-}
+//bool Response::isStatusCodeOk() {
+//	if (_status_code != 200)
+//		return false;
+//	return true;
+//}
 
 void Response::readFileToContent(std::string & filename) {
 	char buf[1024 + 1];
@@ -314,11 +330,15 @@ bool Response::isMethodAllowed() {
 void Response::generateGetResponse() {
 	generateHeadResponse();
 
-	if (!isStatusCodeOk())
+	if (!_request->isStatusCodeOk())
 		return ;
 
 	_raw_response += _content;
 }
+
+//void Response::setStatusCode(int status_code) {
+//	_status_code = status_code;
+//}
 
 void Response::generateHeadResponse() {
 	if (!isMethodAllowed()) {
@@ -330,8 +350,7 @@ void Response::generateHeadResponse() {
 		}
 		_allow.erase(_allow.size() - 1, 1);
 		_allow += "\r\n";
-		_status_code = 405;
-		return ;
+		return _request->setStatusCode(405);
 	}
 
 //	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
@@ -348,12 +367,22 @@ void Response::generateHeadResponse() {
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
-			std::list<std::string> index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
+			if (filename[filename.size() - 1] != '/') {
+//				filename += '/';
+				_location = getLocationHeader();
+
+				return _request->setStatusCode(301); //Moved Permanently
+			}
+			std::list<std::string> index_list;
+			if (_request->_handling_location)
+				index_list = _request->_handling_location->getIndexPagesDirectiveInfo(); // try to search one of index file
+			else
+				index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
 
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
 					if (stat((filename + "/" + *it).c_str(), &stat_buf) == 0) {
-						filename += "/";
+						filename += "/"; //TODO:redundant '/'
 						filename += *it;
 						break ;
 					}
@@ -370,16 +399,16 @@ void Response::generateHeadResponse() {
 				generateAutoindex();
 				_content_type = "Content-Type: text/html\r\n";
 			} else {
-				_status_code = 403;
+				return _request->setStatusCode(403);
 			}
 		} else {
-			_status_code = 403; // TODO:check what code to return if file is not a directory and not a regular file
+			return _request->setStatusCode(403); // TODO:check what code to return if file is not a directory and not a regular file
 		}
 	} else {
-		_status_code = 404;
+		return _request->setStatusCode(404);
 	}
 
-	if (!isStatusCodeOk())
+	if (!_request->isStatusCodeOk())
 		return ;
 //		return generateResponseByStatusCode();
 
@@ -400,9 +429,6 @@ void Response::generatePutResponse() {
 }
 
 
-
-
-
 void Response::generateResponse() {
 	if (_request->isStatusCodeOk()) {
 		if (_request->_method == "GET") {
@@ -412,10 +438,10 @@ void Response::generateResponse() {
 		} else if (_request->_method == "PUT") {
 			generatePutResponse();
 		} else {
-			_status_code = 501; // 501 Not Implemented
+			_request->setStatusCode(501); // 501 Not Implemented
 		}
 	}
-	if (!isStatusCodeOk()) {
+	if (!_request->isStatusCodeOk()) {
 		generateResponseByStatusCode();
 	}
 }
@@ -423,4 +449,5 @@ void Response::generateResponse() {
 void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
 	send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
+//	std::cout << "Response::sendResponse response is sent\n";
 }
