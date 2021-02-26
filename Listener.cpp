@@ -6,6 +6,8 @@
 #include "WebServ.hpp"
 #include "response/Response.hpp"
 
+#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
+
 Listener::Listener(const std::string &host, int port)
 		: _host(host), _port(port)
 {
@@ -101,22 +103,71 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
 
-    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
+//    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
+    const std::string& body = request_obj->getRawRequest();
     int length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second == "chunked")) {
-        size_t      len;
+//        size_t      len;
         std::string tmp_body = body;
 
-        while (!tmp_body.empty()) {
-            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
-                return true;
-            if (tmp_body.length() >= len + 5)
-                tmp_body = tmp_body.substr(tmp_body.find("\r\n") + 2 + len);
-            else
-                break;
+
+		size_t start_line_length = tmp_body.find("\r\n");
+
+		std::string start_line;
+		std::string chunk_length_field;
+		size_t chunk_length;
+		size_t sum_content_length = 0;
+		size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
+
+        while (!tmp_body.empty()) { // jnannie: remade like Request::parseChunkedContent()
+
+			if (start_line_length == std::string::npos)
+				return false;
+			if (start_line_length > MAX_HEADER_LINE_LENGTH) {
+				request_obj->setStatusCode(400);
+				return true;
+			}
+			start_line = tmp_body.substr(0, start_line_length);
+
+			chunk_length_field = start_line.substr(0, tmp_body.find(';')); // to ';' or full line
+
+			libft::string_to_lower(chunk_length_field);
+			if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos) {
+				request_obj->setStatusCode(400);
+				return true;
+			}
+			chunk_length = libft::strtoul_base(chunk_length_field, 16);
+			if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length) {
+				request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
+				return true;
+			}
+			sum_content_length += chunk_length;
+			if (client_max_body_size && sum_content_length > client_max_body_size) {
+				request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
+				return true;
+			}
+
+			tmp_body.erase(0, start_line_length + 2); // remove start line
+
+//			_content.append(_raw_request.substr(0, chunk_length));
+
+			if (tmp_body.size() < chunk_length + 2)
+				return false;
+
+			tmp_body.erase(0, chunk_length + 2); // remove rest of chunk
+
+			start_line_length = tmp_body.find("\r\n");
+
+//            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
+//                return true;
+//            if (tmp_body.length() >= len + 5)
+//                tmp_body = tmp_body.substr(tmp_body.find("\r\n") + 2 + len);
+//            else
+//                break;
+
         }
     }
     else if ((length = request_obj->getHeaderContentLength()) >= 0) {
