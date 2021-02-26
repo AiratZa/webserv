@@ -246,8 +246,11 @@ void Response::generateResponseByStatusCode() {
 	_content_type = "Content-Type: text/html\r\n";
 	_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]);
 
-	generateStatusLine();
-	generateHeaders();
+    generateStatusLine();
+
+    if (_request->getStatusCode() != 100) { // cURL dont recognize 100 status code response with headers
+        generateHeaders();
+    }
 	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
 }

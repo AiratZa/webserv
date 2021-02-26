@@ -5,13 +5,14 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
+class Response;
+
 #include "../request_handlers/Request.hpp"
 #include <sys/socket.h>
 #include <string>
 #include <set>
 //#include "../Server.hpp"
 
-//class Server;
 #include <list>
 #include <sys/stat.h>
 #include <fcntl.h>

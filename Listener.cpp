@@ -155,10 +155,12 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         return false;
     }
 
-    request->handleExpectHeader();
+    if (!request->getCountSentResponses()) { // check for header in first iteration
+        request->handleExpectHeader();
 
-    if (!request->isStatusCodeOk()) {
-        return false;
+        if (!request->isStatusCodeOk()) {
+            return false;
+        }
     }
 
     return true;
@@ -204,6 +206,10 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			else
 				time[*it] = get_time();
 			buf[bytes_read] = '\0';
+
+			std::cout << "=========================" << std::endl;
+			std::cout << buf << std::endl;
+            std::cout << std::endl << "=========================" << std::endl;
 
 			try
 			{
@@ -286,14 +292,22 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 			request->parseBody();
 
-			Response response(request, fd);
-			response.generateResponse();
-			response.sendResponse();
+			Response* response = new Response(request, fd);
+			response->generateResponse();
+			response->sendResponse();
 
-			close(fd);
-			delete _client_requests[fd];
-			_client_requests.erase(fd);
-			it = _clients_write.erase(it);
+			if (request->_status_code == 100) {
+			    request->addSentResponse(response);
+			    request->setDefaultStatusCode(); //200
+			    _clients_read.push_back(fd);
+			} else {
+			    delete response;
+                close(fd);
+                delete _client_requests[fd];
+                _client_requests.erase(fd);
+			}
+            it = _clients_write.erase(it);
+
 
 		} else {
 			++it;

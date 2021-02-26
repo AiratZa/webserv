@@ -9,6 +9,10 @@
 class Request;
 #include "../WebServ.hpp"
 #include <climits>
+#include "../response/Response.hpp"
+
+#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+#define DEFAULT_REQUEST_STATUS_CODE 200
 
 class Request {
 
@@ -55,6 +59,8 @@ class Request {
 		std::string _content;
 
 //		size_t _client_max_body_size; // need to use client_max_body_size from server config
+
+
 
     void setHandlingServer(ServerContext* handling_server); // Airat
     void setHandlingLocation(LocationContext* location_to_route); // Airat
@@ -107,8 +113,18 @@ class Request {
     bool isMethodLimited(const std::string& method) const;
     void handleExpectHeader(void);
 
-    private:
+    void addSentResponse(Response* resp);
 
+    std::size_t getCountSentResponses(void) const {
+        return _sent_responses.size();
+    }
+
+    void setDefaultStatusCode(void) {
+        _status_code = DEFAULT_REQUEST_STATUS_CODE;
+    }
+
+    private:
+        std::list<Response *> _sent_responses;
         std::size_t _header_end_pos;
         bool _header_was_read;
 

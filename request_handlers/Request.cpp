@@ -8,7 +8,7 @@
 #include "../utils/cpp_libft/libft.hpp"
 
 
-#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+
 
 /*
  * CLIENT_MAX_BODY_SIZE is about 1m
@@ -42,7 +42,7 @@ std::set<std::string> Request::initRequestHeaders() {
 
 Request::Request()
     : _raw_request(""),
-    _status_code(200),
+    _status_code(DEFAULT_REQUEST_STATUS_CODE),
 //    _client_max_body_size(0xfffff),
     _is_alias_path(false),
       _header_end_pos(0),
@@ -50,7 +50,7 @@ Request::Request()
 
 Request::Request(const std::string& request)
         : _raw_request(request),
-        _status_code(200),
+        _status_code(DEFAULT_REQUEST_STATUS_CODE),
 //        _client_max_body_size(0xfffff),
         _is_alias_path(false),
           _header_end_pos(0),
@@ -156,7 +156,7 @@ void Request::parseHeaders() {
 }
 
 bool Request::isStatusCodeOk() {
-	if (_status_code != 200)
+	if (_status_code != DEFAULT_REQUEST_STATUS_CODE)
 		return false;
 	return true;
 }
@@ -379,4 +379,8 @@ void Request::handleExpectHeader(void) {
         }
 
     }
+}
+
+void Request::addSentResponse(Response* resp) {
+    _sent_responses.push_back(resp);
 }
