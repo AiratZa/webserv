@@ -381,8 +381,7 @@ void Response::generateHeadResponse() {
 
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
-					if (stat((filename + "/" + *it).c_str(), &stat_buf) == 0) {
-						filename += "/"; //TODO:redundant '/'
+					if (stat((filename + *it).c_str(), &stat_buf) == 0) {
 						filename += *it;
 						break ;
 					}
