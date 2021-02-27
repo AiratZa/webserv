@@ -301,13 +301,14 @@ void    Request::parsURL() {
 	}
 	it = path.begin();
 	while (it != path.end()) { // uri constructor
-		res += '/';
 		res += *it;
 		++it;
+		if (it != path.end())
+			res += '/';
 	}
 
 	_request_target = res;
-	if (url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
+	if (url.size() && url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
 		_request_target += '/';
 }
 

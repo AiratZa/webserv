@@ -219,6 +219,7 @@ std::string Response::getLocationHeader() {
 	location += "location: ";
 	location += "http://";
 	location += _request->_headers["host"];
+	location += '/';
 //	location += "http://localhost:8080"; //TODO:get scheme, host and port from connection or smt
 	location += _request->_request_target;//getLocationHeader();
 	location += '/';
