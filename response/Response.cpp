@@ -271,6 +271,7 @@ void Response::readFileToContent(std::string & filename) {
 			utils::exitWithLog();
 		_content.append(buf, ret);
 	}
+	close(fd);
 }
 
 void Response::generateAutoindex() { // TODO:replace by normal autoindex

@@ -84,6 +84,7 @@ void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteS
 void Listener::readError(std::list<int>::iterator & it) {
 	close(*it);
 	delete _client_requests[*it];
+	_client_requests.erase(*it);
 	it = _clients_read.erase(it);
 }
 
