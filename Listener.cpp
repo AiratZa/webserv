@@ -330,9 +330,8 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 			if (request->isStatusCodeOk()) {
 				request->parsURL();
-//				std::cout << "request->_request_target: " << request->_request_target << std::endl;
-				if (request->isStatusCodeOk())
-					WebServ::routeRequests(_host, _port, _client_requests);
+//				if (request->isStatusCodeOk()) // TODO: routing already done in Listener::handleRequests() -> Listener::processHeaderInfoForActions() so this one is redundant
+//					WebServ::routeRequests(_host, _port, _client_requests);
 			}
 
 			request->parseBody();

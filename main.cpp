@@ -8,7 +8,7 @@
 
 
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
-#define PREFIX_DEFAULT_PATH "/default_folder" // From this path working root
+#define PREFIX_DEFAULT_PATH "/default_folder" // From this path working root // TODO:add ending '/'
 
 WebServ webserv;
 

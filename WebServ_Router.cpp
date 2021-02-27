@@ -136,8 +136,6 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request) {
     std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
 
-//    std::cout << "_client_request->_headers.size() " << _client_request->_headers.size() << std::endl;
-
     std::string host_from_header;
     if (it != _client_request->_headers.end()) {
 //        host_from_header = it->second;
@@ -155,15 +153,15 @@ void WebServ::routeRequest(const std::string& host, const int port, Request* _cl
     _client_request->setAbsoluteRootPathForRequest();
 }
 
-void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
-    std::map<int, Request *>::iterator it_r = _clients_requests.begin();
-
-    while (it_r != _clients_requests.end()) {
-        Request* current_request = (*it_r).second;
-        WebServ::routeRequest(host, port, current_request);
-        ++it_r;
-    }
-}
+//void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
+//    std::map<int, Request *>::iterator it_r = _clients_requests.begin();
+//
+//    while (it_r != _clients_requests.end()) {
+//        Request* current_request = (*it_r).second;
+//        WebServ::routeRequest(host, port, current_request);
+//        ++it_r;
+//    }
+//}
 
 
 
