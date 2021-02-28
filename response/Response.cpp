@@ -26,7 +26,7 @@ std::set<std::string> Response::initResponseHeaders() {
 	implemented_headers.insert("retry-after");
 	implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
-	implemented_headers.insert("www-authenticate");
+	implemented_headers.insert("www-authenticate"); //WWW-Authenticate: Newauth realm="apps", type=1, title="Login to \"apps\"", Basic realm="simple"
 	return implemented_headers;
 }
 
@@ -153,7 +153,7 @@ void Response::generateStatusLine() {
  * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
  * explanations http://howardhinnant.github.io/date_algorithms.html
  */
-struct tm Response::_getCalendarTime(time_t tv_sec) {
+struct tm Response::_getCalendarTime(time_t tv_sec) { // TODO: maybe should make it simplier
 	struct tm calendar_time;
 	int days = tv_sec / 86400;
 	days += 719468;

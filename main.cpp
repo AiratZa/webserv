@@ -81,3 +81,8 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+//TODO: make connections persistent
+//TODO: accept all incoming connettions in Listener::acceptConnection(), not only one
+//TODO: check accept-charset, accept-language and other request headers before response
+
