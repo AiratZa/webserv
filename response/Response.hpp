@@ -36,7 +36,7 @@ public:
 	void readFileToContent(std::string & filename);
 	bool isStatusCodeOk();
 	void generateAutoindex();
-	void setContentTypeByFilename(std::string & filename);
+	void setContentTypeByFileExt(std::string & ext);
 	bool isMethodAllowed();
 //	void setStatusCode(int status_code);
 
@@ -47,6 +47,9 @@ public:
 private:
 	struct tm _getCalendarTime(time_t tv_sec);
 	struct tm _gmtime(time_t tv_sec);
+	std::string _getExt(std::string filename);
+	bool _isCgiExt(std::string & ext);
+	void _runCgi(std::string & filename);
 
 
 

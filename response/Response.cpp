@@ -278,15 +278,10 @@ void Response::generateAutoindex() { // TODO:replace by normal autoindex
 	_content = "generated autoindex";
 }
 
-void Response::setContentTypeByFilename(std::string & filename) {
-	std::string ext;
-	size_t dot_pos;
-
-	dot_pos = filename.rfind('.');
-	if (dot_pos == std::string::npos)
+void Response::setContentTypeByFileExt(std::string & ext) {
+	if (ext == "")
 		_content_type = "Content-Type: application/octet-stream\r\n";
 	else {
-		ext = filename.substr(dot_pos);
 		if (ext == ".txt")
 			_content_type = "Content-Type: text/plain\r\n";
 		else if (ext == ".html")
@@ -342,6 +337,43 @@ void Response::generateGetResponse() {
 //	_status_code = status_code;
 //}
 
+std::string Response::_getExt(std::string filename) {
+	std::string ext;
+	size_t dot_pos;
+
+	dot_pos = filename.rfind('.');
+	if (dot_pos != std::string::npos)
+		ext = filename.substr(dot_pos);
+	return ext;
+}
+
+bool Response::_isCgiExt(std::string & ext) {
+	return ext == "php";
+}
+
+void Response::_runCgi(std::string & filename) {
+	int pid;
+	int exit_status;
+	std::string php_cgi("/usr/bin/php-cgi");
+	char * argv[2] = {
+			const_cast<char *>(php_cgi.c_str()),
+			const_cast<char *>(filename.c_str())
+	};
+	char ** env = NULL;
+
+	if ((pid = fork()) == -1)
+		_request->setStatusCode(500); // Internal Server Error
+	else if (pid == 0) {
+		if (execve(argv[0], argv, env) == -1)
+			exit(EXIT_FAILURE);
+	}
+	waitpid(pid, &exit_status, 0);
+	if (WIFEXITED(exit_status))
+		exit_status = WEXITSTATUS(exit_status);
+	else if (WIFSIGNALED(exit_status))
+		exit_status = exit_status | 128;
+}
+
 void Response::generateHeadResponse() {
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
@@ -392,9 +424,14 @@ void Response::generateHeadResponse() {
 		}
 
 		if (S_ISREG(stat_buf.st_mode)) {
-			readFileToContent(filename);
-			setContentTypeByFilename(filename);
-			_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+			std::string ext = _getExt(filename);
+			if (_isCgiExt(ext))
+				_runCgi(filename);
+			else {
+				setContentTypeByFileExt(ext);
+				readFileToContent(filename);
+				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
 				generateAutoindex();
