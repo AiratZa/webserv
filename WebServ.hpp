@@ -36,7 +36,7 @@ public:
                                                          const std::string& server_name);
 
     static void routeRequest(const std::string& host, const int port, Request* _client_request);
-    static void routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests);
+//    static void routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests); // jnannie: not needed
 
 	void stop();
 

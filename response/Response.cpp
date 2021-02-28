@@ -219,6 +219,7 @@ std::string Response::getLocationHeader() {
 	location += "location: ";
 	location += "http://";
 	location += _request->_headers["host"];
+	location += '/';
 //	location += "http://localhost:8080"; //TODO:get scheme, host and port from connection or smt
 	location += _request->_request_target;//getLocationHeader();
 	location += '/';
@@ -274,6 +275,7 @@ void Response::readFileToContent(std::string & filename) {
 			utils::exitWithLog();
 		_content.append(buf, ret);
 	}
+	close(fd);
 }
 
 void Response::generateAutoindex() { // TODO:replace by normal autoindex
@@ -385,8 +387,7 @@ void Response::generateHeadResponse() {
 
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
-					if (stat((filename + "/" + *it).c_str(), &stat_buf) == 0) {
-						filename += "/"; //TODO:redundant '/'
+					if (stat((filename + *it).c_str(), &stat_buf) == 0) {
 						filename += *it;
 						break ;
 					}

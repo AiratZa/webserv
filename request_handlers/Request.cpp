@@ -8,7 +8,7 @@
 #include "../utils/cpp_libft/libft.hpp"
 
 
-
+#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
 
 /*
  * CLIENT_MAX_BODY_SIZE is about 1m
@@ -24,6 +24,7 @@ std::list<int> Request::initOkStatusCodes(void) {
 
     codes.push_back(DEFAULT_REQUEST_STATUS_CODE);
     codes.push_back(201);
+    codes.push_back(100);
     return codes;
 }
 
@@ -84,33 +85,32 @@ int Request::getStatusCode() {
 	return _status_code;
 }
 
-void Request::parseRequestLine(std::string& raw_request_cp) {
-
-    size_t word_end = raw_request_cp.find(' ');
+void Request::parseRequestLine() {
+	size_t word_end = _raw_request.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_method = raw_request_cp.substr(0, word_end);
-	raw_request_cp.erase(0, word_end + 1);
+	_method = _raw_request.substr(0, word_end);
+	_raw_request.erase(0, word_end + 1);
 
-	word_end = raw_request_cp.find(' ');
+	word_end = _raw_request.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_request_target = raw_request_cp.substr(0, word_end);
-	raw_request_cp.erase(0, word_end + 1);
+	_request_target = _raw_request.substr(0, word_end);
+	_raw_request.erase(0, word_end + 1);
 
-	word_end = raw_request_cp.find("\r\n");
+	word_end = _raw_request.find("\r\n");
 	if (word_end == std::string::npos
-		|| raw_request_cp.find(' ') < word_end)
+		|| _raw_request.find(' ') < word_end)
 		return setStatusCode(400);
 
-	_http_version = raw_request_cp.substr(0, word_end);
-	raw_request_cp.erase(0, word_end + 2);
+	_http_version = _raw_request.substr(0, word_end);
+	_raw_request.erase(0, word_end + 2);
 
 	if (_method.length() + _request_target.length() + _http_version.length() + 4 > MAX_HEADER_LINE_LENGTH)
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 }
 
-void Request::parseHeaders(std::string& raw_request_cp) {
+void Request::parseHeaders() {
 	if (!isStatusCodeOk())
 		return ;
 	std::string field_name;
@@ -118,38 +118,38 @@ void Request::parseHeaders(std::string& raw_request_cp) {
 	size_t field_name_length;
 	size_t field_value_length;
 
-	size_t line_length = raw_request_cp.find("\r\n");
+	size_t line_length = _raw_request.find("\r\n");
 	while (line_length != 0) {
 		if (line_length > MAX_HEADER_LINE_LENGTH
 			|| line_length == std::string::npos) {
 			return setStatusCode(400); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
 
-		field_name_length = raw_request_cp.find(':'); // field-name
+		field_name_length = _raw_request.find(':'); // field-name
 		if (field_name_length == std::string::npos) {
 			return setStatusCode(400);
 		}
-		field_name = raw_request_cp.substr(0, field_name_length);
+		field_name = _raw_request.substr(0, field_name_length);
 
 		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
 		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
 			return setStatusCode(400);
 		}
-		raw_request_cp.erase(0, field_name_length + 1);
+		_raw_request.erase(0, field_name_length + 1);
 
 
 		field_value_length = line_length - field_name_length - 1; // field-value
-		if (raw_request_cp[0] == ' ') {
-			raw_request_cp.erase(0, 1); // remove optional whitespace in the beginning of field-value
+		if (_raw_request[0] == ' ') {
+			_raw_request.erase(0, 1); // remove optional whitespace in the beginning of field-value
 			field_value_length--;
 		}
-		if (raw_request_cp[field_value_length - 1] == ' ') {
-			raw_request_cp.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
+		if (_raw_request[field_value_length - 1] == ' ') {
+			_raw_request.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
 			field_value_length--;
 		}
-		field_value = raw_request_cp.substr(0, field_value_length);
-		raw_request_cp.erase(0, field_value_length + 2);
+		field_value = _raw_request.substr(0, field_value_length);
+		_raw_request.erase(0, field_value_length + 2);
 
 		if (Request::implemented_headers.count(field_name))
 		{
@@ -161,9 +161,9 @@ void Request::parseHeaders(std::string& raw_request_cp) {
 			_headers[field_name].append(field_value); // add field_name-field_value to map
 		}
 
-		line_length = raw_request_cp.find("\r\n");
+		line_length = _raw_request.find("\r\n");
 	}
-	raw_request_cp.erase(0, 2);
+	_raw_request.erase(0, 2);
 }
 
 bool Request::isStatusCodeOk() {
@@ -178,7 +178,7 @@ bool Request::isStatusCodeOk() {
 /*
  * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
  */
-void Request::parseChunkedContent() {
+void Request::parseChunkedContent() { // TODO:we can remove all length and validity checks because all work done by Listener::continueReadBody()
 	std::string chunk_length_field;
 	std::string start_line;
 	size_t chunk_length;
@@ -186,7 +186,7 @@ void Request::parseChunkedContent() {
 	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
 
 	size_t start_line_length = _raw_request.find("\r\n");
-	while (_raw_request[0] != '0') {
+	while (!_raw_request.empty()) {
 		if (start_line_length > MAX_HEADER_LINE_LENGTH
 			|| start_line_length == std::string::npos) {
 			return setStatusCode(400);
@@ -196,14 +196,19 @@ void Request::parseChunkedContent() {
 		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
 
 		libft::string_to_lower(chunk_length_field);
+		if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
+			return setStatusCode(400);
 		chunk_length = libft::strtoul_base(chunk_length_field, 16);
-		if (chunk_length == ULONG_MAX)
+		if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length)
 			return setStatusCode(413); // 413 (Request Entity Too Large)
-		sum_content_length +=chunk_length;
+		sum_content_length += chunk_length;
 		if (client_max_body_size && sum_content_length > client_max_body_size)
 			return setStatusCode(413);
 
 		_raw_request.erase(0, start_line_length + 2); // remove start line
+
+		if (_raw_request.size() < chunk_length + 2)
+			return setStatusCode(400);
 
 		_content.append(_raw_request.substr(0, chunk_length));
 
@@ -310,13 +315,14 @@ void    Request::parsURL() {
 	}
 	it = path.begin();
 	while (it != path.end()) { // uri constructor
-		res += '/';
 		res += *it;
 		++it;
+		if (it != path.end())
+			res += '/';
 	}
 
 	_request_target = res;
-	if (url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
+	if (url.size() && url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
 		_request_target += '/';
 }
 
@@ -393,8 +399,4 @@ void Request::handleExpectHeader(void) {
         }
 
     }
-}
-
-void Request::addSentResponse(Response* resp) {
-    _sent_responses.push_back(resp);
 }
