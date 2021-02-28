@@ -14,6 +14,9 @@ class Request;
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 #define DEFAULT_REQUEST_STATUS_CODE 200
 
+
+
+
 class Request {
 
 	public:
@@ -27,12 +30,12 @@ class Request {
 
 		void setStatusCode(int status_code);
 		int getStatusCode();
-		void parseRequestLine();
+		void parseRequestLine(std::string& raw_request_cp);
 		void stringToLower(std::string & str);
 		bool isStatusCodeOk();
 		void parseChunkedContent();
 		void getContentByLength();
-		void parseHeaders();
+		void parseHeaders(std::string& raw_request_cp);
 		void parseBody();
 //		void checkMethod();
 //		void checkRequestTarget();
@@ -41,12 +44,14 @@ class Request {
 
 	private:
 		static std::set<std::string> initRequestHeaders();
+		static std::list<int> initOkStatusCodes(void);
 
 	private:
 		std::string _raw_request;
 
 	public:
 		static const std::set<std::string> implemented_headers;
+        static const std::list<int> OK_STATUS_CODES;
 
 	public:
 		int _status_code;
@@ -123,6 +128,7 @@ class Request {
         _status_code = DEFAULT_REQUEST_STATUS_CODE;
     }
 
+
     private:
         std::list<Response *> _sent_responses;
         std::size_t _header_end_pos;
@@ -132,5 +138,6 @@ class Request {
 
 
 };
+
 
 #endif

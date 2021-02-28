@@ -238,8 +238,9 @@ void Response::generateHeaders() {
 	_raw_response += "\r\n";
 	_raw_response += _last_modified;
 	_raw_response += _location;
+//	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-	_raw_response += "\r\n";
+//	_raw_response += "\r\n";
 }
 
 void Response::generateResponseByStatusCode() {
@@ -251,7 +252,7 @@ void Response::generateResponseByStatusCode() {
     if (_request->getStatusCode() != 100) { // cURL dont recognize 100 status code response with headers
         generateHeaders();
     }
-	_raw_response.append(_content);
+//	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
 }
 
@@ -420,12 +421,14 @@ void Response::generateHeadResponse() {
 }
 
 void Response::generatePutResponse() {
-    std::cout << "HELLO TARGET: " <<_request->_request_target << std::endl;
-    for (int i = 0; i < 100; i++)
-        std::cout << std::endl;
-    std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
+//    std::cout << "HELLO TARGET: " <<_request->_request_target << std::endl;
+//    for (int i = 0; i < 100; i++)
+//        std::cout << std::endl;
+//    std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
 //    setIndexFileContentToResponseContent();
 
+    _request->_status_code = 201;
+    _location = getLocationHeader();
     generateStatusLine();
     generateHeaders();
     _raw_response += _content;
@@ -451,6 +454,8 @@ void Response::generateResponse() {
 
 void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
-	send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
-//	std::cout << "Response::sendResponse response is sent\n";
+    std::cout << _raw_response << std::endl;
+    send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
+
+	//	std::cout << "Response::sendResponse response is sent\n";
 }

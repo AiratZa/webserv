@@ -46,13 +46,30 @@ in_addr_t Listener::_getHostInetAddrFromStr(const std::string& host_str) const {
 	return host_addr;
 }
 
+template <class Key, class Value>
+Key max_map_key(const std::map<Key, Value>& map_value) {
+    Key max_value = map_value.begin()->first;
+
+    typename std::map<Key, Value>::const_iterator it = map_value.begin();
+
+    while (it != map_value.end()) {
+        if (it->first > max_value) {
+            max_value = it->first;
+        }
+        ++it;
+    }
+    return max_value;
+
+
+}
+
 void Listener::updateMaxFD(void) {
 	int max_tmp = _listener;
 	if (!_clients_read.empty()) {
-		max_tmp = std::max(max_tmp, *std::max_element(_clients_read.begin(), _clients_read.end()));
+		max_tmp = std::max(max_tmp, max_map_key(_clients_read));
 	}
 	if (!_clients_write.empty()) {
-		max_tmp = std::max(max_tmp, *std::max_element(_clients_write.begin(), _clients_write.end()));
+		max_tmp = std::max(max_tmp, max_map_key(_clients_write));
 	}
 	_max_fd = max_tmp;
 }
@@ -69,20 +86,37 @@ void Listener::acceptConnection(void) {
 	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
 		utils::exitWithLog();
 
-	_clients_read.push_back(sock);
+	// by default check to read and write, maybe we will need read|write at same iteration
+	_clients_read[sock] = true;
+    _clients_write[sock] = true;
 
 	_client_requests[sock] =  new Request();
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
-	handleRequests(globalReadSetPtr);
+    handleRequests(globalReadSetPtr);
 	handleResponses(globalWriteSetPtr); // Routing is made inside handling Responses
 }
 
-void Listener::readError(std::list<int>::iterator & it) {
-	close(*it);
-	delete _client_requests[*it];
-	it = _clients_read.erase(it);
+template <class Key, class Value>
+typename std::map<Key, Value>::iterator eraseMapElementAndReturnNext(std::map<Key, Value>& map_instance,
+                                                             typename std::map<Key, Value>::iterator& it) {
+    typename std::map<Key, Value>::iterator next_one = ++it;
+    --it;
+    map_instance.erase(it);
+    return next_one;
+}
+
+
+void Listener::readError(std::map<int, bool>::iterator & it) {
+//	close(it->first);
+//	delete _client_requests[it->first];
+//	it = _clients_read.erase(it);
+
+    close(it->first);
+    delete _client_requests[it->first];
+
+    it = eraseMapElementAndReturnNext(_clients_read, it);
 }
 
 // return TRUE if header was read else FALSE
@@ -120,6 +154,7 @@ bool Listener::continueReadBody(Request* request_obj) {
         }
     }
     else if ((length = request_obj->getHeaderContentLength()) >= 0) {
+        std::cout << body.length() << std::endl;
         if (body.length() == static_cast<std::size_t>(length))
             return true;
         return false;
@@ -135,9 +170,11 @@ bool Listener::continueReadBody(Request* request_obj) {
 bool Listener::processHeaderInfoForActions(int client_socket) {
     Request* request = _client_requests[client_socket];
 
-    request->parseRequestLine();
+    // we dont need silently change raw request inside parsing methods!
+    std::string raw_request_for_parsing = request->getRawRequest();
+    request->parseRequestLine(raw_request_for_parsing);
     if (request->isStatusCodeOk()) {
-        request->parseHeaders();
+        request->parseHeaders(raw_request_for_parsing);
         if (!request->isStatusCodeOk()) {
             return false;
         }
@@ -181,101 +218,131 @@ void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std:
 	}
 }
 
+void        set_time(std::map<int, int> &time,
+                     std::map<int, bool>::iterator it,
+                     std::map<int, bool>::iterator const& ite) {
+    while (it != ite) {
+        time[it->first] = get_time();
+        ++it;
+    }
+}
+
 void Listener::handleRequests(fd_set* globalReadSetPtr) {
 	char buf[BUFFER_LENGHT];
 	int bytes_read;
-	std::list<int>::iterator it = _clients_read.begin();
+	std::map<int, bool>::iterator it = _clients_read.begin();
 	std::map<int, int> time;
 	set_time(time, it, _clients_read.end());
 
 
 	while (it != _clients_read.end() ) {
+        int fd = it->first;
 
-		if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
-		    // Check client header info was read or not
+        // Поступили данные от клиента, читаем их
+        // if fd contains in SELECTed for READ set and it is ready for read(_clients_read[fd] == true)
+        if (FD_ISSET(fd, globalReadSetPtr) && it->second)
+        {
+            Request* request = _client_requests[fd];
+            // Check client header info was read or not
 
-		    bool header_was_read_client = _client_requests[*it]->isHeaderWasRead();
+            bool header_was_read_client = request->isHeaderWasRead();
 
-			bytes_read = recv(*it, buf, BUFFER_LENGHT - 1, 0);
-			if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
-				readError(it); // ERASES iterator instance inside
-				continue;
-			}
-			else if (bytes_read < 0)
-				bytes_read = 0;
-			else
-				time[*it] = get_time();
-			buf[bytes_read] = '\0';
+            bytes_read = recv(fd, buf, BUFFER_LENGHT - 1, 0);
+            if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
+                readError(it); // ERASES iterator instance inside
+                continue;
+            }
+            else if (bytes_read < 0)
+                bytes_read = 0;
+            else
+                time[fd] = get_time();
+            buf[bytes_read] = '\0';
 
-			std::cout << "=========================" << std::endl;
-			std::cout << buf << std::endl;
+            std::cout << "=========================" << std::endl;
+            std::cout << buf << std::endl;
             std::cout << std::endl << "=========================" << std::endl;
 
-			try
-			{
-				_client_requests[*it]->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
-			}
-			catch (std::bad_alloc const& e)
-			{
-				_client_requests[*it]->_status_code = 500;
-				readError(it);
-				continue;
-			}
+            try
+            {
+                request->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
+            }
+            catch (std::bad_alloc const& e)
+            {
+                request->_status_code = 500;
+                readError(it);
+                continue;
+            }
 
-			// Behavior based on was or not read header
-			if (!header_was_read_client) {
-			    bool header_was_read = readAndSetHeaderInfoInRequest(_client_requests[*it]);
-			    if (header_was_read) {
-                    _client_requests[*it]->setHeaderWasRead();
-                    bool is_continue_read_body = processHeaderInfoForActions(*it);
+            // Behavior based on was or not read header
+            if (!header_was_read_client) {
+                bool header_was_read = readAndSetHeaderInfoInRequest(request);
+                if (header_was_read) {
+                    request->setHeaderWasRead();
+
+
+                    bool is_continue_read_body = processHeaderInfoForActions(fd);
+                    if (!is_continue_read_body && (request->_status_code == 100))
+                    {
+                        Response* response = new Response(request, fd);
+                        response->generateResponse();
+                        response->sendResponse();
+                        continue ;
+                    }
 
                     if (is_continue_read_body) {
-                        bool body_was_read = continueReadBody(_client_requests[*it]);
+                        bool body_was_read = continueReadBody(_client_requests[fd]);
                         if (body_was_read) {
-                            _clients_write.push_back(*it);
-                            it = _clients_read.erase(it);
+                            _clients_write[fd] = true;
+                            _clients_read[fd] = false;
+                            ++it;
+//                            it = eraseMapElementAndReturnNext(_clients_read, it);
+//                            it = _clients_read.erase(it);
                         }
                         else {
                             ++it;
                         }
                     }
                     else {
-                        _clients_write.push_back(*it);
-                        it = _clients_read.erase(it);
+                        _clients_write[fd] = true;
+                        _clients_read[fd] = false;
+                        ++it;
                     }
                 }
-			    else // jnannie: we can read and write only once according to checklist
-			    	++it;
+                else // jnannie: we can read and write only once according to checklist
+                    ++it;
             }
-			else {
-			    bool body_was_read = continueReadBody(_client_requests[*it]);
-			    if (body_was_read) {
-                    _clients_write.push_back(*it);
-                    it = _clients_read.erase(it);
-			    }
-			    else {
+            else {
+                bool body_was_read = continueReadBody(_client_requests[fd]);
+                if (body_was_read) {
+                    _clients_write[fd] = true;
+                    _clients_read[fd] = false;
                     ++it;
                 }
-			}
-		}
-		// if not ready for reading (socket not in SET)
-		else {
-			if ((get_time() - time[*it]) > TIME_OUT) {
-				readError(it);
-				continue;
-			}
-			++it;
-		}
+                else {
+                    ++it;
+                }
+            }
+        }
+        // just skip if not ready
+        else {
+            if ((get_time() - time[fd]) > TIME_OUT) {
+                readError(it);
+                continue;
+            }
+            ++it;
+        }
 	}
 }
 
 void Listener::handleResponses(fd_set* globalWriteSetPtr) {
-	std::list<int>::iterator it = _clients_write.begin();
+	std::map<int, bool>::iterator it = _clients_write.begin();
 
-	int fd;
 	while (it != _clients_write.end()) {
-		fd = *it;
-		if (FD_ISSET(fd, globalWriteSetPtr)) {
+	    int fd = it->first;
+
+	    // if fd contains in SELECTed for WRITE set and it is ready for write(_clients_write[fd] == true)
+		if (FD_ISSET(fd, globalWriteSetPtr) && it->second)
+		{
 			Request* request = _client_requests[fd];
 
 			// moved to listenere opers
@@ -283,11 +350,16 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //			if (request->isStatusCodeOk())
 //				request->parseHeaders();
 
+            if (request->_status_code == 100) {
+                request->_status_code = 200;
+            }
+
+
 			if (request->isStatusCodeOk()) {
 				request->parsURL();
 //				std::cout << "request->_request_target: " << request->_request_target << std::endl;
-				if (request->isStatusCodeOk())
-					WebServ::routeRequests(_host, _port, _client_requests);
+//				if (request->isStatusCodeOk())
+//					WebServ::routeRequests(_host, _port, _client_requests);
 			}
 
 			request->parseBody();
@@ -296,20 +368,18 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			response->generateResponse();
 			response->sendResponse();
 
-			if (request->_status_code == 100) {
-			    request->addSentResponse(response);
-			    request->setDefaultStatusCode(); //200
-			    _clients_read.push_back(fd);
-			} else {
-			    delete response;
-                close(fd);
-                delete _client_requests[fd];
-                _client_requests.erase(fd);
-			}
-            it = _clients_write.erase(it);
 
-
-		} else {
+            delete response;
+            close(fd);
+            delete _client_requests[fd];
+            _client_requests.erase(fd);
+//            it = _clients_write.erase(it);
+            _clients_read.erase(fd);
+//            eraseMapElementAndReturnNext(_clients_read, it);
+            it = eraseMapElementAndReturnNext(_clients_write, it);
+		}
+		else // just skip if not ready
+        {
 			++it;
 		}
 	}

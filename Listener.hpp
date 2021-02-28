@@ -18,8 +18,8 @@ public:
 
 	int getListener(void) const { return _listener; }
 
-	const std::list<int>& getReadClients(void) const { return _clients_read; }
-	const std::list<int>& getWriteClients(void) const { return _clients_write; }
+	const std::map<int, bool>& getReadClients(void) const { return _clients_read; }
+	const std::map<int, bool>& getWriteClients(void) const { return _clients_write; }
 	void updateMaxFD(void);
 
 	void acceptConnection(void);
@@ -32,7 +32,7 @@ public:
 
 	//skarry:
 	int     checkFullRequest(std::string const& req);
-	void    readError(std::list<int>::iterator & it);
+	void    readError(std::map<int, bool>::iterator & it);
 
 	// Airat (GDrake)
     bool readAndSetHeaderInfoInRequest(Request* request_obj);
@@ -46,8 +46,8 @@ private:
 	const std::string _host;
 	const int _port;
 
-	std::list<int> _clients_read;
-	std::list<int> _clients_write;
+	std::map<int, bool> _clients_read; // second param for ready or not
+	std::map<int, bool> _clients_write; // second param for ready or not
 	std::map<int, Request *> _client_requests;
 
 	int _max_fd;

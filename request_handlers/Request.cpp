@@ -17,6 +17,16 @@
  */
 //#define CLIENT_MAX_BODY_SIZE 0xfffff
 
+const std::list<int> Request::OK_STATUS_CODES = Request::initOkStatusCodes();
+
+std::list<int> Request::initOkStatusCodes(void) {
+    std::list<int> codes;
+
+    codes.push_back(DEFAULT_REQUEST_STATUS_CODE);
+    codes.push_back(201);
+    return codes;
+}
+
 const std::set<std::string> Request::implemented_headers = Request::initRequestHeaders();
 
 std::set<std::string> Request::initRequestHeaders() {
@@ -35,7 +45,7 @@ std::set<std::string> Request::initRequestHeaders() {
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
     implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
 
-    // sent by cURL with PUT request
+    // send by cURL with PUT request
     implemented_headers.insert("expect"); // Expect: 100-continue
 	return implemented_headers;
 }
@@ -74,32 +84,33 @@ int Request::getStatusCode() {
 	return _status_code;
 }
 
-void Request::parseRequestLine() {
-	size_t word_end = _raw_request.find(' ');
+void Request::parseRequestLine(std::string& raw_request_cp) {
+
+    size_t word_end = raw_request_cp.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_method = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 1);
+	_method = raw_request_cp.substr(0, word_end);
+	raw_request_cp.erase(0, word_end + 1);
 
-	word_end = _raw_request.find(' ');
+	word_end = raw_request_cp.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_request_target = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 1);
+	_request_target = raw_request_cp.substr(0, word_end);
+	raw_request_cp.erase(0, word_end + 1);
 
-	word_end = _raw_request.find("\r\n");
+	word_end = raw_request_cp.find("\r\n");
 	if (word_end == std::string::npos
-		|| _raw_request.find(' ') < word_end)
+		|| raw_request_cp.find(' ') < word_end)
 		return setStatusCode(400);
 
-	_http_version = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 2);
+	_http_version = raw_request_cp.substr(0, word_end);
+	raw_request_cp.erase(0, word_end + 2);
 
 	if (_method.length() + _request_target.length() + _http_version.length() + 4 > MAX_HEADER_LINE_LENGTH)
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 }
 
-void Request::parseHeaders() {
+void Request::parseHeaders(std::string& raw_request_cp) {
 	if (!isStatusCodeOk())
 		return ;
 	std::string field_name;
@@ -107,38 +118,38 @@ void Request::parseHeaders() {
 	size_t field_name_length;
 	size_t field_value_length;
 
-	size_t line_length = _raw_request.find("\r\n");
+	size_t line_length = raw_request_cp.find("\r\n");
 	while (line_length != 0) {
 		if (line_length > MAX_HEADER_LINE_LENGTH
 			|| line_length == std::string::npos) {
 			return setStatusCode(400); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
 
-		field_name_length = _raw_request.find(':'); // field-name
+		field_name_length = raw_request_cp.find(':'); // field-name
 		if (field_name_length == std::string::npos) {
 			return setStatusCode(400);
 		}
-		field_name = _raw_request.substr(0, field_name_length);
+		field_name = raw_request_cp.substr(0, field_name_length);
 
 		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
 		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
 			return setStatusCode(400);
 		}
-		_raw_request.erase(0, field_name_length + 1);
+		raw_request_cp.erase(0, field_name_length + 1);
 
 
 		field_value_length = line_length - field_name_length - 1; // field-value
-		if (_raw_request[0] == ' ') {
-			_raw_request.erase(0, 1); // remove optional whitespace in the beginning of field-value
+		if (raw_request_cp[0] == ' ') {
+			raw_request_cp.erase(0, 1); // remove optional whitespace in the beginning of field-value
 			field_value_length--;
 		}
-		if (_raw_request[field_value_length - 1] == ' ') {
-			_raw_request.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
+		if (raw_request_cp[field_value_length - 1] == ' ') {
+			raw_request_cp.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
 			field_value_length--;
 		}
-		field_value = _raw_request.substr(0, field_value_length);
-		_raw_request.erase(0, field_value_length + 2);
+		field_value = raw_request_cp.substr(0, field_value_length);
+		raw_request_cp.erase(0, field_value_length + 2);
 
 		if (Request::implemented_headers.count(field_name))
 		{
@@ -150,15 +161,18 @@ void Request::parseHeaders() {
 			_headers[field_name].append(field_value); // add field_name-field_value to map
 		}
 
-		line_length = _raw_request.find("\r\n");
+		line_length = raw_request_cp.find("\r\n");
 	}
-	_raw_request.erase(0, 2);
+	raw_request_cp.erase(0, 2);
 }
 
 bool Request::isStatusCodeOk() {
-	if (_status_code != DEFAULT_REQUEST_STATUS_CODE)
-		return false;
-	return true;
+    std::list<int>::const_iterator found = std::find(OK_STATUS_CODES.begin(), OK_STATUS_CODES.end(), _status_code);
+
+    if (found == OK_STATUS_CODES.end()) {
+        return false;
+    }
+    return true;
 }
 
 /*
