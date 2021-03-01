@@ -14,7 +14,8 @@ class Request;
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 #define DEFAULT_REQUEST_STATUS_CODE 200
 
-
+#define BUFFER_LENGHT 1024
+#define TIME_OUT 150000
 
 
 class Request {
@@ -30,12 +31,12 @@ class Request {
 
 		void setStatusCode(int status_code);
 		int getStatusCode();
-		void parseRequestLine(std::string& raw_request_cp);
+		void parseRequestLine(void);
 		void stringToLower(std::string & str);
 		bool isStatusCodeOk();
 		void parseChunkedContent();
 		void getContentByLength();
-		void parseHeaders(std::string& raw_request_cp);
+		void parseHeaders(void);
 		void parseBody();
 //		void checkMethod();
 //		void checkRequestTarget();
@@ -94,11 +95,11 @@ class Request {
     void setHeaderWasRead(void) { _header_was_read = true; }
 
 
-    int getHeaderContentLength(void) const {
+    long long getHeaderContentLength(void) const {
         std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
         if (it == _headers.end())
             return -1;
-        return libft::strtoul_base((*it).second, 10);
+        return libft::stoll_base((*it).second, 10);
     }
 
     const std::string getRawBody(void) const {
@@ -128,11 +129,53 @@ class Request {
         _status_code = DEFAULT_REQUEST_STATUS_CODE;
     }
 
+    void increaseReadBodySize(int bytes_read) {
+        _read_body_size += bytes_read;
+    }
 
-    private:
+    long long getReadBodySize(void) {
+        return _read_body_size;
+    }
+
+    bool checkToClientMaxBodySize(void);
+
+    int shift_from_buf_start;
+    char _buf[BUFFER_LENGHT];
+    int _bytes_read;
+
+    std::string _full_filename;
+
+    bool writeBodyReadBytesIntoFile(void) {
+        int file = open(_full_filename.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
+//        int file = open(_full_filename.c_str(), O_RDWR | O_APPEND, 0666);
+        if (file <= 0) {
+            _status_code = 500;
+            return false;
+        }
+
+        if (shift_from_buf_start > 0)
+        {
+            int len = _bytes_read - shift_from_buf_start;
+            write(file, _buf + shift_from_buf_start, len);
+            shift_from_buf_start = 0;
+        }
+        else
+        {
+            write(file, _buf, _bytes_read);
+        }
+        close(file);
+        return true;
+    }
+
+private:
         std::list<Response *> _sent_responses;
         std::size_t _header_end_pos;
         bool _header_was_read;
+
+        long long _read_body_size;
+
+        int _file_fd;
+        bool _file_fd_is_opened;
 
 
 

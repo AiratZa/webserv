@@ -56,16 +56,23 @@ Request::Request()
     _status_code(DEFAULT_REQUEST_STATUS_CODE),
 //    _client_max_body_size(0xfffff),
     _is_alias_path(false),
+      shift_from_buf_start(0),
       _header_end_pos(0),
-      _header_was_read(false) {  };
+      _header_was_read(false),
+      _read_body_size(0),
+      _file_fd(0),
+	  _file_fd_is_opened(false){  };
 
 Request::Request(const std::string& request)
         : _raw_request(request),
         _status_code(DEFAULT_REQUEST_STATUS_CODE),
 //        _client_max_body_size(0xfffff),
         _is_alias_path(false),
+          shift_from_buf_start(0),
           _header_end_pos(0),
-        _header_was_read(false){ };
+        _header_was_read(false),
+          _read_body_size(0)
+		  { };
 
 Request::~Request(void) { };
 
@@ -231,6 +238,26 @@ void Request::getContentByLength() {
 	_raw_request.erase(0, content_length);
 	_raw_request.clear();
 }
+
+bool Request::checkToClientMaxBodySize(void) {
+    long long client_max_body_size;
+    if (_handling_location) {
+        client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
+    } else {
+        client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+    }
+
+    std::map<std::string, std::string>::const_iterator found = _headers.find("content-length");
+    if (found != _headers.end()) {
+        long long content_length = libft::stoll_base(_headers["content-length"], 10);
+        if (client_max_body_size && content_length > client_max_body_size) {
+            setStatusCode(413);
+            return false;
+        }
+    }
+    return true;
+}
+
 
 void Request::parseBody() {
 	if (isStatusCodeOk()) {

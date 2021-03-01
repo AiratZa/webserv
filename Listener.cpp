@@ -88,6 +88,7 @@ void Listener::acceptConnection(void) {
 	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
 		utils::exitWithLog();
 
+	_all_clients.push_back(sock);
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request();
@@ -112,6 +113,12 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
     std::size_t empty_line_pos = raw_request.find("\r\n\r\n");
     if (std::string::npos != empty_line_pos) {
         request_obj->setHeaderEndPos(empty_line_pos);
+
+        std::size_t raw_request_len = raw_request.length();
+        if (raw_request_len > (empty_line_pos + 4)) {
+            request_obj->shift_from_buf_start = (empty_line_pos + 4);
+            request_obj->increaseReadBodySize(raw_request_len - (empty_line_pos + 4));
+        }
         return true;
     }
     return false;
@@ -123,7 +130,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 
 //    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
     const std::string& body = request_obj->getRawRequest();
-    int length;
+    long long length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
@@ -189,7 +196,7 @@ bool Listener::continueReadBody(Request* request_obj) {
         }
     }
     else if ((length = request_obj->getHeaderContentLength()) >= 0) {
-        if (body.length() == static_cast<std::size_t>(length))
+        if (request_obj->getReadBodySize() == length)
             return true;
         return false;
     }
@@ -205,10 +212,9 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     Request* request = _client_requests[client_socket];
 
     // we dont need silently change raw request inside parsing methods!
-    std::string raw_request_for_parsing = request->getRawRequest();
-    request->parseRequestLine(raw_request_for_parsing);
+    request->parseRequestLine();
     if (request->isStatusCodeOk()) {
-        request->parseHeaders(raw_request_for_parsing);
+        request->parseHeaders();
         if (!request->isStatusCodeOk()) {
             return false;
         }
@@ -231,9 +237,24 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (!request->isStatusCodeOk()) {
         return false;
     }
+    std::cout << request->getAbsoluteRootPathForRequest() << std::endl;
 
+    request->checkToClientMaxBodySize();
+    if (!request->isStatusCodeOk()) {
+        return false;
+    }
+
+    if (request->_method == "PUT") {
+        std::string target = request->_request_target.substr(1);
+        request->_full_filename = request->getAbsoluteRootPathForRequest() + target;
+        bool result = request->writeBodyReadBytesIntoFile();
+        if (!result)
+            return false;
+    }
     return true;
 }
+
+
 
 int			get_time(void)
 {
@@ -251,8 +272,8 @@ void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std:
 }
 
 void Listener::handleRequests(fd_set* globalReadSetPtr) {
-	char buf[BUFFER_LENGHT];
-	int bytes_read;
+//	char buf[BUFFER_LENGHT];
+//	int bytes_read;
 	std::list<int>::iterator it = _clients_read.begin();
 	std::map<int, int> time;
 	set_time(time, it, _clients_read.end());
@@ -266,24 +287,34 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             Request* request = _client_requests[fd];
             bool header_was_read_client = request->isHeaderWasRead();
 
-			bytes_read = recv(fd, buf, BUFFER_LENGHT - 1, 0);
-			if (bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
+//            std::string st = "one23.txt";
+//            int f = open(st.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
+            request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
+			if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
 				readError(it); // ERASES iterator instance inside
 				continue;
 			}
-			else if (bytes_read < 0)
-				bytes_read = 0;
+			else if (request->_bytes_read < 0)
+				request->_bytes_read = 0;
 			else
 				time[*it] = get_time();
-			buf[bytes_read] = '\0';
+			request->_buf[request->_bytes_read] = '\0';
+//			request->_current_iteration_buf = &buf;
+//			request->_bytes_read = bytes_read;
+//			write(f, buf, bytes_read);
+//			close(f);
 
-            std::cout << "=========================" << std::endl;
-            std::cout << buf << std::endl;
-            std::cout << std::endl << "=========================" << std::endl;
+			std::cout << request->getReadBodySize() << std::endl;
+//            std::cout << "=========================" << std::endl;
+//            std::cout << buf << std::endl;
+//            std::cout << std::endl << "=========================" << std::endl;
 
             try
             {
-                request->getRawRequest().append(buf);// собираем строку пока весь запрос не соберем
+                request->getRawRequest().append(request->_buf);// собираем строку пока весь запрос не соберем
+                if (header_was_read_client) {
+                    request->increaseReadBodySize(request->_bytes_read);
+                }
             }
             catch (std::bad_alloc const& e)
             {
@@ -299,11 +330,12 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                     request->setHeaderWasRead();
                     bool is_continue_read_body = processHeaderInfoForActions(*it);
 
-                    if (!is_continue_read_body && (request->_status_code == 100))
+                    if (is_continue_read_body && (request->_status_code == 100))
                     {
-                        Response* response = new Response(request, fd);
-                        response->generateResponse();
-                        response->sendResponse();
+                        Response response = Response(request, fd);
+                        response.generateStatusLine();
+                        response.sendResponse();
+
                         continue ;
                     }
 
@@ -327,7 +359,13 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             }
 			else {
 			    bool body_was_read = continueReadBody(_client_requests[*it]);
-			    if (body_was_read) {
+                bool result = request->writeBodyReadBytesIntoFile();
+
+                if (!result) {
+                    request->_status_code = 500;
+                }
+
+                if (body_was_read || !result) {
                     _clients_write.push_back(*it);
                     it = _clients_read.erase(it);
 			    }

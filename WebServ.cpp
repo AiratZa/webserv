@@ -49,14 +49,14 @@ void WebServ::addServer(Server* server) {
     _servers.push_back(server);
 }
 
-void WebServ::setToReadFDSet(const std::map<int, bool>& clientsFD) {
-    for(std::map<int, bool>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-        FD_SET(it->first, &_readset);
+void WebServ::setToReadFDSet(const std::list<int>& clientsFD) {
+    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+        FD_SET(*it, &_readset);
 }
 
-void WebServ::setToWriteFDSet(const std::map<int, bool>& clientsFD) {
-    for(std::map<int, bool>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-        FD_SET(it->first, &_writeset);
+void WebServ::setToWriteFDSet(const std::list<int>& clientsFD) {
+    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+        FD_SET(*it, &_writeset);
 }
 
 void WebServ::updateMaxFD(void) {
@@ -98,8 +98,8 @@ void WebServ::serveConnections() {
             std::list<Listener*>::iterator it_l = listeners.begin();
             while (it_l != listeners.end()) {
                 FD_SET((*it_l)->getListener(), getReadSetPtr());
-                setToReadFDSet((*it_l)->getReadClients());
-                setToWriteFDSet((*it_l)->getWriteClients());
+                setToReadFDSet((*it_l)->getAllClients());
+                setToWriteFDSet((*it_l)->getAllClients());
                 (*it_l)->updateMaxFD();
                 ++it_l;
             }

@@ -18,8 +18,12 @@ public:
 
 	int getListener(void) const { return _listener; }
 
-	const std::map<int, bool>& getReadClients(void) const { return _clients_read; }
-	const std::map<int, bool>& getWriteClients(void) const { return _clients_write; }
+	const std::list<int>& getReadClients(void) const { return _clients_read; }
+	const std::list<int>& getWriteClients(void) const { return _clients_write; }
+    const std::list<int>& getAllClients(void) const {
+	    return _all_clients;
+	}
+
 	void updateMaxFD(void);
 
 	void acceptConnection(void);
@@ -32,9 +36,10 @@ public:
 
 	//skarry:
 	int     checkFullRequest(std::string const& req);
-	void    readError(std::map<int, bool>::iterator & it);
+    void readError(std::list<int>::iterator & it);
 
-	// Airat (GDrake)
+
+        // Airat (GDrake)
     bool readAndSetHeaderInfoInRequest(Request* request_obj);
     bool continueReadBody(Request* request_obj);
     bool processHeaderInfoForActions(int client_socket);
@@ -46,8 +51,9 @@ private:
 	const std::string _host;
 	const int _port;
 
-	std::map<int, bool> _clients_read; // second param for ready or not
-	std::map<int, bool> _clients_write; // second param for ready or not
+	std::list<int> _all_clients;
+	std::list<int> _clients_read; // second param for ready or not
+	std::list<int> _clients_write; // second param for ready or not
 	std::map<int, Request *> _client_requests;
 
 	int _max_fd;

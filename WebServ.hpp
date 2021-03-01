@@ -23,8 +23,8 @@ public:
     fd_set* getReadSetPtr(void) { return &_readset; };
     fd_set* getWriteSetPtr(void) { return &_writeset; };
 
-    void setToReadFDSet(const std::map<int, bool>& clientsFD);
-    void setToWriteFDSet(const std::map<int, bool>& clientsFD);
+    void setToReadFDSet(const std::list<int>& clientsFD);
+    void setToWriteFDSet(const std::list<int>& clientsFD);
 
     void updateMaxFD(void);
     const int & getMaxFD() const { return _max_fd; }

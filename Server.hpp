@@ -31,8 +31,7 @@ class Server;
 
 
 
-#define BUFFER_LENGHT 1024
-#define TIME_OUT 150000
+
 
 
 class Server {

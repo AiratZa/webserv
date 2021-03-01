@@ -67,7 +67,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 	status_codes[416] = "RANGE NOT SATISFIABLE";
 	status_codes[417] = "EXPECTATION FAILED";
 	status_codes[426] = "UPGRADE REQUIRED";
-	status_codes[500] = "UPGRADE REQUIRED";
+	status_codes[500] = "INTERNAL SERVER ERROR"; // "UPGRADE REQUIRED";
 	status_codes[501] = "NOT IMPLEMENTED";
 	status_codes[502] = "BAD GATEWAY";
 	status_codes[503] = "SERVICE UNAVAILABLE";
@@ -457,6 +457,5 @@ void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
     std::cout << _raw_response << std::endl;
     send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
-
 	//	std::cout << "Response::sendResponse response is sent\n";
 }
