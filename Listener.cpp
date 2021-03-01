@@ -114,7 +114,7 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
     if (std::string::npos != empty_line_pos) {
         request_obj->setHeaderEndPos(empty_line_pos);
 
-        std::size_t raw_request_len = raw_request.length();
+        std::size_t raw_request_len = request_obj->_bytes_read;
         if (raw_request_len > (empty_line_pos + 4)) {
             request_obj->shift_from_buf_start = (empty_line_pos + 4);
             request_obj->increaseReadBodySize(raw_request_len - (empty_line_pos + 4));
@@ -211,6 +211,8 @@ bool Listener::continueReadBody(Request* request_obj) {
 bool Listener::processHeaderInfoForActions(int client_socket) {
     Request* request = _client_requests[client_socket];
 
+    std::cout << request->getRawRequest() << std::endl;
+
     // we dont need silently change raw request inside parsing methods!
     request->parseRequestLine();
     if (request->isStatusCodeOk()) {
@@ -258,12 +260,16 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         bool status = request->isFileExists();
         request->setFileExistenceStatus(status);
 
-        if (!request->targetIsFile()) {
-            if (request->isStatusCodeOk()) {
-                request->_status_code = 409;
+        if (request->getFileExistenceStatus())
+        {
+            if (!request->targetIsFile()) {
+                if (request->isStatusCodeOk()) {
+                    request->_status_code = 409;
+                }
+                return false;
             }
-            return false;
         }
+
 
         if (!request->checkIsMayFileBeOpenedOrCreated())
             return false;
@@ -350,6 +356,11 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
                     if (is_continue_read_body) {
                         bool body_was_read = continueReadBody(request);
+                        bool result = request->writeBodyReadBytesIntoFile();
+
+                        if (!result) {
+                            request->_status_code = 500;
+                        }
                         if (body_was_read) {
                             _clients_write.push_back(*it);
                             it = _clients_read.erase(it);
@@ -423,6 +434,12 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			close(fd);
 			delete _client_requests[fd];
 			_client_requests.erase(fd);
+
+			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);
+			if (it_all != _all_clients.end()) {
+                _all_clients.erase(it_all);
+			}
+
 			it = _clients_write.erase(it);
 
 		} else {

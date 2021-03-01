@@ -460,3 +460,24 @@ void Response::sendResponse() {
     send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
 	//	std::cout << "Response::sendResponse response is sent\n";
 }
+
+
+/*
+PUT /nginx_meme.jpg HTTP/1.1
+
+Host: localhost:8080
+
+User-Agent: curl/7.75.0
+
+Accept: *//*
+
+Content-Length: 172172
+
+Expect: 100-continue
+
+
+
+
+
+
+ */
