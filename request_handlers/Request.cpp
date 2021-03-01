@@ -59,9 +59,7 @@ Request::Request()
       shift_from_buf_start(0),
       _header_end_pos(0),
       _header_was_read(false),
-      _read_body_size(0),
-      _file_fd(0),
-	  _file_fd_is_opened(false){  };
+      _read_body_size(0){  };
 
 Request::Request(const std::string& request)
         : _raw_request(request),
@@ -78,10 +76,6 @@ Request::~Request(void) { };
 
 std::string & Request::getRawRequest(void) {
 	return this->_raw_request;
-}
-
-void Request::setRawRequest(const std::string & request) {
-	this->_raw_request = request ;
 }
 
 void Request::setStatusCode(int status_code) {

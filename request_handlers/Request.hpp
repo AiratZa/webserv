@@ -26,8 +26,6 @@ class Request {
 		~Request(void);
 
 		std::string & getRawRequest(void);
-		void setRawRequest(const std::string & request);
-
 
 		void setStatusCode(int status_code);
 		int getStatusCode();
@@ -102,32 +100,11 @@ class Request {
         return libft::stoll_base((*it).second, 10);
     }
 
-    const std::string getRawBody(void) const {
-        if (!_header_end_pos)
-            return "";
-        try {
-            return _raw_request.substr(_header_end_pos + 4);
-        }
-        catch (const std::out_of_range& oor) {
-            return "";
-        }
-    }
-
     void setHeaderEndPos(std::size_t val) { _header_end_pos = val;}
 
 
     bool isMethodLimited(const std::string& method) const;
     void handleExpectHeader(void);
-
-    void addSentResponse(Response* resp);
-
-    std::size_t getCountSentResponses(void) const {
-        return _sent_responses.size();
-    }
-
-    void setDefaultStatusCode(void) {
-        _status_code = DEFAULT_REQUEST_STATUS_CODE;
-    }
 
     void increaseReadBodySize(int bytes_read) {
         _read_body_size += bytes_read;
@@ -147,7 +124,6 @@ class Request {
 
     bool writeBodyReadBytesIntoFile(void) {
         int file = open(_full_filename.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
-//        int file = open(_full_filename.c_str(), O_RDWR | O_APPEND, 0666);
         if (file <= 0) {
             _status_code = 500;
             return false;
@@ -167,18 +143,21 @@ class Request {
         return true;
     }
 
+    bool checkIsMayFileBeOpened(void) {
+        int file = open(_full_filename.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
+        if (file <= 0) {
+            _status_code = 500;
+            return false;
+        }
+        close(file);
+        return true;
+    }
+
 private:
-        std::list<Response *> _sent_responses;
         std::size_t _header_end_pos;
         bool _header_was_read;
 
         long long _read_body_size;
-
-        int _file_fd;
-        bool _file_fd_is_opened;
-
-
-
 
 };
 

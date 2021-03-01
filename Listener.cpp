@@ -247,8 +247,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (request->_method == "PUT") {
         std::string target = request->_request_target.substr(1);
         request->_full_filename = request->getAbsoluteRootPathForRequest() + target;
-        bool result = request->writeBodyReadBytesIntoFile();
-        if (!result)
+        if (!request->checkIsMayFileBeOpened())
             return false;
     }
     return true;
@@ -272,8 +271,6 @@ void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std:
 }
 
 void Listener::handleRequests(fd_set* globalReadSetPtr) {
-//	char buf[BUFFER_LENGHT];
-//	int bytes_read;
 	std::list<int>::iterator it = _clients_read.begin();
 	std::map<int, int> time;
 	set_time(time, it, _clients_read.end());
@@ -287,8 +284,6 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             Request* request = _client_requests[fd];
             bool header_was_read_client = request->isHeaderWasRead();
 
-//            std::string st = "one23.txt";
-//            int f = open(st.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
             request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
 			if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
 				readError(it); // ERASES iterator instance inside
@@ -299,10 +294,6 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			else
 				time[*it] = get_time();
 			request->_buf[request->_bytes_read] = '\0';
-//			request->_current_iteration_buf = &buf;
-//			request->_bytes_read = bytes_read;
-//			write(f, buf, bytes_read);
-//			close(f);
 
 			std::cout << request->getReadBodySize() << std::endl;
 //            std::cout << "=========================" << std::endl;
