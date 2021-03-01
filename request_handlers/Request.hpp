@@ -123,7 +123,7 @@ class Request {
     std::string _full_filename;
 
     bool writeBodyReadBytesIntoFile(void) {
-        int file = open(_full_filename.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
+        int file = open(_full_filename.c_str(), O_RDWR | O_APPEND, 0666);
         if (file <= 0) {
             _status_code = 500;
             return false;
@@ -143,8 +143,16 @@ class Request {
         return true;
     }
 
-    bool checkIsMayFileBeOpened(void) {
-        int file = open(_full_filename.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
+    bool checkIsMayFileBeOpenedOrCreated(void) {
+        int flags;
+        if (_is_file_exists) {
+            flags = O_RDWR | O_TRUNC | O_APPEND;
+        }
+        else {
+            flags = O_RDWR | O_CREAT | O_APPEND;
+        }
+
+        int file = open(_full_filename.c_str(), flags, 0666);
         if (file <= 0) {
             _status_code = 500;
             return false;
@@ -153,10 +161,47 @@ class Request {
         return true;
     }
 
+    bool isFileExists(void) {
+        struct stat buffer;
+        return (stat (_full_filename.c_str(), &buffer) == 0);
+    }
+
+    void setFileExistenceStatus(bool value) {
+        _is_file_exists = value;
+    }
+
+    bool isConcreteHeaderExists(const std::string& header_name) {
+        if (_headers.find(header_name) == _headers.end()) {
+            return false;
+        }
+        return true;
+    }
+
+    bool targetIsFile(void) {
+        struct stat info_buf;
+
+        if (stat(_full_filename.c_str(), &info_buf) == -1) {
+            std::cout << strerror(errno) << std::endl;
+            _status_code = 500;
+            return false;
+        }
+
+        int file_type = info_buf.st_mode & S_IFMT;
+
+        if (file_type == S_IFREG) // return true if it's file
+            return true;
+        return false;
+    }
+
+    bool getFileExistenceStatus(void) const {
+        return _is_file_exists;
+    }
+
 private:
         std::size_t _header_end_pos;
         bool _header_was_read;
-
+        bool _is_wokrs_with_files;
+        bool _is_file_exists;
         long long _read_body_size;
 
 };

@@ -245,9 +245,27 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     }
 
     if (request->_method == "PUT") {
+
+        // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
+        if (request->isConcreteHeaderExists("content-range")) {
+            request->_status_code = 400;
+            return false;
+        }
+
         std::string target = request->_request_target.substr(1);
         request->_full_filename = request->getAbsoluteRootPathForRequest() + target;
-        if (!request->checkIsMayFileBeOpened())
+
+        bool status = request->isFileExists();
+        request->setFileExistenceStatus(status);
+
+        if (!request->targetIsFile()) {
+            if (request->isStatusCodeOk()) {
+                request->_status_code = 409;
+            }
+            return false;
+        }
+
+        if (!request->checkIsMayFileBeOpenedOrCreated())
             return false;
     }
     return true;

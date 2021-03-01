@@ -46,8 +46,12 @@ std::set<std::string> Request::initRequestHeaders() {
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
     implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
 
-    // send by cURL with PUT request
+    // for requests with PUT method
     implemented_headers.insert("expect"); // Expect: 100-continue
+    implemented_headers.insert("content-range"); // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
+
+
+
 	return implemented_headers;
 }
 

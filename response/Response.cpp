@@ -359,6 +359,7 @@ void Response::generateHeadResponse() {
 		return _request->setStatusCode(405);
 	}
 
+
 //	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
 //	std::cout << "_request->_handling_location->getAliasPath() " << _request->_handling_location->getAliasPath() << std::endl;
 //	std::cout << "_request->_handling_location->getLocationPath() " << _request->_handling_location->getLocationPath() << std::endl;
@@ -422,14 +423,14 @@ void Response::generateHeadResponse() {
 }
 
 void Response::generatePutResponse() {
-//    std::cout << "HELLO TARGET: " <<_request->_request_target << std::endl;
-//    for (int i = 0; i < 100; i++)
-//        std::cout << std::endl;
-//    std::cout << "ABS PATH: " << _request->getAbsoluteRootPathForRequest() << std::endl;
-//    setIndexFileContentToResponseContent();
+    bool file_was_at_start = _request->getFileExistenceStatus();
 
-    _request->_status_code = 201;
-    _location = getLocationHeader();
+    if (file_was_at_start) {
+        _request->_status_code = 204;
+    } else {
+        _request->_status_code = 201;
+        _location = getLocationHeader();
+    }
     generateStatusLine();
     generateHeaders();
     _raw_response += _content;
