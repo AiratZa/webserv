@@ -399,7 +399,7 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
 		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
 	}
-	//env[18] is NULL
+	//all elements of env is initialized to NULL
 }
 
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
@@ -427,6 +427,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	close(filedes_in[1]);
 	dup2(filedes_out[0], 0);
 	close(filedes_out[0]);
+	write(1, _request->_content.c_str(), _request->_content.length());
 	if ((pid = fork()) == -1) {
 		close(filedes_in[0]);
 		close(filedes_out[1]);
@@ -443,10 +444,17 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
 	if (!exit_status) {
-		char buf[1024 + 1];
+		char buf[1024] = {0};
 		fcntl(0, F_SETFL, O_NONBLOCK);
-		while (read(0, buf, 1024) > 0)
-			_content.append(buf);
+		int ret;
+		while ((ret = read(0, buf, 1024)) > 0) {
+			try {
+				_content.append(buf, ret);
+			} catch (std::bad_alloc& ba) {
+				_request->setStatusCode(500);
+				break ;
+			}
+		}
 	}
 	dup2(stdin_backup, 0);
 	dup2(stdout_backup, 1);
@@ -454,7 +462,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		_request->setStatusCode(500);
 }
 
-void Response::_cutPhpHeadersFromCgiResponse() {
+void Response::_parsePhpHeadersFromCgiResponse() { // the same as in request headers parsing
 	if (!_request->isStatusCodeOk())
 		return ;
 	std::string field_name;
@@ -566,8 +574,12 @@ void Response::generateHeadResponse() {
 			_file_ext = _getExt(filename);
 			if (_isCgiExt(_file_ext)) {
 				_runCgi(filename);
-				if (_file_ext == "php")
-					_cutPhpHeadersFromCgiResponse();
+				if (_file_ext == "php") {
+					_parsePhpHeadersFromCgiResponse();
+					if (_php_headers.count("content-length")) {
+						_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
+					}
+				}
 //				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
 			} else {
 				setContentTypeByFileExt(_file_ext);

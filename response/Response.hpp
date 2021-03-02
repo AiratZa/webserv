@@ -55,7 +55,7 @@ private:
 	bool _isCgiExt(std::string & ext);
 	void _runCgi(std::string & filename);
 	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
-	void _cutPhpHeadersFromCgiResponse();
+	void _parsePhpHeadersFromCgiResponse();
 
 
 
