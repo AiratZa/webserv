@@ -38,7 +38,7 @@ public:
 	void generateHeaders();
 	void generateContent();
 	void readFileToContent(std::string & filename);
-	bool isStatusCodeOk();
+//	bool isStatusCodeOk();
 	void generateAutoindex();
 	void setContentTypeByFileExt(std::string & ext);
 	bool isMethodAllowed();
@@ -55,6 +55,7 @@ private:
 	bool _isCgiExt(std::string & ext);
 	void _runCgi(std::string & filename);
 	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
+	void _cutPhpHeadersFromContent();
 
 
 
@@ -75,6 +76,8 @@ private:
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
 	std::string _content;
+
+	std::map<std::string, std::string> _php_headers;
 
 //	Server* _server;
 
