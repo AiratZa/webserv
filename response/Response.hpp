@@ -18,6 +18,9 @@ class Response;
 #include <fcntl.h>
 #include <time.h>
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 class Response {
 public:
 	Response(Request* request, int socket);

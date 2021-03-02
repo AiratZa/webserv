@@ -63,7 +63,9 @@ Request::Request()
       shift_from_buf_start(0),
       _header_end_pos(0),
       _header_was_read(false),
-      _read_body_size(0){  };
+      _read_body_size(0),
+      _is_need_writing_body_to_file(false)
+      {  };
 
 Request::Request(const std::string& request)
         : _raw_request(request),
@@ -73,7 +75,8 @@ Request::Request(const std::string& request)
           shift_from_buf_start(0),
           _header_end_pos(0),
         _header_was_read(false),
-          _read_body_size(0)
+          _read_body_size(0),
+          _is_need_writing_body_to_file(false)
 		  { };
 
 Request::~Request(void) { };

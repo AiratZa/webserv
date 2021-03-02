@@ -250,6 +250,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (request->_method == "PUT") {
 
         // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
+
         if (request->isConcreteHeaderExists("content-range")) {
             request->_status_code = 400;
             return false;
@@ -260,6 +261,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
         bool status = request->isFileExists();
         request->setFileExistenceStatus(status);
+        request->setNeedWritingBodyToFile(true);
 
         if (request->getFileExistenceStatus())
         {
@@ -275,6 +277,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         if (!request->checkIsMayFileBeOpenedOrCreated())
             return false;
     }
+
     return true;
 }
 
@@ -357,12 +360,17 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
                     if (is_continue_read_body) {
                         bool body_was_read = continueReadBody(request);
-                        bool result = request->writeBodyReadBytesIntoFile();
+                        bool writing_to_file_result = true;
 
-                        if (!result) {
-                            request->_status_code = 500;
+                        if (request->getNeedWritingBodyToFile()) {
+                            writing_to_file_result = request->writeBodyReadBytesIntoFile();
+
+                            if (!writing_to_file_result) {
+                                request->_status_code = 500;
+                            }
                         }
-                        if (body_was_read) {
+
+                        if (body_was_read || !writing_to_file_result) {
                             _clients_write.push_back(*it);
                             it = _clients_read.erase(it);
                         }
@@ -380,13 +388,17 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             }
 			else {
 			    bool body_was_read = continueReadBody(_client_requests[*it]);
-                bool result = request->writeBodyReadBytesIntoFile();
+                bool writing_to_file_result = true;
 
-                if (!result) {
-                    request->_status_code = 500;
+                if (request->getNeedWritingBodyToFile()) {
+                    writing_to_file_result = request->writeBodyReadBytesIntoFile();
+
+                    if (!writing_to_file_result) {
+                        request->_status_code = 500;
+                    }
                 }
 
-                if (body_was_read || !result) {
+                if (body_was_read || !writing_to_file_result) {
                     _clients_write.push_back(*it);
                     it = _clients_read.erase(it);
 			    }

@@ -197,13 +197,24 @@ class Request {
             return true;
         return false;
     }
-private:
-	bool _isValidValue(std::string & hex_str);
-
 
     bool getFileExistenceStatus(void) const {
         return _is_file_exists;
     }
+
+    void setNeedWritingBodyToFile(bool value) {
+        _is_need_writing_body_to_file = value;
+    }
+
+    bool getNeedWritingBodyToFile(void) const {
+        return _is_need_writing_body_to_file;
+    }
+
+private:
+	bool _isValidValue(std::string & hex_str);
+
+
+
 
 private:
         std::size_t _header_end_pos;
@@ -212,6 +223,7 @@ private:
         bool _is_file_exists;
         long long _read_body_size;
 
+        bool _is_need_writing_body_to_file;
 };
 
 
