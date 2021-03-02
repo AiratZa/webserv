@@ -50,6 +50,7 @@ private:
 	std::string _getExt(std::string filename);
 	bool _isCgiExt(std::string & ext);
 	void _runCgi(std::string & filename);
+	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
 
 
 
@@ -66,10 +67,11 @@ private:
 	int _socket;
 	std::string _http_version;
 //	int _status_code;
-	std::string _reason_phrase;
+//	std::string _reason_phrase;
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
 	std::string _content;
+
 //	Server* _server;
 
 	std::string _root; // TODO:temporary

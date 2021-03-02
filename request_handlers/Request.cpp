@@ -75,25 +75,39 @@ int Request::getStatusCode() {
 }
 
 void Request::parseRequestLine() {
-	size_t word_end = _raw_request.find(' ');
+	std::string request_line;
+
+	size_t request_line_length = _raw_request.find("\r\n");
+	if (request_line_length == std::string::npos)
+		return setStatusCode(400);
+	request_line = _raw_request.substr(0, request_line_length);
+	size_t word_end = request_line.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_method = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 1);
+	_method = request_line.substr(0, word_end);
+	request_line.erase(0, word_end + 1);
 
-	word_end = _raw_request.find(' ');
+	word_end = request_line.find('?');
+	bool there_is_query = word_end != std::string::npos;
+	if (there_is_query) {
+		_request_target = request_line.substr(0, word_end);
+		request_line.erase(0, word_end + 1);
+	}
+
+	word_end = request_line.find(' ');
 	if (word_end == std::string::npos)
 		return setStatusCode(400);
-	_request_target = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 1);
+	if (there_is_query)
+		_query_string = request_line.substr(0, word_end);
+	else
+		_request_target = request_line.substr(0, word_end);
+	request_line.erase(0, word_end + 1);
 
-	word_end = _raw_request.find("\r\n");
-	if (word_end == std::string::npos
-		|| _raw_request.find(' ') < word_end)
+	if (request_line.find(' ') != std::string::npos)
 		return setStatusCode(400);
 
-	_http_version = _raw_request.substr(0, word_end);
-	_raw_request.erase(0, word_end + 2);
+	_http_version = request_line;
+	_raw_request.erase(0, request_line_length + 2);
 
 	if (_method.length() + _request_target.length() + _http_version.length() + 4 > MAX_HEADER_LINE_LENGTH)
 		return setStatusCode(414); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
@@ -153,6 +167,8 @@ void Request::parseHeaders() {
 		line_length = _raw_request.find("\r\n");
 	}
 	_raw_request.erase(0, 2);
+	if (_headers.empty())
+		return setStatusCode(400);
 }
 
 bool Request::isStatusCodeOk() {
@@ -253,6 +269,11 @@ void    Request::parsURL() {
 	// _requestTarget = url
 	int count = 0;
 	int lenght = url.length();
+
+	size_t hashtag_pos = url.find('#');
+	if (hashtag_pos != std::string::npos)
+		url.resize(hashtag_pos); // nginx just ignore all that after '#', even %00
+
 	while (count < lenght && url[count] != '/') {
 		res += url[count];
 		++count;
@@ -277,7 +298,7 @@ void    Request::parsURL() {
 				char ch;
 				std::string hex_str = url.substr(count + 1, 2);
 				libft::string_to_lower(hex_str);
-				if (hex_str.find_first_not_of("0123456789abcdef") == std::string::npos && hex_str != "00") {
+				if (hex_str.find_first_not_of("0123456789abcdef") == std::string::npos && hex_str != "00") { // nginx returns 400 when %00, but when %01-%17 it returns 404, the same with other Excluded US-ASCII Characters
 					ch  = libft::strtoul_base(hex_str, 16);
 					tmp += ch;
 					count += 3;

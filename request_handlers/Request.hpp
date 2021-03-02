@@ -48,11 +48,16 @@ class Request {
 		int _status_code;
 		std::string _method;
 		std::string _request_target;
+		std::string _query_string;
 		std::string _http_version;
 
 		std::map<std::string, std::string> _headers;
 
 		std::string _content;
+
+		int _port;
+
+//		std::string _remote_addr;
 
 //		size_t _client_max_body_size; // need to use client_max_body_size from server config
 
@@ -111,6 +116,9 @@ class Request {
 
         std::size_t _header_end_pos;
         bool _header_was_read;
+
+private:
+	bool _isValidValue(std::string & hex_str);
 
 
 
