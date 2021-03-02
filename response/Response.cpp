@@ -395,9 +395,11 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
 	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
-	cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
-	env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
-	env[18] = NULL;
+	if (_file_ext == "php") {
+		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
+		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
+	}
+	//env[18] is NULL
 }
 
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
@@ -409,15 +411,15 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 			const_cast<char *>(filename.c_str()),
 			NULL
 	};
-	char * env[19];
+	char * env[19] = {0};
 
 	std::map<std::string, std::string> cgiVariables;
 	_setEnv(env, filename, cgiVariables);
 
-	int filedes_in[2];
-	int filedes_out[2];
+	int filedes_in[2]; // in php-cgi
+	int filedes_out[2]; // out of php-cgi
 	if (pipe(filedes_in) == -1 || pipe(filedes_out) == -1)
-		_request->setStatusCode(500);
+		return _request->setStatusCode(500);
 
 	int stdin_backup = dup(0);
 	int stdout_backup = dup(1);
@@ -428,31 +430,31 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	if ((pid = fork()) == -1) {
 		close(filedes_in[0]);
 		close(filedes_out[1]);
-		_request->setStatusCode(500); // Internal Server Error
-	}
-	else if (pid == 0) {
+		return _request->setStatusCode(500); // Internal Server Error
+	} else if (pid == 0) {
 		dup2(filedes_in[0], 0);
 		dup2(filedes_out[1], 1);
 		execve(argv[0], argv, env);
 		exit(EXIT_FAILURE);
 	}
 	waitpid(pid, &exit_status, 0); // TODO: maybe we should use not blocking wait, then we need to save stdin and out backups and pass pipe descritpors to select
-//	if (WIFEXITED(exit_status))
-//		exit_status = WEXITSTATUS(exit_status);
-//	else if (WIFSIGNALED(exit_status))
-//		exit_status = exit_status | 128;
-	char buf[4096 + 1];
-	int ret;
-	ret = read(0, buf, 4096);
-	_content.append(buf);
-//	while (read(0, buf, 1024) != 0) {
-//		_content.append(buf);
-//	}
+	if (WIFEXITED(exit_status))
+		exit_status = WEXITSTATUS(exit_status);
+	else if (WIFSIGNALED(exit_status))
+		exit_status = exit_status | 128;
+	if (!exit_status) {
+		char buf[1024 + 1];
+		fcntl(0, F_SETFL, O_NONBLOCK);
+		while (read(0, buf, 1024) > 0)
+			_content.append(buf);
+	}
 	dup2(stdin_backup, 0);
 	dup2(stdout_backup, 1);
+	if (exit_status)
+		_request->setStatusCode(500);
 }
 
-void Response::_cutPhpHeadersFromContent() {
+void Response::_cutPhpHeadersFromCgiResponse() {
 	if (!_request->isStatusCodeOk())
 		return ;
 	std::string field_name;
@@ -561,13 +563,14 @@ void Response::generateHeadResponse() {
 		}
 
 		if (S_ISREG(stat_buf.st_mode)) {
-			std::string file_ext = _getExt(filename);
-			if (_isCgiExt(file_ext)) {
+			_file_ext = _getExt(filename);
+			if (_isCgiExt(_file_ext)) {
 				_runCgi(filename);
-				_cutPhpHeadersFromContent();
+				if (_file_ext == "php")
+					_cutPhpHeadersFromCgiResponse();
 //				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
 			} else {
-				setContentTypeByFileExt(file_ext);
+				setContentTypeByFileExt(_file_ext);
 				readFileToContent(filename);
 				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
 			}
