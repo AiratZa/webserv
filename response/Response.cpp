@@ -241,7 +241,7 @@ void Response::generateHeaders() {
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-//	_raw_response += "\r\n";
+	_raw_response += "\r\n";
 }
 
 void Response::generateResponseByStatusCode() {
@@ -250,10 +250,10 @@ void Response::generateResponseByStatusCode() {
 
     generateStatusLine();
 
-    if (_request->getStatusCode() != 100) { // cURL dont recognize 100 status code response with headers
+    if (_request->getStatusCode() != 100){ // cURL dont recognize 100 status code response with headers
         generateHeaders();
+        _raw_response.append(_content);
     }
-//	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
 }
 
