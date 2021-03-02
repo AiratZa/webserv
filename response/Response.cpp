@@ -241,7 +241,10 @@ void Response::generateHeaders() {
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-//	_raw_response += "\r\n";
+	for (std::map<std::string, std::string>::iterator it = _php_headers.begin(); it != _php_headers.end(); ++it) {
+		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
+	}
+	_raw_response += "\r\n";
 }
 
 void Response::generateResponseByStatusCode() {
@@ -252,17 +255,10 @@ void Response::generateResponseByStatusCode() {
 
     if (_request->getStatusCode() != 100) { // cURL dont recognize 100 status code response with headers
         generateHeaders();
+		_raw_response.append(_content);
     }
-//	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
 }
-
-
-//bool Response::isStatusCodeOk() {
-//	if (_status_code != 200)
-//		return false;
-//	return true;
-//}
 
 void Response::readFileToContent(std::string & filename) {
 	char buf[1024 + 1];
@@ -286,11 +282,11 @@ void Response::setContentTypeByFileExt(std::string & ext) {
 	if (ext == "")
 		_content_type = "Content-Type: application/octet-stream\r\n";
 	else {
-		if (ext == ".txt")
+		if (ext == "txt")
 			_content_type = "Content-Type: text/plain\r\n";
-		else if (ext == ".html")
+		else if (ext == "html")
 			_content_type = "Content-Type: text/html\r\n";
-		else if (ext == ".jpg")
+		else if (ext == "jpg")
 			_content_type = "Content-Type: image/jpeg;\r\n";
 		else
 			_content_type = "Content-Type: application/octet-stream\r\n";
@@ -445,15 +441,71 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		exit_status = WEXITSTATUS(exit_status);
 //	else if (WIFSIGNALED(exit_status))
 //		exit_status = exit_status | 128;
-	char buf[1024 + 1];
+	char buf[4096 + 1];
 	int ret;
-	ret = read(0, buf, 1024);
+	ret = read(0, buf, 4096);
 	_content.append(buf);
 //	while (read(0, buf, 1024) != 0) {
 //		_content.append(buf);
 //	}
 	dup2(stdin_backup, 0);
 	dup2(stdout_backup, 1);
+}
+
+void Response::_cutPhpHeadersFromContent() {
+	if (!_request->isStatusCodeOk())
+		return ;
+	std::string field_name;
+	std::string field_value;
+	size_t field_name_length;
+	size_t field_value_length;
+
+	size_t line_length = _content.find("\r\n");
+	while (line_length != 0) {
+		if (line_length > MAX_HEADER_LINE_LENGTH
+			|| line_length == std::string::npos) {
+			return _request->setStatusCode(500); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
+		}
+
+		field_name_length = _content.find(':'); // field-name
+		if (field_name_length == std::string::npos) {
+			return _request->setStatusCode(500);
+		}
+		field_name = _content.substr(0, field_name_length);
+
+		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
+
+		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
+			return _request->setStatusCode(500);
+		}
+		_content.erase(0, field_name_length + 1);
+
+
+		field_value_length = line_length - field_name_length - 1; // field-value
+		if (_content[0] == ' ') {
+			_content.erase(0, 1); // remove optional whitespace in the beginning of field-value
+			field_value_length--;
+		}
+		if (_content[field_value_length - 1] == ' ') {
+			_content.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
+			field_value_length--;
+		}
+		field_value = _content.substr(0, field_value_length);
+		_content.erase(0, field_value_length + 2);
+
+		if (Request::implemented_headers.count(field_name))
+		{
+			if (_php_headers.count(field_name)) {
+				if (field_name == "host")
+					return _request->setStatusCode(500);
+				_php_headers[field_name].append(",");
+			}
+			_php_headers[field_name].append(field_value); // add field_name-field_value to map
+		}
+
+		line_length = _content.find("\r\n");
+	}
+	_content.erase(0, 2);
 }
 
 void Response::generateHeadResponse() {
@@ -509,13 +561,13 @@ void Response::generateHeadResponse() {
 		}
 
 		if (S_ISREG(stat_buf.st_mode)) {
-			std::string ext = _getExt(filename);
-			if (_isCgiExt(ext)) {
+			std::string file_ext = _getExt(filename);
+			if (_isCgiExt(file_ext)) {
 				_runCgi(filename);
-				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
-			}
-			else {
-				setContentTypeByFileExt(ext);
+				_cutPhpHeadersFromContent();
+//				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
+			} else {
+				setContentTypeByFileExt(file_ext);
 				readFileToContent(filename);
 				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
 			}
