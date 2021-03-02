@@ -108,7 +108,7 @@ TEST(LimitExceptDirectiveTests, positive_scenarios_wtih_context_one_allowed_meth
     const std::list<LocationContext*>& locations = (*it)->getLocationsList();
     EXPECT_EQ(locations.size(), 1);
 
-    std::list<std::string> limited_methods = (*locations.begin())->getLimitedMethods();
+    std::list<std::string> limited_methods = (*locations.begin())->getLimitExceptMethods();
 
     EXPECT_EQ(limited_methods.size(), 1);
     EXPECT_EQ((*limited_methods.begin()), "HEAD");
@@ -136,7 +136,7 @@ TEST(LimitExceptDirectiveTests, positive_scenarios_wtih_context_all_allowed_meth
     const std::list<LocationContext*>& locations = (*it)->getLocationsList();
     EXPECT_EQ(locations.size(), 1);
 
-    std::list<std::string> limited_methods = (*locations.begin())->getLimitedMethods();
+    std::list<std::string> limited_methods = (*locations.begin())->getLimitExceptMethods();
     std::list<std::string>::const_iterator it_actual = limited_methods.begin();
 
     ASSERT_EQ(limited_methods.size(), 8);

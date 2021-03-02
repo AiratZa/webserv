@@ -35,6 +35,14 @@ public:
 
     virtual bool setRootPath(const std::string& root_path);
 
+    bool IsCgiLocation(void) const { return _is_cgi_location; }
+
+    void setIsCgiLocation(bool value) { _is_cgi_location = value; }
+
+    bool setCgiParam(const Pair<std::string, std::string>& cgi_param);
+
+    const std::string getCgiParamByName(const std::string& key) const;
+
 private:
 
 
@@ -49,6 +57,10 @@ private:
     std::string _alias_path;
     bool _is_alias_path_already_was_set;
 
+    bool _is_cgi_location;
+
+    std::string _cgi_script_name;
+    std::string _cgi_path_info;
 
 };
 

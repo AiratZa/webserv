@@ -66,3 +66,33 @@ bool LocationContext::setAliasPath(const std::string& alias) {
     _is_alias_path_already_was_set = true;
     return true;
 }
+
+bool LocationContext::setCgiParam(const Pair<std::string, std::string>& cgi_param) {
+    _is_cgi_location = true;
+
+    if (cgi_param.first == CGI_PARAM_SCRIPT_NAME) {
+        if (!_cgi_script_name.size()) {
+            _cgi_script_name = cgi_param.second;
+            return true;
+        }
+    }
+    else if (cgi_param.first == CGI_PARAM_PATH_INFO) {
+        if (!_cgi_path_info.size()) {
+            _cgi_path_info = cgi_param.second;
+            return true;
+        }
+    }
+    return false;
+}
+
+const std::string LocationContext::getCgiParamByName(const std::string& key) const {
+    if (key == CGI_PARAM_SCRIPT_NAME)
+    {
+        return _cgi_script_name;
+    }
+    else if (key == CGI_PARAM_PATH_INFO)
+    {
+        return _cgi_path_info;
+    }
+    return std::string();
+}

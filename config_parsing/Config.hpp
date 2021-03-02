@@ -42,6 +42,10 @@
 #define INDEX_KW "index"
 #define ROOT_KW "root"
 
+#define CGI_PARAM_DEFINITION "cgi_param"
+#define CGI_PARAM_PATH_INFO "PATH_INFO"
+#define CGI_PARAM_SCRIPT_NAME "SCRIPT_NAME"
+
 #define ERROR_PAGE_REDIRECT_URI "ERROR_PAGE_REDIRECT_URI"
 #define ERROR_PAGE_CHANGE_ERROR_CODE "ERROR_PAGE_CHANGE_ERROR_CODE"
 
@@ -187,6 +191,7 @@ private:
     bool _autoindexExceptKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _indexKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::string _rootKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    Pair<std::string, std::string> _cgiParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     const std::string parseHost(const std::string& param) const;
