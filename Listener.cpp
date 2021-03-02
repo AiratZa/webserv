@@ -25,7 +25,7 @@ Listener::Listener(const std::string &host, int port)
 	in_addr_t host_addr = _getHostInetAddrFromStr(host);
 
 	_addr.sin_family = AF_INET;
-	_addr.sin_port = htons(port);
+	_addr.sin_port = htons(port); // TODO: is htons it allowed?
 	_addr.sin_addr.s_addr = host_addr;
 
 
@@ -92,6 +92,7 @@ void Listener::acceptConnection(void) {
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request();
+	_client_requests[sock]->_port = _port;
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {

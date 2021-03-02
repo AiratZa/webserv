@@ -26,7 +26,7 @@ std::set<std::string> Response::initResponseHeaders() {
 	implemented_headers.insert("retry-after");
 	implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
-	implemented_headers.insert("www-authenticate");
+	implemented_headers.insert("www-authenticate"); //WWW-Authenticate: Newauth realm="apps", type=1, title="Login to \"apps\"", Basic realm="simple"
 	return implemented_headers;
 }
 
@@ -78,7 +78,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket),
-				_reason_phrase("OK"), _raw_response(""), _content(""), _root(WebServ::getWebServRootPath()) { };
+				_raw_response(""), _content(""), _root(WebServ::getWebServRootPath()) { };
 
 Response::~Response(void) { };
 
@@ -153,7 +153,7 @@ void Response::generateStatusLine() {
  * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
  * explanations http://howardhinnant.github.io/date_algorithms.html
  */
-struct tm Response::_getCalendarTime(time_t tv_sec) {
+struct tm Response::_getCalendarTime(time_t tv_sec) { // TODO: maybe should make it simplier
 	struct tm calendar_time;
 	int days = tv_sec / 86400;
 	days += 719468;
@@ -282,15 +282,10 @@ void Response::generateAutoindex() { // TODO:replace by normal autoindex
 	_content = "generated autoindex";
 }
 
-void Response::setContentTypeByFilename(std::string & filename) {
-	std::string ext;
-	size_t dot_pos;
-
-	dot_pos = filename.rfind('.');
-	if (dot_pos == std::string::npos)
+void Response::setContentTypeByFileExt(std::string & ext) {
+	if (ext == "")
 		_content_type = "Content-Type: application/octet-stream\r\n";
 	else {
-		ext = filename.substr(dot_pos);
 		if (ext == ".txt")
 			_content_type = "Content-Type: text/plain\r\n";
 		else if (ext == ".html")
@@ -346,6 +341,121 @@ void Response::generateGetResponse() {
 //	_status_code = status_code;
 //}
 
+std::string Response::_getExt(std::string filename) {
+	std::string ext;
+	size_t dot_pos;
+
+	dot_pos = filename.rfind('.');
+	if (dot_pos != std::string::npos)
+		ext = filename.substr(dot_pos + 1);
+	return ext;
+}
+
+bool Response::_isCgiExt(std::string & ext) {
+	return ext == "php";
+}
+
+void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
+//	std::string temp;
+	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"];
+	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
+	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
+	env[1] = const_cast<char *>(cgiVariables["CONTENT_LENGTH"].c_str());
+	cgiVariables["CONTENT_TYPE"] = "CONTENT_TYPE=" + _request->_headers["content-type"];
+	env[2] = const_cast<char *>(cgiVariables["CONTENT_TYPE"].c_str());
+	cgiVariables["GATEWAY_INTERFACE"].assign("GATEWAY_INTERFACE=").append("CGI/1.1");
+	env[3] = const_cast<char *>(cgiVariables["GATEWAY_INTERFACE"].c_str());
+
+	/*
+	 * TODO: from slack:
+	 * TODO: "they want the target with locations substituted" ex :
+	 * TODO: PATH_INFO=/YoupieBanane/youpi.bla
+	 * TODO: for http://host:port/directory/youpi.bla (in tester)
+	 */
+	cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(filename);
+	env[4] = const_cast<char *>(cgiVariables["PATH_INFO"].c_str());
+
+	cgiVariables["PATH_TRANSLATED"].assign("PATH_TRANSLATED=").append(filename);
+	env[5] = const_cast<char *>(cgiVariables["PATH_TRANSLATED"].c_str());
+	cgiVariables["QUERY_STRING"] = "QUERY_STRING=" + _request->_query_string;
+	env[6] = const_cast<char *>(cgiVariables["QUERY_STRING"].c_str());
+	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append("127.0.0.1"); // TODO: need some kind of inet_ntoa()
+	env[7] = const_cast<char *>(cgiVariables["REMOTE_ADDR"].c_str());
+	cgiVariables["REMOTE_IDENT"] = "REMOTE_IDENT=";
+	env[8] = const_cast<char *>(cgiVariables["REMOTE_IDENT"].c_str());
+	cgiVariables["REMOTE_USER"] = "REMOTE_USER="; // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11
+	env[9] = const_cast<char *>(cgiVariables["REMOTE_USER"].c_str());
+	cgiVariables["REQUEST_METHOD"] = "REQUEST_METHOD=" + _request->_method;
+	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());
+	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append("/").append(_request->_request_target); // there is no such Variable in rfc
+	env[11] = const_cast<char *>(cgiVariables["REQUEST_URI"].c_str());
+	cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/.brew/bin/php-cgi"); // TODO: get from config file
+	env[12] = const_cast<char *>(cgiVariables["SCRIPT_NAME"].c_str());
+	cgiVariables["SERVER_NAME"] = "SERVER_NAME=" + _request->_headers["host"].substr(0, _request->_headers["host"].find(':'));
+	env[13] = const_cast<char *>(cgiVariables["SERVER_NAME"].c_str());
+	cgiVariables["SERVER_PORT"] = "SERVER_PORT=" + libft::ultostr_base(_request->_port, 10);
+	env[14] = const_cast<char *>(cgiVariables["SERVER_PORT"].c_str());
+	cgiVariables["SERVER_PROTOCOL"].assign("SERVER_PROTOCOL=").append("HTTP/1.1");
+	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
+	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
+	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
+	cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
+	env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
+	env[18] = NULL;
+}
+
+void Response::_runCgi(std::string & filename) { // filename is a *.php script
+	int pid;
+	int exit_status;
+	std::string php_cgi("/Users/jnannie/.brew/bin/php-cgi");
+	char * argv[3] = {
+			const_cast<char *>(php_cgi.c_str()),
+			const_cast<char *>(filename.c_str()),
+			NULL
+	};
+	char * env[19];
+
+	std::map<std::string, std::string> cgiVariables;
+	_setEnv(env, filename, cgiVariables);
+
+	int filedes_in[2];
+	int filedes_out[2];
+	if (pipe(filedes_in) == -1 || pipe(filedes_out) == -1)
+		_request->setStatusCode(500);
+
+	int stdin_backup = dup(0);
+	int stdout_backup = dup(1);
+	dup2(filedes_in[1], 1);
+	close(filedes_in[1]);
+	dup2(filedes_out[0], 0);
+	close(filedes_out[0]);
+	if ((pid = fork()) == -1) {
+		close(filedes_in[0]);
+		close(filedes_out[1]);
+		_request->setStatusCode(500); // Internal Server Error
+	}
+	else if (pid == 0) {
+		dup2(filedes_in[0], 0);
+		dup2(filedes_out[1], 1);
+		execve(argv[0], argv, env);
+		exit(EXIT_FAILURE);
+	}
+	waitpid(pid, &exit_status, 0); // TODO: maybe we should use not blocking wait, then we need to save stdin and out backups and pass pipe descritpors to select
+//	if (WIFEXITED(exit_status))
+//		exit_status = WEXITSTATUS(exit_status);
+//	else if (WIFSIGNALED(exit_status))
+//		exit_status = exit_status | 128;
+	char buf[1024 + 1];
+	int ret;
+	ret = read(0, buf, 1024);
+	_content.append(buf);
+//	while (read(0, buf, 1024) != 0) {
+//		_content.append(buf);
+//	}
+	dup2(stdin_backup, 0);
+	dup2(stdout_backup, 1);
+}
+
 void Response::generateHeadResponse() {
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
@@ -370,7 +480,9 @@ void Response::generateHeadResponse() {
 	struct stat stat_buf;
 	std::string filename;
 
+//TODO: need to figure out what path to use instead of root
 	filename = _root + _request->_request_target;
+//	std::cout << "_root " << _root << "_request->_request_target " << _request->_request_target << std::endl;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
@@ -397,9 +509,16 @@ void Response::generateHeadResponse() {
 		}
 
 		if (S_ISREG(stat_buf.st_mode)) {
-			readFileToContent(filename);
-			setContentTypeByFilename(filename);
-			_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+			std::string ext = _getExt(filename);
+			if (_isCgiExt(ext)) {
+				_runCgi(filename);
+				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
+			}
+			else {
+				setContentTypeByFileExt(ext);
+				readFileToContent(filename);
+				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
 				generateAutoindex();
