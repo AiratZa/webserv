@@ -31,7 +31,16 @@ WebServ::WebServ(const Config& config)
             std::cout << "      ____________________________________________" << std::endl;
             std::cout << "      LOCATION LEVEL INDEX DIRECTIVE PARAMS: "  << (*loc_it)->getIndexPagesDirectiveInfo() << std::endl;
             std::cout << "      ____________________________________________" << std::endl;
+            std::cout << std::boolalpha << "IS CGI LOCATION: " << (*loc_it)->IsCgiLocation() << std::endl;
+            if ((*loc_it)->IsCgiLocation()) {
+                std::cout << "      CGI_PARAM SCRIPT_NAME: "  << (*loc_it)->getCgiParamByName(CGI_PARAM_SCRIPT_NAME) << std::endl;
+                std::cout << "      ____________________________________________" << std::endl;
+                std::cout << "      CGI_PARAM PATH_INFO: "  << (*loc_it)->getCgiParamByName(CGI_PARAM_PATH_INFO) << std::endl;
+                std::cout << "      ____________________________________________" << std::endl;
+            }
             ++loc_it;
+            std::cout << std::endl << "============================================" << std::endl;
+
         }
         std::cout << std::endl << "____________________________________________" << std::endl;
 
