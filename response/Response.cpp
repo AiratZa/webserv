@@ -406,9 +406,13 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	int pid;
 	int exit_status;
-	std::string php_cgi("/Users/jnannie/.brew/bin/php-cgi");
+	std::string cgi_script;
+	if (_file_ext == "php")
+		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
+	else
+		cgi_script = "/Users/jnannie/Desktop/webserv/cgi_tester";
 	char * argv[3] = {
-			const_cast<char *>(php_cgi.c_str()),
+			const_cast<char *>(cgi_script.c_str()),
 			const_cast<char *>(filename.c_str()),
 			NULL
 	};
@@ -463,7 +467,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		_request->setStatusCode(500);
 }
 
-void Response::_parsePhpHeadersFromCgiResponse() { // the same as in request headers parsing
+void Response::_parseHeadersFromCgiResponse() { // the same as in request headers parsing
 	if (!_request->isStatusCodeOk())
 		return ;
 	std::string field_name;
@@ -576,7 +580,7 @@ void Response::generateHeadResponse() {
 			if (_isCgiExt(_file_ext)) {
 				_runCgi(filename);
 				if (_file_ext == "php") {
-					_parsePhpHeadersFromCgiResponse();
+					_parseHeadersFromCgiResponse();
 					if (_php_headers.count("content-length")) {
 						_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
 					}
@@ -645,7 +649,7 @@ void Response::generatePostResponse() {
 	if (_isCgiExt(_file_ext)) {
 		_runCgi(filename);
 		if (_file_ext == "php" || _file_ext == "bla") {
-			_parsePhpHeadersFromCgiResponse();
+			_parseHeadersFromCgiResponse();
 			if (_php_headers.count("content-length")) {
 				_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
 			}

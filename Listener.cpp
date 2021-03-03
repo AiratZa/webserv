@@ -301,7 +301,7 @@ void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std:
 void Listener::handleRequests(fd_set* globalReadSetPtr) {
 	std::list<int>::iterator it = _clients_read.begin();
 	std::map<int, int> time;
-	set_time(time, it, _clients_read.end());
+	set_time(time, it, _clients_read.end()); //TODO: check if it works
 
 
 	while (it != _clients_read.end() ) {

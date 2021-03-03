@@ -85,4 +85,5 @@ int main(int argc, char *argv[])
 //TODO: make connections persistent
 //TODO: accept all incoming connettions in Listener::acceptConnection(), not only one
 //TODO: check accept-charset, accept-language and other request headers before response
+//TODO: set timeout in select
 
