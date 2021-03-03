@@ -348,7 +348,7 @@ std::string Response::_getExt(std::string filename) {
 }
 
 bool Response::_isCgiExt(std::string & ext) {
-	return ext == "php";
+	return ext == "php" || ext == "bla";
 }
 
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
@@ -622,6 +622,42 @@ void Response::generatePutResponse() {
     _raw_response += _content;
 }
 
+void Response::generatePostResponse() {
+	if (!isMethodAllowed()) {
+		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
+		_allow = "Allow: ";
+		for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+			_allow += *it;
+			_allow += ",";
+		}
+		_allow.erase(_allow.size() - 1, 1);
+		_allow += "\r\n";
+		return _request->setStatusCode(405);
+	}
+
+//	struct stat stat_buf;
+
+//TODO: need to figure out what path to use instead of root
+	std::string filename = _root + _request->_request_target;
+
+	_file_ext = _getExt(filename);
+	if (_isCgiExt(_file_ext)) {
+		_runCgi(filename);
+		if (_file_ext == "php" || _file_ext == "bla") {
+			_parsePhpHeadersFromCgiResponse();
+			if (_php_headers.count("content-length")) {
+				_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
+			}
+		}
+	}
+
+	if (!_request->isStatusCodeOk())
+		return ;
+
+	generateStatusLine();
+	generateHeaders();
+	_raw_response += _content;
+}
 
 void Response::generateResponse() {
 	if (_request->isStatusCodeOk()) {
@@ -631,6 +667,8 @@ void Response::generateResponse() {
 			generateHeadResponse();
 		} else if (_request->_method == "PUT") {
 			generatePutResponse();
+		} else if (_request->_method == "POST") {
+			generatePostResponse();
 		} else {
 			_request->setStatusCode(501); // 501 Not Implemented
 		}

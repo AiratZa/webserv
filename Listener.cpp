@@ -88,7 +88,7 @@ void Listener::acceptConnection(void) {
 	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
 		utils::exitWithLog();
 
-	_all_clients.push_back(sock);
+//	_all_clients.push_back(sock);
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request();
@@ -444,14 +444,16 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			response.generateResponse();
 			response.sendResponse();
 
-			close(fd);
+//			close(fd);
 			delete _client_requests[fd];
-			_client_requests.erase(fd);
+			_client_requests[fd] = new Request;
+			_clients_read.push_back(fd);
+//			_client_requests.erase(fd);
 
-			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);
-			if (it_all != _all_clients.end()) {
-                _all_clients.erase(it_all);
-			}
+//			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);
+//			if (it_all != _all_clients.end()) {
+//                _all_clients.erase(it_all);
+//			}
 
 			it = _clients_write.erase(it);
 

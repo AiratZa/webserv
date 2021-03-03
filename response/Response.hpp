@@ -32,6 +32,7 @@ public:
 	void generateGetResponse();
 	void generateHeadResponse();
 	void generatePutResponse();
+	void generatePostResponse();
 	void generateResponse();
 	void generateResponseByStatusCode();
 	void generateStatusLine();

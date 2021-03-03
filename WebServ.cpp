@@ -86,10 +86,12 @@ Server* WebServ::getServerByPosition(int i) {
 }
 
 void WebServ::serveConnections() {
+	fd_set temp_read_set;
+	fd_set temp_write_set;
 	while(true) {
 
-		FD_ZERO(getReadSetPtr());
-		FD_ZERO(getWriteSetPtr());
+		FD_ZERO(&temp_read_set);
+		FD_ZERO(&temp_write_set);
 
 		for (int i = 0; i < getServersCount(); i++) {
 			Server *server = getServerByPosition(i);
@@ -97,9 +99,11 @@ void WebServ::serveConnections() {
 			std::list<Listener*> listeners = server->getListeners();
             std::list<Listener*>::iterator it_l = listeners.begin();
             while (it_l != listeners.end()) {
-                FD_SET((*it_l)->getListener(), getReadSetPtr());
-                setToReadFDSet((*it_l)->getAllClients());
-                setToWriteFDSet((*it_l)->getAllClients());
+                FD_SET((*it_l)->getListener(), &temp_read_set);
+				for(std::list<int>::const_iterator it = (*it_l)->getReadClients().begin(); it != (*it_l)->getReadClients().end(); it++)
+					FD_SET(*it, &temp_read_set);
+				for(std::list<int>::const_iterator it = (*it_l)->getWriteClients().begin(); it != (*it_l)->getWriteClients().end(); it++)
+					FD_SET(*it, &temp_write_set);
                 (*it_l)->updateMaxFD();
                 ++it_l;
             }
@@ -108,8 +112,8 @@ void WebServ::serveConnections() {
 		updateMaxFD();
 		// Ждём события в одном из сокетов
 		if (select(getMaxFD() + 1,
-				   getReadSetPtr(),
-                   getWriteSetPtr(),
+				   &temp_read_set,
+				   &temp_write_set,
 				   NULL,
 				   NULL) < 0) {
 			utils::exitWithLog();
@@ -122,11 +126,11 @@ void WebServ::serveConnections() {
             std::list<Listener*> listeners = server->getListeners();
             std::list<Listener*>::iterator it_l = listeners.begin();
             while (it_l != listeners.end()) {
-                if (FD_ISSET((*it_l)->getListener(), getReadSetPtr())) {
+                if (FD_ISSET((*it_l)->getListener(), &temp_read_set)) {
                     // Поступил новый запрос на соединение, используем accept
                     (*it_l)->acceptConnection();
                 }
-                (*it_l)->processConnections(getReadSetPtr(), getWriteSetPtr());
+                (*it_l)->processConnections(&temp_read_set, &temp_write_set);
                 ++it_l;
             }
 		}
