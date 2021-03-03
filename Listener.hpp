@@ -20,9 +20,9 @@ public:
 
 	const std::list<int>& getReadClients(void) const { return _clients_read; }
 	const std::list<int>& getWriteClients(void) const { return _clients_write; }
-    const std::list<int>& getAllClients(void) const {
-	    return _all_clients;
-	}
+//    const std::list<int>& getAllClients(void) const {
+//	    return _all_clients;
+//	}
 
 	void updateMaxFD(void);
 
@@ -51,7 +51,7 @@ private:
 	const std::string _host;
 	const int _port;
 
-	std::list<int> _all_clients;
+//	std::list<int> _all_clients;
 	std::list<int> _clients_read; // second param for ready or not
 	std::list<int> _clients_write; // second param for ready or not
 	std::map<int, Request *> _client_requests;
