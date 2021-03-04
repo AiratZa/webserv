@@ -92,7 +92,7 @@ void Listener::acceptConnection(void) {
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request();
-	_client_requests[sock]->_port = _port;
+	_client_requests[sock]->_port = _port; // TODO: need to set _port after every new Request
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -218,18 +218,19 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     request->parseRequestLine();
     if (request->isStatusCodeOk()) {
         request->parseHeaders();
-        if (!request->isStatusCodeOk()) {
-            return false;
-        }
+		if (request->isStatusCodeOk())
+			request->parsURL();
+		else
+			return false;
     }
     else {
         return false;
     }
 
     WebServ::routeRequest(_host, _port, request);
-    if (request->isMethodLimited(request->_method)) {
-        request->_status_code = 403;
-    }
+//    if (request->isMethodLimited(request->_method)) { // TODO: jnannie: its 405, but we check for allowed methods in Response, and set 'location' header if method is not allowed, maybe later move it here, but xz
+//        request->_status_code = 403;
+//    }
 
     if (!request->isStatusCodeOk()) {
         return false;
@@ -432,11 +433,11 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //			if (request->isStatusCodeOk())
 //				request->parseHeaders();
 
-			if (request->isStatusCodeOk()) {
-				request->parsURL();
+//			if (request->isStatusCodeOk()) {
+//				request->parsURL();
 //				if (request->isStatusCodeOk()) // TODO: routing already done in Listener::handleRequests() -> Listener::processHeaderInfoForActions() so this one is redundant
 //					WebServ::routeRequests(_host, _port, _client_requests);
-			}
+//			}
 
 			request->parseBody();
 
@@ -446,7 +447,7 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 //			close(fd);
 			delete _client_requests[fd];
-			_client_requests[fd] = new Request;
+			_client_requests[fd] = new Request();
 			_clients_read.push_back(fd);
 //			_client_requests.erase(fd);
 

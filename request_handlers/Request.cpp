@@ -106,7 +106,7 @@ void Request::parseRequestLine() {
 	_method = request_line.substr(0, word_end);
 	request_line.erase(0, word_end + 1);
 
-	word_end = request_line.find('?');
+	word_end = request_line.find('?'); // TODO: take word first, to ' ', and find '?' in it, just in case, but not mandatory
 	bool there_is_query = word_end != std::string::npos;
 	if (there_is_query) {
 		_request_target = request_line.substr(0, word_end);
@@ -155,7 +155,7 @@ void Request::parseHeaders() {
 
 		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
-		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
+		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 3.2.4
 			return setStatusCode(400);
 		}
 		_raw_request.erase(0, field_name_length + 1);
@@ -176,7 +176,7 @@ void Request::parseHeaders() {
 		if (Request::implemented_headers.count(field_name))
 		{
 			if (_headers.count(field_name)) {
-				if (field_name == "host")
+				if (field_name == "host" || field_name == "content-length")
 					return setStatusCode(400);
 				_headers[field_name].append(",");
 			}
@@ -316,10 +316,10 @@ void    Request::parsURL() {
 	if (hashtag_pos != std::string::npos)
 		url.resize(hashtag_pos); // nginx just ignore all that after '#', even %00
 
-	while (count < lenght && url[count] != '/') {
-		res += url[count];
-		++count;
-	}
+//	while (count < lenght && url[count] != '/') {
+//		res += url[count];
+//		++count;
+//	}
 	while (count < lenght) {
 		while (url[count] == '/') // if "//////"
 			++count;
@@ -364,15 +364,18 @@ void    Request::parsURL() {
 	}
 	it = path.begin();
 	while (it != path.end()) { // uri constructor
+		res += '/';
 		res += *it;
 		++it;
-		if (it != path.end())
-			res += '/';
 	}
 
-	_request_target = res;
-	if (url != "/" && url.size() && url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
-		_request_target += '/';
+	if (res.empty())
+		_request_target = '/';
+	else {
+		_request_target = res;
+		if (url.size() && url[url.size() - 1] == '/')// jnannie: if there is '/' in the end of the uri we should save it, because when directory has not '/' we will response with "location" header as nginx does
+			_request_target += '/';
+	}
 }
 
 void Request::setAbsoluteRootPathForRequest(void) {

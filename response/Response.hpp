@@ -79,11 +79,11 @@ private:
 	std::string _content;
 
 	std::string _file_ext;
-	std::map<std::string, std::string> _php_headers;
+	std::map<std::string, std::string> _cgi_headers;
 
 //	Server* _server;
 
-	std::string _root; // TODO:temporary
+//	std::string _root; // TODO:temporary
 
 private: // headers
 	std::string _content_type;

@@ -78,7 +78,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket),
-				_raw_response(""), _content(""), _root(WebServ::getWebServRootPath()) { };
+				_raw_response(""), _content("") { };
 
 Response::~Response(void) { };
 
@@ -219,7 +219,7 @@ std::string Response::getLocationHeader() {
 	location += "location: ";
 	location += "http://";
 	location += _request->_headers["host"];
-	location += '/';
+//	location += '/';
 //	location += "http://localhost:8080"; //TODO:get scheme, host and port from connection or smt
 	location += _request->_request_target;//getLocationHeader();
 	location += '/';
@@ -241,7 +241,7 @@ void Response::generateHeaders() {
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-	for (std::map<std::string, std::string>::iterator it = _php_headers.begin(); it != _php_headers.end(); ++it) {
+	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
 		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
 	}
 	_raw_response += "\r\n";
@@ -510,12 +510,12 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 
 		if (Request::implemented_headers.count(field_name))
 		{
-			if (_php_headers.count(field_name)) {
+			if (_cgi_headers.count(field_name)) {
 				if (field_name == "host")
 					return _request->setStatusCode(500);
-				_php_headers[field_name].append(",");
+				_cgi_headers[field_name].append(",");
 			}
-			_php_headers[field_name].append(field_value); // add field_name-field_value to map
+			_cgi_headers[field_name].append(field_value); // add field_name-field_value to map
 		}
 
 		line_length = _content.find("\r\n");
@@ -524,6 +524,13 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 }
 
 void Response::generateHeadResponse() {
+
+//	if (_request->_request_target == "" && _request->_method == "HEAD") { // TODO: remove later, just for test
+//		_allow = "Allow: GET";
+//		_allow += "\r\n";
+//		return _request->setStatusCode(405);
+//	}
+
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
 		_allow = "Allow: ";
@@ -544,12 +551,20 @@ void Response::generateHeadResponse() {
 //	std::cout << "_request->_handling_location->getLocationPathForComparison() " << _request->_handling_location->getLocationPathForComparison() << std::endl;
 //	std::cout << "_request->_handling_server->getRootPath() " << _request->_handling_server->getRootPath() << std::endl;
 
-	struct stat stat_buf;
-	std::string filename;
 
 //TODO: need to figure out what path to use instead of root
-	filename = _root + _request->_request_target;
+	std::string filename = _request->getAbsoluteRootPathForRequest();
+	if (filename[filename.size() - 1] != '/')
+		filename += _request->_request_target; // _request->_request_target always starts with '/'
+	else
+		filename += _request->_request_target.substr(1); // remove '/'
+//	filename = _request->getAbsoluteRootPathForRequest();
+//	if (filename[filename.size() - 1] != '/')
+//		filename += "/";
+//	filename += _request->_request_target.substr(1); // without '/'
 //	std::cout << "_root " << _root << "_request->_request_target " << _request->_request_target << std::endl;
+
+	struct stat stat_buf;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
@@ -581,8 +596,8 @@ void Response::generateHeadResponse() {
 				_runCgi(filename);
 				if (_file_ext == "php") {
 					_parseHeadersFromCgiResponse();
-					if (_php_headers.count("content-length")) {
-						_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
+					if (_cgi_headers.count("content-length")) {
+						_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
 					}
 				}
 //				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
@@ -628,6 +643,13 @@ void Response::generatePutResponse() {
 }
 
 void Response::generatePostResponse() {
+
+//	if (_request->_request_target == "") { // TODO: remove later, just for test
+//		_allow = "Allow: GET";
+//		_allow += "\r\n";
+//		return _request->setStatusCode(405);
+//	}
+
 	if (!isMethodAllowed()) {
 		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
 		_allow = "Allow: ";
@@ -640,18 +662,23 @@ void Response::generatePostResponse() {
 		return _request->setStatusCode(405);
 	}
 
+
 //	struct stat stat_buf;
 
 //TODO: need to figure out what path to use instead of root
-	std::string filename = _root + _request->_request_target;
+	std::string filename = _request->getAbsoluteRootPathForRequest();
+	if (filename[filename.size() - 1] != '/')
+		filename += _request->_request_target; // _request->_request_target always starts with '/'
+	else
+		filename += _request->_request_target.substr(1); // remove '/'
 
 	_file_ext = _getExt(filename);
 	if (_isCgiExt(_file_ext)) {
 		_runCgi(filename);
 		if (_file_ext == "php" || _file_ext == "bla") {
 			_parseHeadersFromCgiResponse();
-			if (_php_headers.count("content-length")) {
-				_content.resize(libft::strtoul_base(_php_headers["content-length"], 10));
+			if (_cgi_headers.count("content-length")) {
+				_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
 			}
 		}
 	}

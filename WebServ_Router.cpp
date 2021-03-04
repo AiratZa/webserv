@@ -113,8 +113,20 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
         ++it_exact;
     }
 
+    /*
+     * added by jnannie because current_request->_request_target == '/' didnt work
+     */
+	const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
+	std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
+	while (it_non_exact != non_exact.end()) {
+		if ((*it_non_exact)->getLocationPath() == current_request->_request_target) {
+			return (*it_non_exact); // exact route(location) is found
+		}
+		++it_non_exact;
+	}
+
     // Searching in Non Exact Locations
-    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
+//    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
     std::size_t target_len = current_request->_request_target.size();
 
     while (target_len > 1) {

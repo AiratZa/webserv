@@ -86,4 +86,6 @@ int main(int argc, char *argv[])
 //TODO: accept all incoming connettions in Listener::acceptConnection(), not only one
 //TODO: check accept-charset, accept-language and other request headers before response
 //TODO: set timeout in select
+//TODO: close connection after sending 400, frc 7230 3.3.3-4
+//TODO: check "Если разрешён метод GET, то метод HEAD также будет разрешён."
 
