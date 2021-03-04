@@ -7,7 +7,8 @@
 LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
                     : _is_error_pages_info_was_updated(false),
                       _alias_path(""),
-                      _is_alias_path_already_was_set(false){
+                      _is_alias_path_already_was_set(false),
+                      _is_cgi_location(false) {
     _is_exact = (location_uri_params.size() == 2);
     _uri = location_uri_params.back();
 
@@ -67,32 +68,31 @@ bool LocationContext::setAliasPath(const std::string& alias) {
     return true;
 }
 
-bool LocationContext::setCgiParam(const Pair<std::string, std::string>& cgi_param) {
+bool LocationContext::setCgiScriptParam(const std::string& value) {
     _is_cgi_location = true;
 
-    if (cgi_param.first == CGI_PARAM_SCRIPT_NAME) {
-        if (!_cgi_script_name.size()) {
-            _cgi_script_name = cgi_param.second;
-            return true;
-        }
-    }
-    else if (cgi_param.first == CGI_PARAM_PATH_INFO) {
-        if (!_cgi_path_info.size()) {
-            _cgi_path_info = cgi_param.second;
-            return true;
-        }
+
+    if (!_cgi_script.size()) {
+        _cgi_script = value;
+        return true;
     }
     return false;
 }
 
-const std::string LocationContext::getCgiParamByName(const std::string& key) const {
-    if (key == CGI_PARAM_SCRIPT_NAME)
-    {
-        return _cgi_script_name;
+bool LocationContext::setCgiExtensionsParam(const std::list<std::string>& value) {
+    _is_cgi_location = true;
+
+    if (!_cgi_extensions.size()) {
+        _cgi_extensions = value;
+        return true;
     }
-    else if (key == CGI_PARAM_PATH_INFO)
-    {
-        return _cgi_path_info;
-    }
-    return std::string();
+    return false;
+}
+
+const std::string& LocationContext::getCgiScript(void) const {
+    return _cgi_script;
+}
+
+const std::list<std::string>& LocationContext::getCgiExtensions(void) const {
+    return _cgi_extensions;
 }

@@ -43,7 +43,8 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _locationContext.push_back(AUTOINDEX_KW); //UNIVERSAL
     _locationContext.push_back(INDEX_KW); //UNIVERSAL
     _locationContext.push_back(ROOT_KW); //UNIVERSAL
-    _locationContext.push_back(CGI_PARAM_DEFINITION);
+    _locationContext.push_back(PARAM_CGI_SCRIPT);
+    _locationContext.push_back(PARAM_CGI_EXTENSION);
 
 
     _ite_server = _serverContext.end();
@@ -54,13 +55,16 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[INDEX_KW] = true;
     _isMultipleParamDirective[LIMIT_EXCEPT_KW] = true;
 
-    _isMultipleParamDirective[CGI_PARAM_DEFINITION] = true;
+    _isMultipleParamDirective[PARAM_CGI_EXTENSION] = true;
 
     _isMultipleParamDirective[LISTEN_KW] = false;
     _isMultipleParamDirective[CLIENT_MAX_BODY_SIZE_KW] = false;
     _isMultipleParamDirective[AUTOINDEX_KW] = false;
     _isMultipleParamDirective[ALIAS_KW] = false;
     _isMultipleParamDirective[ROOT_KW] = false;
+
+    _isMultipleParamDirective[PARAM_CGI_SCRIPT] = false;
+
 
 
 
@@ -392,9 +396,13 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
         std::string root = _rootKeywordHandler(current_context, directive_params);
         checkIfParamWasNotAlreadySet = current_context->setRootPath(root);
     }
-    else if (directive_keyword == CGI_PARAM_DEFINITION) {
-        Pair<std::string, std::string> cgi_param = _cgiParamKeywordHandler(current_context, directive_params);
-        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiParam(cgi_param);
+    else if (directive_keyword == PARAM_CGI_SCRIPT) {
+        std::string script_name = _cgiScriptParamKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiScriptParam(script_name);
+    }
+    else if (directive_keyword == PARAM_CGI_EXTENSION) {
+        std::list<std::string> cgi_exts = _cgiExtensionsParamKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiExtensionsParam(cgi_exts);
     }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
@@ -987,21 +995,31 @@ std::list<std::string> Config::_indexKeywordHandler(AContext* current_context,
 
 
 
-Pair<std::string, std::string> Config::_cgiParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+std::string Config::_cgiScriptParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
-    std::size_t len = directive_params.size();
-    if (len != 2) {
-        _badConfigError("invalid number of arguments in \"cgi_param\" directive");
-    }
-    std::string key = checkAndRemoveQuotes(directive_params.front());
-    if ((key != CGI_PARAM_PATH_INFO) &&
-            (key != CGI_PARAM_SCRIPT_NAME)) {
-        _badConfigError("invalid CGI argument in \"cgi_param\" directive: " + key);
-    }
 
-    std::string value = checkAndRemoveQuotes(directive_params.back());
-    return Pair<std::string, std::string>(key, value);
+    std::string value = checkAndRemoveQuotes(directive_params.front());
+    if (value.size() == 0) {
+        _badConfigError("cgi_script param can't be empty");
+    }
+    return value;
 }
 
 
+std::list<std::string> Config::_cgiExtensionsParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
 
+    std::list<std::string> values_to_return;
+
+    std::list<std::string>::const_iterator it = directive_params.begin();
+
+    while (it != directive_params.end()) {
+        std::string tmp = checkAndRemoveQuotes(*it);
+        if (tmp.size() == 0) {
+            _badConfigError("cgi_ext param can't be empty");
+        }
+        values_to_return.push_back(tmp);
+        ++it;
+    }
+    return values_to_return;
+}

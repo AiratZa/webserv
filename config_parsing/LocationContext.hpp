@@ -37,14 +37,15 @@ public:
 
     bool IsCgiLocation(void) const { return _is_cgi_location; }
 
-    void setIsCgiLocation(bool value) { _is_cgi_location = value; }
+    bool setCgiScriptParam(const std::string& value);
 
-    bool setCgiParam(const Pair<std::string, std::string>& cgi_param);
+    bool setCgiExtensionsParam(const std::list<std::string>& value);
 
-    const std::string getCgiParamByName(const std::string& key) const;
+    const std::string& getCgiScript(void) const;
+
+    const std::list<std::string>& getCgiExtensions(void) const;
 
 private:
-
 
     LocationContext() { }
     bool _is_exact; //is contains "=" modifier
@@ -59,8 +60,8 @@ private:
 
     bool _is_cgi_location;
 
-    std::string _cgi_script_name;
-    std::string _cgi_path_info;
+    std::string _cgi_script;
+    std::list<std::string> _cgi_extensions;
 
 };
 

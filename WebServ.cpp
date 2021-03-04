@@ -33,9 +33,19 @@ WebServ::WebServ(const Config& config)
             std::cout << "      ____________________________________________" << std::endl;
             std::cout << std::boolalpha << "IS CGI LOCATION: " << (*loc_it)->IsCgiLocation() << std::endl;
             if ((*loc_it)->IsCgiLocation()) {
-                std::cout << "      CGI_PARAM SCRIPT_NAME: "  << (*loc_it)->getCgiParamByName(CGI_PARAM_SCRIPT_NAME) << std::endl;
+                std::cout << "      CGI_PARAM cgi_script: "  << (*loc_it)->getCgiScript() << std::endl;
                 std::cout << "      ____________________________________________" << std::endl;
-                std::cout << "      CGI_PARAM PATH_INFO: "  << (*loc_it)->getCgiParamByName(CGI_PARAM_PATH_INFO) << std::endl;
+                const std::list<std::string>& exts = (*loc_it)->getCgiExtensions();
+                if (exts.size()) {
+                    std::list<std::string>::const_iterator ext_it = exts.begin();
+                    std::cout << "      CGI_PARAM cgi_exts: " ;
+
+                    while (ext_it != exts.end()) {
+                        std::cout << *ext_it << "  ";
+                        ++ext_it;
+                    }
+                    std::cout << std::endl;
+                }
                 std::cout << "      ____________________________________________" << std::endl;
             }
             ++loc_it;
