@@ -210,6 +210,8 @@ void Request::parseChunkedContent() { // TODO:we can remove all length and valid
 	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
 
 	size_t start_line_length = _raw_request.find("\r\n");
+	if (start_line_length == std::string::npos)
+		return setStatusCode(400);
 	while (!_raw_request.empty()) {
 		if (start_line_length > MAX_HEADER_LINE_LENGTH
 			|| start_line_length == std::string::npos) {
