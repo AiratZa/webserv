@@ -141,6 +141,8 @@ bool Listener::continueReadBody(Request* request_obj) {
 
 
 		size_t start_line_length = tmp_body.find("\r\n");
+		if (start_line_length == std::string::npos)
+			return false;
 
 		std::string start_line;
 		std::string chunk_length_field;
