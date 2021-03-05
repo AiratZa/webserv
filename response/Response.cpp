@@ -249,7 +249,8 @@ void Response::generateHeaders() {
 
 void Response::generateResponseByStatusCode() {
 	_content_type = "Content-Type: text/html\r\n";
-	_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
+	if (_request->_method != "HEAD")
+		_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
 
     generateStatusLine();
 
