@@ -207,7 +207,44 @@ bool Listener::continueReadBody(Request* request_obj) {
 }
 
 
+/*
+ * authorization functions to move
+ */
+std::vector<std::string>    parser_log_pass(std::string file) {
+	std::vector<std::string> log_pass;
 
+	int fd_file = open(file.c_str(), O_RDONLY);
+	// if (fd_file < 0)
+	//     utils::exitWithLog("Error happened when try to open auth_basic_user_file");
+
+	char *str;
+	int  read;
+
+	while ((read = get_next_line(fd_file, &str)) == 1) {
+		log_pass.push_back(str);
+		delete str;
+	}
+	log_pass.push_back(str);
+	delete str;
+
+	// if (read != 0)
+	//     utils::exitWithLog("Error happened when read auth_basic_user_file");
+	close(fd_file);
+	return log_pass;
+}
+
+bool    find_log_pass(std::vector<std::string> log_pass, std::string const& reqests_log_pass) {
+	std::vector<std::string>::iterator it = log_pass.begin();
+//	std::string decoded_reqest_log_pass = base64_decode(reqests_log_pass);
+//	std::string decoded_reqest_log_pass = reqests_log_pass;
+
+	while (it != log_pass.end()) {
+		if (*it == reqests_log_pass)
+			return true;
+		++it;
+	}
+	return false;
+}
 
 
 // returns TRUE if we are ready and need body and its length check, etc.
@@ -238,6 +275,22 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         return false;
     }
 
+    if (request->_handling_location) {
+		if (request->_handling_location->getLocationPath() == "/ht") {
+			if (request->_headers.count("authorization")) {
+				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/htpasswd"));
+				if (!find_log_pass(log_pass, request->_headers["authorization"].substr(6))) {
+					request->setStatusCode(403);
+					return false;
+				}
+			} else {
+				request->setStatusCode(401);
+				return false;
+			}
+		}
+    }
+
+
     request->handleExpectHeader();
 
     if (!request->isStatusCodeOk()) {
@@ -249,6 +302,8 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (!request->isStatusCodeOk()) {
         return false;
     }
+
+
 
     if (request->_method == "PUT") {
 

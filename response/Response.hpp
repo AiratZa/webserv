@@ -49,6 +49,7 @@ public:
 	std::string getLastModifiedHeader(time_t tv_sec);
 	std::string getLocationHeader();
 	std::string getAllowHeader();
+	std::string getWwwAuthenticateHeader();
 
 private:
 	struct tm _getCalendarTime(time_t tv_sec);
@@ -91,6 +92,7 @@ private: // headers
 	std::string _allow;
 	std::string _last_modified;
 	std::string _location;
+	std::string _www_authenticate;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 

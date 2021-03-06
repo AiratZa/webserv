@@ -49,7 +49,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 	status_codes[305] = "USE PROXY";
 	status_codes[307] = "TEMPORARY REDIRECT";
 	status_codes[400] = "BAD REQUEST";
-	status_codes[401] = "UNAUTHORIZED";
+	status_codes[401] = "Authorization Required"; // Authorization Required //UNAUTHORIZED
 	status_codes[402] = "PAYMENT REQUIRED";
 	status_codes[403] = "FORBIDDEN";
 	status_codes[404] = "NOT FOUND";
@@ -226,9 +226,15 @@ std::string Response::getAllowHeader() {
 	return allow;
 }
 
+std::string Response::getWwwAuthenticateHeader() {
+	std::string www_authenticate = "WWW-Authenticate: Basic realm=\"Access to the staging site\", charset=\"UTF-8\"\r\n";
+	return www_authenticate;
+}
+
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
 	_raw_response += "server: webserv\r\n";
+	_raw_response += _www_authenticate;
 	_raw_response += getDateHeader();
 	_raw_response += _content_type;
 	_raw_response += _allow;
@@ -251,6 +257,10 @@ void Response::generateResponseByStatusCode() {
 		_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
 
     generateStatusLine();
+
+	if (_request->getStatusCode() == 401) {
+		_www_authenticate = getWwwAuthenticateHeader();
+	}
 
     if (_request->getStatusCode() != 100){ // cURL dont recognize 100 status code response with headers
         generateHeaders();
@@ -537,7 +547,8 @@ void Response::generateHeadResponse() {
 
 //TODO: need to figure out what path to use instead of root
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	if (_request->_is_alias_path) {
+//	if (_request->_is_alias_path) {
+	if (_request->_handling_location) {
 		filename += _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
 	} else {
 		if (filename[filename.size() - 1] != '/')
@@ -677,6 +688,14 @@ void Response::generateResponse() {
 }
 
 void Response::sendResponse() {
+//	static int i = 0;
+//
+//	if (i == 0) {
+//		_raw_response = "HTTP/1.1 401 Authorization Required\r\nWWW-Authenticate: Basic realm=\"Access to the staging site\", charset=\"UTF-8\"\r\nContent-Type: image/jpeg;\r\nserver: webserv \r\n\r\n";
+//		++i;
+//	}
+//	std::cout << _raw_response.substr(0, 200) << std::endl;
+
 	// Отправляем ответ клиенту с помощью функции send
     std::cout << _raw_response << std::endl;
     send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
