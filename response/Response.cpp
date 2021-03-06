@@ -135,20 +135,6 @@ void Response::generateStatusLine() {
 	_raw_response += "\r\n";
 }
 
-//implemented_headers.insert("allow"); // Allow: OPTIONS, GET, HEAD
-//implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
-//implemented_headers.insert("content-length"); // Content-Length: 1348
-//implemented_headers.insert("content-location");
-//implemented_headers.insert("content-type"); // Content-Type: text/html;charset=utf-8
-//implemented_headers.insert("date"); // Date: Tue, 15 Nov 1994 08:12:31 GMT
-//implemented_headers.insert("last-modified");
-//implemented_headers.insert("location"); // Location: http://example.com/about.html#contacts
-//implemented_headers.insert("retry-after");
-//implemented_headers.insert("server"); // Server: Apache/2.2.17 (Win32) PHP/5.3.5
-//implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
-//implemented_headers.insert("www-authenticate");
-
-
 /*
  * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
  * explanations http://howardhinnant.github.io/date_algorithms.html
@@ -226,6 +212,18 @@ std::string Response::getLocationHeader() {
 	location += "\r\n";
 
 	return location;
+}
+
+std::string Response::getAllowHeader() {
+	std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
+	std::string allow = "Allow: ";
+	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
+		allow += *it;
+		allow += ",";
+	}
+	allow.erase(allow.size() - 1, 1);
+	allow += "\r\n";
+	return allow;
 }
 
 void Response::generateHeaders() {
@@ -335,10 +333,6 @@ void Response::generateGetResponse() {
 	_raw_response += _content;
 }
 
-//void Response::setStatusCode(int status_code) {
-//	_status_code = status_code;
-//}
-
 std::string Response::_getExt(std::string filename) {
 	std::string ext;
 	size_t dot_pos;
@@ -350,11 +344,16 @@ std::string Response::_getExt(std::string filename) {
 }
 
 bool Response::_isCgiExt(std::string & ext) {
-	return ext == "php" || ext == "bla";
+	const std::list<std::string> & cgi_extensions = _request->_handling_location->getCgiExtensions();
+	for (std::list<std::string>::const_iterator it = cgi_extensions.begin(); it != cgi_extensions.end(); ++it) {
+		if (*it  == "." + ext)
+			return true;
+	}
+	return false;
+//	return ext == "php" || ext == "bla";
 }
 
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
-//	std::string temp;
 	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"];
 	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
 	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
@@ -387,7 +386,11 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());
 	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append("/").append(_request->_request_target); // there is no such Variable in rfc
 	env[11] = const_cast<char *>(cgiVariables["REQUEST_URI"].c_str());
-	cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/.brew/bin/php-cgi"); // TODO: get from config file
+	cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append(_request->_handling_location->getCgiScript().c_str());
+//	if (_file_ext == "php")
+//		cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/.brew/bin/php-cgi"); // TODO: get from config file
+//	else
+//		cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/Desktop/webserv/cgi_tester");
 	env[12] = const_cast<char *>(cgiVariables["SCRIPT_NAME"].c_str());
 	cgiVariables["SERVER_NAME"] = "SERVER_NAME=" + _request->_headers["host"].substr(0, _request->_headers["host"].find(':'));
 	env[13] = const_cast<char *>(cgiVariables["SERVER_NAME"].c_str());
@@ -408,10 +411,11 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	int pid;
 	int exit_status;
 	std::string cgi_script;
-	if (_file_ext == "php")
-		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
-	else
-		cgi_script = "/Users/jnannie/Desktop/webserv/cgi_tester";
+	cgi_script = _request->_handling_location->getCgiScript();
+//	if (_file_ext == "php")
+//		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
+//	else
+//		cgi_script = "/Users/jnannie/Desktop/webserv/cgi_tester";
 	char * argv[3] = {
 			const_cast<char *>(cgi_script.c_str()),
 			const_cast<char *>(filename.c_str()),
@@ -526,51 +530,27 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 
 void Response::generateHeadResponse() {
 
-//	if (_request->_request_target == "" && _request->_method == "HEAD") { // TODO: remove later, just for test
-//		_allow = "Allow: GET";
-//		_allow += "\r\n";
-//		return _request->setStatusCode(405);
-//	}
-
 	if (!isMethodAllowed()) {
-		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
-		_allow = "Allow: ";
-		for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
-			_allow += *it;
-			_allow += ",";
-		}
-		_allow.erase(_allow.size() - 1, 1);
-		_allow += "\r\n";
+		_allow = getAllowHeader();
 		return _request->setStatusCode(405);
 	}
 
-
-//	std::cout << "_request->getAbsoluteRootPathForRequest() " << _request->getAbsoluteRootPathForRequest() << std::endl;
-//	std::cout << "_request->_handling_location->getAliasPath() " << _request->_handling_location->getAliasPath() << std::endl;
-//	std::cout << "_request->_handling_location->getLocationPath() " << _request->_handling_location->getLocationPath() << std::endl;
-//	std::cout << "_request->_handling_location->getRootPath() " << _request->_handling_location->getRootPath() << std::endl;
-//	std::cout << "_request->_handling_location->getLocationPathForComparison() " << _request->_handling_location->getLocationPathForComparison() << std::endl;
-//	std::cout << "_request->_handling_server->getRootPath() " << _request->_handling_server->getRootPath() << std::endl;
-
-
 //TODO: need to figure out what path to use instead of root
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	if (filename[filename.size() - 1] != '/')
-		filename += _request->_request_target; // _request->_request_target always starts with '/'
-	else
-		filename += _request->_request_target.substr(1); // remove '/'
-//	filename = _request->getAbsoluteRootPathForRequest();
-//	if (filename[filename.size() - 1] != '/')
-//		filename += "/";
-//	filename += _request->_request_target.substr(1); // without '/'
-//	std::cout << "_root " << _root << "_request->_request_target " << _request->_request_target << std::endl;
+	if (_request->_is_alias_path) {
+		filename += _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
+	} else {
+		if (filename[filename.size() - 1] != '/')
+			filename += _request->_request_target; // _request->_request_target always starts with '/'
+		else
+			filename += _request->_request_target.substr(1); // remove '/'
+	}
 
 	struct stat stat_buf;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
 			if (filename[filename.size() - 1] != '/') {
-//				filename += '/';
 				_location = getLocationHeader();
 
 				return _request->setStatusCode(301); //Moved Permanently
@@ -588,6 +568,9 @@ void Response::generateHeadResponse() {
 						break ;
 					}
 				}
+				if (!S_ISREG(stat_buf.st_mode)) { // test from subject wants 404 if there is index in config but file doesnt exist
+					return _request->setStatusCode(404);
+				}
 			}
 		}
 
@@ -595,13 +578,12 @@ void Response::generateHeadResponse() {
 			_file_ext = _getExt(filename);
 			if (_isCgiExt(_file_ext)) {
 				_runCgi(filename);
-				if (_file_ext == "php") {
+				if (_file_ext == "php") { //TODO: do test cgi response with headers?
 					_parseHeadersFromCgiResponse();
 					if (_cgi_headers.count("content-length")) {
 						_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
 					}
 				}
-//				_content_type = "Content-Type: text/html; charset=UTF-8\r\n";
 			} else {
 				setContentTypeByFileExt(_file_ext);
 				readFileToContent(filename);
@@ -623,7 +605,6 @@ void Response::generateHeadResponse() {
 
 	if (!_request->isStatusCodeOk())
 		return ;
-//		return generateResponseByStatusCode();
 
 	generateStatusLine();
 	generateHeaders();
@@ -645,26 +626,10 @@ void Response::generatePutResponse() {
 
 void Response::generatePostResponse() {
 
-//	if (_request->_request_target == "") { // TODO: remove later, just for test
-//		_allow = "Allow: GET";
-//		_allow += "\r\n";
-//		return _request->setStatusCode(405);
-//	}
-
 	if (!isMethodAllowed()) {
-		std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
-		_allow = "Allow: ";
-		for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
-			_allow += *it;
-			_allow += ",";
-		}
-		_allow.erase(_allow.size() - 1, 1);
-		_allow += "\r\n";
+		_allow = getAllowHeader();
 		return _request->setStatusCode(405);
 	}
-
-
-//	struct stat stat_buf;
 
 //TODO: need to figure out what path to use instead of root
 	std::string filename = _request->getAbsoluteRootPathForRequest();
@@ -715,7 +680,6 @@ void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
     std::cout << _raw_response << std::endl;
     send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
-	//	std::cout << "Response::sendResponse response is sent\n";
 }
 
 

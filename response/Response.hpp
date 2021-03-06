@@ -48,6 +48,7 @@ public:
 	std::string getDateHeader();
 	std::string getLastModifiedHeader(time_t tv_sec);
 	std::string getLocationHeader();
+	std::string getAllowHeader();
 
 private:
 	struct tm _getCalendarTime(time_t tv_sec);
