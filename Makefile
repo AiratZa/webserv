@@ -31,7 +31,8 @@ SRCS = $(UTILS_SRCS) main.cpp \
     request_handlers/Request.cpp \
     response/Response.cpp \
     Listener.cpp \
-    response/autoindex_handling/autoindex_handling.cpp
+    response/autoindex_handling/autoindex_handling.cpp \
+    base64_coding/base64.cpp
 
 #     ServerListener.cpp \
     ServerListener_HandleRequests.cpp \

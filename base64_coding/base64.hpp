@@ -8,9 +8,15 @@
 
 #include <string>
 
-std::string base64_encode(std::string const& s, bool url = false);
-std::string base64_decode(std::string const& s, bool remove_linebreaks = false);
-std::string base64_encode(unsigned char const*, size_t len, bool url = false);
+class Base64 {
+public:
+	static std::string base64_encode(std::string & input);
+//	static std::string base64_decode(std::string & input);
+};
+
+//std::string base64_encode(std::string const& s, bool url = false);
+//std::string base64_decode(std::string const& s, bool remove_linebreaks = false);
+//std::string base64_encode(unsigned char const*, size_t len, bool url = false);
 
 
 #endif

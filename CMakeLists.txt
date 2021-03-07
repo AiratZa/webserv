@@ -35,6 +35,7 @@ set (PROJECT_SRCS  Server.cpp
         request_handlers/Request.cpp
         response/Response.cpp
         response/autoindex_handling/autoindex_handling.cpp
+        base64_coding/base64.cpp
         ${CONFIG_PARSING_SRCS})
 
 add_executable(webserv main.cpp ${PROJECT_SRCS} )

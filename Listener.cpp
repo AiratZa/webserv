@@ -279,8 +279,10 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 		if (request->_handling_location->getLocationPath() == "/ht") {
 			if (request->_headers.count("authorization")) {
 				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/htpasswd"));
-				if (!find_log_pass(log_pass, request->_headers["authorization"].substr(6))) {
-					request->setStatusCode(403);
+				std::string auth_scheme = request->_headers["authorization"].substr(0, 5);
+				libft::string_to_lower(auth_scheme);
+				if (auth_scheme == "basic" && !find_log_pass(log_pass, request->_headers["authorization"].substr(6))) {
+					request->setStatusCode(401);
 					return false;
 				}
 			} else {

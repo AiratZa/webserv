@@ -6,6 +6,8 @@
 
 #include "response/autoindex_handling/autoindex_handling.hpp" // TODO: will be removed after TESTS
 
+#include "base64_coding/base64.hpp"
+
 
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
 #define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root // TODO:add ending '/'
@@ -71,6 +73,10 @@ int main(int argc, char *argv[])
 
         WebServ::servers_list = _config.getServersList();
         webserv = WebServ(_config);
+
+//        std::string test("a");
+//		std::cout << Base64::base64_encode(test) << std::endl;
+
         webserv.serveConnections();
     }
     catch (Config::BadConfigException & e)
@@ -88,6 +94,7 @@ int main(int argc, char *argv[])
 //TODO: set timeout in select
 //TODO: close connection after sending 400, frc 7230 3.3.3-4
 //TODO: check "Если разрешён метод GET, то метод HEAD также будет разрешён."
+//TODO: dont forget about cgi bug
 
 //location /ht {
 //auth_basic "closed site";

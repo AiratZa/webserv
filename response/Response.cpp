@@ -227,7 +227,7 @@ std::string Response::getAllowHeader() {
 }
 
 std::string Response::getWwwAuthenticateHeader() {
-	std::string www_authenticate = "WWW-Authenticate: Basic realm=\"Access to the staging site\", charset=\"UTF-8\"\r\n";
+	std::string www_authenticate = "WWW-Authenticate: Basic realm=\"restricted\", charset=\"UTF-8\"\r\n";
 	return www_authenticate;
 }
 
@@ -380,7 +380,7 @@ std::string Response::_inet_ntoa(struct in_addr sin_addr) {
 }
 
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
-	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"];
+	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"].substr(0, 5); // TODO: should be scheme only, "Basic"
 //	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
 	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
 //	env[1] = const_cast<char *>(cgiVariables["CONTENT_LENGTH"].c_str());
@@ -403,15 +403,16 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	cgiVariables["QUERY_STRING"] = "QUERY_STRING=" + _request->_query_string;
 //	env[6] = const_cast<char *>(cgiVariables["QUERY_STRING"].c_str());
 //	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append("127.0.0.1"); // TODO: need some kind of inet_ntoa()
-	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append(_inet_ntoa(_request->_remote_addr.sin_addr).c_str()); // TODO: need some kind of inet_ntoa()
+	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append(_inet_ntoa(_request->_remote_addr.sin_addr).c_str());
 //	env[7] = const_cast<char *>(cgiVariables["REMOTE_ADDR"].c_str());
 	cgiVariables["REMOTE_IDENT"] = "REMOTE_IDENT=";
 //	env[8] = const_cast<char *>(cgiVariables["REMOTE_IDENT"].c_str());
-	cgiVariables["REMOTE_USER"] = "REMOTE_USER="; // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11
+	cgiVariables["REMOTE_USER"].assign("REMOTE_USER=").append("admin"); // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11 // this user is from "authorization" request header
 //	env[9] = const_cast<char *>(cgiVariables["REMOTE_USER"].c_str());
 	cgiVariables["REQUEST_METHOD"] = "REQUEST_METHOD=" + _request->_method;
 //	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());
-	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append("/").append(_request->_request_target); // there is no such Variable in rfc
+	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append(_request->_request_target); // there is no such Variable in rfc
+//	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append("/").append(_request->_request_target); // there is no such Variable in rfc
 //	env[11] = const_cast<char *>(cgiVariables["REQUEST_URI"].c_str());
 	cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append(_request->_handling_location->getCgiScript().c_str());
 //	if (_file_ext == "php")
@@ -427,7 +428,7 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 //	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
 //	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
-	if (_file_ext == "php") {
+	if (_file_ext == "php") { // php doesnt work without it, dont know why yet
 		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
 //		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
 	}
