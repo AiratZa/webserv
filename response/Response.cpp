@@ -49,7 +49,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 	status_codes[305] = "USE PROXY";
 	status_codes[307] = "TEMPORARY REDIRECT";
 	status_codes[400] = "BAD REQUEST";
-	status_codes[401] = "Authorization Required"; // Authorization Required //UNAUTHORIZED
+	status_codes[401] = "UNAUTHORIZED"; // Authorization Required //UNAUTHORIZED
 	status_codes[402] = "PAYMENT REQUIRED";
 	status_codes[403] = "FORBIDDEN";
 	status_codes[404] = "NOT FOUND";
@@ -363,15 +363,31 @@ bool Response::_isCgiExt(std::string & ext) {
 //	return ext == "php" || ext == "bla";
 }
 
+/*
+ * https://topic.alibabacloud.com/a/implement-inet_aton-and-inet_ntoa-function-functions-in-c-language_1_31_20001161.html
+ */
+std::string Response::_inet_ntoa(struct in_addr sin_addr) {
+	std::string buf;
+	unsigned char *str = (unsigned char *)&sin_addr;
+
+	buf += libft::ultostr_base(static_cast<unsigned long>(str[0]), 10) + ".";
+	buf += libft::ultostr_base(static_cast<unsigned long>(str[1]), 10) + ".";
+	buf += libft::ultostr_base(static_cast<unsigned long>(str[2]), 10) + ".";
+	buf += libft::ultostr_base(static_cast<unsigned long>(str[3]), 10);
+
+	std::cout << "buf content: "<< buf << std::endl;
+	return buf;
+}
+
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
 	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"];
-	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
+//	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
 	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
-	env[1] = const_cast<char *>(cgiVariables["CONTENT_LENGTH"].c_str());
+//	env[1] = const_cast<char *>(cgiVariables["CONTENT_LENGTH"].c_str());
 	cgiVariables["CONTENT_TYPE"] = "CONTENT_TYPE=" + _request->_headers["content-type"];
-	env[2] = const_cast<char *>(cgiVariables["CONTENT_TYPE"].c_str());
+//	env[2] = const_cast<char *>(cgiVariables["CONTENT_TYPE"].c_str());
 	cgiVariables["GATEWAY_INTERFACE"].assign("GATEWAY_INTERFACE=").append("CGI/1.1");
-	env[3] = const_cast<char *>(cgiVariables["GATEWAY_INTERFACE"].c_str());
+//	env[3] = const_cast<char *>(cgiVariables["GATEWAY_INTERFACE"].c_str());
 
 	/*
 	 * TODO: from slack:
@@ -380,39 +396,45 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	 * TODO: for http://host:port/directory/youpi.bla (in tester)
 	 */
 	cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(filename);
-	env[4] = const_cast<char *>(cgiVariables["PATH_INFO"].c_str());
+//	env[4] = const_cast<char *>(cgiVariables["PATH_INFO"].c_str());
 
 	cgiVariables["PATH_TRANSLATED"].assign("PATH_TRANSLATED=").append(filename);
-	env[5] = const_cast<char *>(cgiVariables["PATH_TRANSLATED"].c_str());
+//	env[5] = const_cast<char *>(cgiVariables["PATH_TRANSLATED"].c_str());
 	cgiVariables["QUERY_STRING"] = "QUERY_STRING=" + _request->_query_string;
-	env[6] = const_cast<char *>(cgiVariables["QUERY_STRING"].c_str());
-	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append("127.0.0.1"); // TODO: need some kind of inet_ntoa()
-	env[7] = const_cast<char *>(cgiVariables["REMOTE_ADDR"].c_str());
+//	env[6] = const_cast<char *>(cgiVariables["QUERY_STRING"].c_str());
+//	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append("127.0.0.1"); // TODO: need some kind of inet_ntoa()
+	cgiVariables["REMOTE_ADDR"].assign("REMOTE_ADDR=").append(_inet_ntoa(_request->_remote_addr.sin_addr).c_str()); // TODO: need some kind of inet_ntoa()
+//	env[7] = const_cast<char *>(cgiVariables["REMOTE_ADDR"].c_str());
 	cgiVariables["REMOTE_IDENT"] = "REMOTE_IDENT=";
-	env[8] = const_cast<char *>(cgiVariables["REMOTE_IDENT"].c_str());
+//	env[8] = const_cast<char *>(cgiVariables["REMOTE_IDENT"].c_str());
 	cgiVariables["REMOTE_USER"] = "REMOTE_USER="; // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11
-	env[9] = const_cast<char *>(cgiVariables["REMOTE_USER"].c_str());
+//	env[9] = const_cast<char *>(cgiVariables["REMOTE_USER"].c_str());
 	cgiVariables["REQUEST_METHOD"] = "REQUEST_METHOD=" + _request->_method;
-	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());
+//	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());
 	cgiVariables["REQUEST_URI"].assign("REQUEST_URI=").append("/").append(_request->_request_target); // there is no such Variable in rfc
-	env[11] = const_cast<char *>(cgiVariables["REQUEST_URI"].c_str());
+//	env[11] = const_cast<char *>(cgiVariables["REQUEST_URI"].c_str());
 	cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append(_request->_handling_location->getCgiScript().c_str());
 //	if (_file_ext == "php")
 //		cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/.brew/bin/php-cgi"); // TODO: get from config file
 //	else
 //		cgiVariables["SCRIPT_NAME"].assign("SCRIPT_NAME=").append("/Users/jnannie/Desktop/webserv/cgi_tester");
-	env[12] = const_cast<char *>(cgiVariables["SCRIPT_NAME"].c_str());
+//	env[12] = const_cast<char *>(cgiVariables["SCRIPT_NAME"].c_str());
 	cgiVariables["SERVER_NAME"] = "SERVER_NAME=" + _request->_headers["host"].substr(0, _request->_headers["host"].find(':'));
-	env[13] = const_cast<char *>(cgiVariables["SERVER_NAME"].c_str());
-	cgiVariables["SERVER_PORT"] = "SERVER_PORT=" + libft::ultostr_base(_request->_port, 10);
-	env[14] = const_cast<char *>(cgiVariables["SERVER_PORT"].c_str());
+//	env[13] = const_cast<char *>(cgiVariables["SERVER_NAME"].c_str());
+	cgiVariables["SERVER_PORT"] = "SERVER_PORT=" + libft::ultostr_base(_request->_server_port, 10);
+//	env[14] = const_cast<char *>(cgiVariables["SERVER_PORT"].c_str());
 	cgiVariables["SERVER_PROTOCOL"].assign("SERVER_PROTOCOL=").append("HTTP/1.1");
-	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
+//	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
-	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
+//	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
 	if (_file_ext == "php") {
 		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
-		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
+//		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
+	}
+	int i = 0;
+	for (std::map<std::string, std::string>::iterator it = cgiVariables.begin(); it != cgiVariables.end(); ++it) {
+		env[i] = const_cast<char *>(it->second.c_str());
+		i++;
 	}
 	//all elements of env is initialized to NULL
 }

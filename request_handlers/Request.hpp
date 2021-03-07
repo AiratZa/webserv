@@ -19,10 +19,13 @@ class Request;
 
 
 class Request {
+	private:
+		Request();
 
 	public:
-		Request();
-		Request(const std::string& request);
+
+		Request(struct sockaddr_in & remote_addr, int server_port);
+//		Request(const std::string& request);
 		~Request(void);
 
 		std::string & getRawRequest(void);
@@ -63,7 +66,8 @@ class Request {
 
 		std::string _content;
 
-		int _port;
+		struct sockaddr_in _remote_addr;
+		int _server_port;
 
 //		std::string _remote_addr;
 

@@ -77,7 +77,8 @@ void Listener::updateMaxFD(void) {
 }
 
 void Listener::acceptConnection(void) {
-	int sock = accept(_listener, NULL, NULL);
+	socklen_t len = sizeof(_remote_addr);
+	int sock = accept(_listener, (struct sockaddr *)&_remote_addr, &len);
 	if(sock < 0)
 		utils::exitWithLog();
 
@@ -91,8 +92,7 @@ void Listener::acceptConnection(void) {
 //	_all_clients.push_back(sock);
 	_clients_read.push_back(sock);
 
-	_client_requests[sock] =  new Request();
-	_client_requests[sock]->_port = _port; // TODO: need to set _port after every new Request
+	_client_requests[sock] =  new Request(_remote_addr, _port);
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -504,7 +504,7 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 //			close(fd);
 			delete _client_requests[fd];
-			_client_requests[fd] = new Request();
+			_client_requests[fd] = new Request(_remote_addr, _port);
 			_clients_read.push_back(fd);
 //			_client_requests.erase(fd);
 

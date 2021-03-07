@@ -51,6 +51,8 @@ private:
 	const std::string _host;
 	const int _port;
 
+	struct sockaddr_in _remote_addr;
+
 //	std::list<int> _all_clients;
 	std::list<int> _clients_read; // second param for ready or not
 	std::list<int> _clients_write; // second param for ready or not
