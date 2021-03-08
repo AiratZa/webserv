@@ -45,11 +45,14 @@ public:
 	bool isMethodAllowed();
 //	void setStatusCode(int status_code);
 
+private:
 	std::string getDateHeader();
 	std::string getLastModifiedHeader(time_t tv_sec);
 	std::string getLocationHeader();
 	std::string getAllowHeader();
 	std::string getWwwAuthenticateHeader();
+
+	std::string _getUserFromCredentials();
 
 private:
 	struct tm _getCalendarTime(time_t tv_sec);

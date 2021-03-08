@@ -74,8 +74,10 @@ int main(int argc, char *argv[])
         WebServ::servers_list = _config.getServersList();
         webserv = WebServ(_config);
 
-//        std::string test("abc:");
-//		std::cout << Base64::base64_encode(test) << std::endl;
+//        std::string test("");
+//		std::cout << "encoded: " << Base64::base64_encode(test) << std::endl;
+//		std::string encoded = Base64::base64_encode(test);
+//		std::cout << "decoded: " << Base64::base64_decode(encoded) << std::endl;
 
         webserv.serveConnections();
     }

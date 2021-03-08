@@ -8,6 +8,7 @@
 #include <set>
 #include "../utils/cpp_libft/libft.hpp"
 #include <time.h>
+#include "../base64_coding/base64.hpp"
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -379,8 +380,15 @@ std::string Response::_inet_ntoa(struct in_addr sin_addr) {
 	return buf;
 }
 
+std::string Response::_getUserFromCredentials() {
+	std::string credentials = _request->_headers["authorization"].substr(6);
+	credentials = credentials.substr(credentials.find_first_not_of(" "));
+	std::string user = Base64::base64_decode(credentials).substr(0, credentials.find(':'));
+	return user;
+}
+
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
-	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"].substr(0, 5); // TODO: should be scheme only, "Basic"
+	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"].substr(0, _request->_headers["authorization"].find(' ')); // TODO: should be scheme only, "Basic"
 //	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
 	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
 //	env[1] = const_cast<char *>(cgiVariables["CONTENT_LENGTH"].c_str());
@@ -407,7 +415,9 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 //	env[7] = const_cast<char *>(cgiVariables["REMOTE_ADDR"].c_str());
 	cgiVariables["REMOTE_IDENT"] = "REMOTE_IDENT=";
 //	env[8] = const_cast<char *>(cgiVariables["REMOTE_IDENT"].c_str());
-	cgiVariables["REMOTE_USER"].assign("REMOTE_USER=").append("admin"); // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11 // this user is from "authorization" request header
+
+
+	cgiVariables["REMOTE_USER"].assign("REMOTE_USER=").append(_getUserFromCredentials()); // TODO: https://tools.ietf.org/html/rfc3875#section-4.1.11 // this user is from "authorization" request header
 //	env[9] = const_cast<char *>(cgiVariables["REMOTE_USER"].c_str());
 	cgiVariables["REQUEST_METHOD"] = "REQUEST_METHOD=" + _request->_method;
 //	env[10] = const_cast<char *>(cgiVariables["REQUEST_METHOD"].c_str());

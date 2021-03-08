@@ -10,7 +10,8 @@
 
 class Base64 {
 public:
-	static std::string base64_encode(std::string & input);
+	static std::string base64_encode(std::string input);
+	static std::string base64_decode(std::string input);
 //	static std::string base64_decode(std::string & input);
 };
 
