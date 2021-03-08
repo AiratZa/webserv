@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         WebServ::servers_list = _config.getServersList();
         webserv = WebServ(_config);
 
-//        std::string test("a");
+//        std::string test("abc:");
 //		std::cout << Base64::base64_encode(test) << std::endl;
 
         webserv.serveConnections();
@@ -98,6 +98,6 @@ int main(int argc, char *argv[])
 
 //location /ht {
 //auth_basic "closed site";
-//auth_basic_uset_file htpasswd;
+//auth_basic_uset_file passwd;
 //}
 

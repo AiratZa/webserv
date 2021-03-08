@@ -60,7 +60,10 @@ private:
 
 	int _max_fd;
 
+	std::map<int, long> _time;
+
 	in_addr_t _getHostInetAddrFromStr(const std::string& host_str) const;
+	long _get_time();
 };
 
 

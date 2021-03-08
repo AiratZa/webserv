@@ -5,6 +5,7 @@
 #include "Listener.hpp"
 #include "WebServ.hpp"
 #include "response/Response.hpp"
+#include "base64_coding/base64.hpp"
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
 
@@ -76,6 +77,14 @@ void Listener::updateMaxFD(void) {
 	_max_fd = max_tmp;
 }
 
+long Listener::_get_time(void)
+{
+	struct timeval current;
+
+	gettimeofday(&current, NULL);
+	return ((long)(((current.tv_sec) * 1000) + ((current.tv_usec) / 1000)));
+}
+
 void Listener::acceptConnection(void) {
 	socklen_t len = sizeof(_remote_addr);
 	int sock = accept(_listener, (struct sockaddr *)&_remote_addr, &len);
@@ -93,6 +102,7 @@ void Listener::acceptConnection(void) {
 	_clients_read.push_back(sock);
 
 	_client_requests[sock] =  new Request(_remote_addr, _port);
+	_time[sock] = _get_time();
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -225,6 +235,7 @@ std::vector<std::string>    parser_log_pass(std::string file) {
 		delete str;
 	}
 	log_pass.push_back(str);
+//	std::cout << "log_pass.size(): " << log_pass.size() << std::endl;
 	delete str;
 
 	// if (read != 0)
@@ -233,13 +244,11 @@ std::vector<std::string>    parser_log_pass(std::string file) {
 	return log_pass;
 }
 
-bool    find_log_pass(std::vector<std::string> log_pass, std::string const& reqests_log_pass) {
+bool    find_log_pass(std::vector<std::string> log_pass, std::string const& credentials) {
 	std::vector<std::string>::iterator it = log_pass.begin();
-//	std::string decoded_reqest_log_pass = base64_decode(reqests_log_pass);
-//	std::string decoded_reqest_log_pass = reqests_log_pass;
 
 	while (it != log_pass.end()) {
-		if (*it == reqests_log_pass)
+		if (Base64::base64_encode(*it) == credentials)
 			return true;
 		++it;
 	}
@@ -276,12 +285,14 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     }
 
     if (request->_handling_location) {
-		if (request->_handling_location->getLocationPath() == "/ht") {
+		if (request->_handling_location->getLocationPath() == "/ht") { // TODO: add to config file
 			if (request->_headers.count("authorization")) {
-				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/htpasswd"));
+				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/passwd"));
 				std::string auth_scheme = request->_headers["authorization"].substr(0, 5);
 				libft::string_to_lower(auth_scheme);
-				if (auth_scheme == "basic" && !find_log_pass(log_pass, request->_headers["authorization"].substr(6))) {
+				std::string credentials = request->_headers["authorization"].substr(6);
+				credentials = credentials.substr(credentials.find_first_not_of(" ")); // remove whitespaces
+				if (auth_scheme != "basic" || !find_log_pass(log_pass, credentials)) {
 					request->setStatusCode(401);
 					return false;
 				}
@@ -343,25 +354,19 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
 
 
-int			get_time(void)
-{
-	struct timeval	current;
 
-	gettimeofday(&current, NULL);
-	return ((int)(((current.tv_sec) * 1000) + ((current.tv_usec) / 1000)));
-}
 
-void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std::list<int>::iterator const& ite) {
-	while (it != ite) {
-		time[*it] = get_time();
-		++it;
-	}
-}
+//void        set_time(std::map<int, int> &time, std::list<int>::iterator it, std::list<int>::iterator const& ite) {
+//	while (it != ite) {
+//		time[*it] = get_time();
+//		++it;
+//	}
+//}
 
 void Listener::handleRequests(fd_set* globalReadSetPtr) {
 	std::list<int>::iterator it = _clients_read.begin();
-	std::map<int, int> time;
-	set_time(time, it, _clients_read.end()); //TODO: check if it works
+
+//	set_time(time, it, _clients_read.end()); //TODO: check if it works
 
 
 	while (it != _clients_read.end() ) {
@@ -380,7 +385,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			else if (request->_bytes_read < 0)
 				request->_bytes_read = 0;
 			else
-				time[*it] = get_time();
+				_time[*it] = _get_time();
 			request->_buf[request->_bytes_read] = '\0';
 
 			std::cout << request->getReadBodySize() << std::endl;
@@ -469,7 +474,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 		}
 		// if not ready for reading (socket not in SET)
 		else {
-			if ((get_time() - time[fd]) > TIME_OUT) {
+			if ((_get_time() - _time[fd]) > TIME_OUT) {
 				readError(it);
 				continue;
 			}

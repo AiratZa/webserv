@@ -107,6 +107,9 @@ Server* WebServ::getServerByPosition(int i) {
 void WebServ::serveConnections() {
 	fd_set temp_read_set;
 	fd_set temp_write_set;
+	struct   timeval tv;
+	tv.tv_sec = 10;
+	tv.tv_usec = 0;
 	while(true) {
 
 		FD_ZERO(&temp_read_set);
@@ -134,7 +137,7 @@ void WebServ::serveConnections() {
 				   &temp_read_set,
 				   &temp_write_set,
 				   NULL,
-				   NULL) < 0) {
+				   &tv) < 0) {
 			utils::exitWithLog();
 		}
 
