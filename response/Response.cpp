@@ -559,7 +559,7 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 		if (Request::implemented_headers.count(field_name))
 		{
 			if (_cgi_headers.count(field_name)) {
-				if (field_name == "host")
+				if (field_name == "host" || field_name == "content-length")
 					return _request->setStatusCode(500);
 				_cgi_headers[field_name].append(",");
 			}
@@ -612,7 +612,7 @@ void Response::generateHeadResponse() {
 						break ;
 					}
 				}
-				if (!S_ISREG(stat_buf.st_mode)) { // test from subject wants 404 if there is index in config but file doesnt exist
+				if (!S_ISREG(stat_buf.st_mode) && _request->_handling_location && !_request->_handling_location->isAutoindexEnabled()) { // test from subject wants 404 if there is index in config but file doesnt exist
 					return _request->setStatusCode(404);
 				}
 			}

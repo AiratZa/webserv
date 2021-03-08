@@ -97,6 +97,8 @@ int main(int argc, char *argv[])
 //TODO: close connection after sending 400, frc 7230 3.3.3-4
 //TODO: check "Если разрешён метод GET, то метод HEAD также будет разрешён."
 //TODO: dont forget about cgi bug
+//TODO: make autoindex
+//TODO: when there is cgi_script there must be and cgi_ext
 
 //location /ht {
 //auth_basic "closed site";
