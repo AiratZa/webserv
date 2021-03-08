@@ -69,6 +69,8 @@ class Request {
 		struct sockaddr_in _remote_addr;
 		int _server_port;
 
+		bool _close_connection;
+
 //		std::string _remote_addr;
 
 //		size_t _client_max_body_size; // need to use client_max_body_size from server config

@@ -511,8 +511,13 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 //			close(fd);
 			delete _client_requests[fd];
-			_client_requests[fd] = new Request(_remote_addr, _port);
-			_clients_read.push_back(fd);
+			if (request->_close_connection) {
+				_client_requests.erase(fd);
+				close(fd);
+			} else {
+				_client_requests[fd] = new Request(_remote_addr, _port);
+				_clients_read.push_back(fd);
+			}
 //			_client_requests.erase(fd);
 
 //			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);

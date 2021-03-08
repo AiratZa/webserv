@@ -98,7 +98,8 @@ int main(int argc, char *argv[])
 //TODO: check "Если разрешён метод GET, то метод HEAD также будет разрешён."
 //TODO: dont forget about cgi bug
 //TODO: make autoindex
-//TODO: when there is cgi_script there must be and cgi_ext
+//TODO: when there is cgi_script there must be also cgi_ext
+//TODO: why new connection always opened
 
 //location /ht {
 //auth_basic "closed site";

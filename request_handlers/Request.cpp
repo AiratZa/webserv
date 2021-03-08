@@ -72,6 +72,7 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _status_code(DEFAULT_REQUEST_STATUS_CODE),
 		  _remote_addr(remote_addr),
 		  _server_port(server_port),
+		  _close_connection(false),
 //    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
 		  shift_from_buf_start(0),
@@ -190,8 +191,12 @@ void Request::parseHeaders() {
 		if (Request::implemented_headers.count(field_name))
 		{
 			if (_headers.count(field_name)) {
-				if (field_name == "host" || field_name == "content-length")
+				if (field_name == "host")
 					return setStatusCode(400);
+				if (field_name == "content-length") {
+					_close_connection = true; // rfc 7230 3.3.3
+					return setStatusCode(400);
+				}
 				_headers[field_name].append(",");
 			}
 			_headers[field_name].append(field_value); // add field_name-field_value to map
@@ -296,8 +301,14 @@ void Request::parseBody() {
 	if (isStatusCodeOk()) {
 		if (_headers.count("transfer-encoding")) {
 			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"
-			if (_headers["transfer-encoding"].find("chunked") != std::string::npos)
-				parseChunkedContent();
+			if (_headers["transfer-encoding"].find("chunked") != std::string::npos) {
+				if (_headers["transfer-encoding"].find("chunked") == _headers["transfer-encoding"].size() - 7)
+					parseChunkedContent();
+				else {
+					_close_connection = true; // rfc 7230 3.3.3
+					return setStatusCode(400);
+				}
+			}
 		}
 		else if (_headers.count("content-length"))
 			getContentByLength();
