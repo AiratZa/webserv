@@ -141,7 +141,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 
 //    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
     std::string& body = request_obj->getRawRequest();
-	unsigned long length;
+	long long length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
@@ -217,11 +217,7 @@ bool Listener::continueReadBody(Request* request_obj) {
     else if ((request_obj->_headers.count("content-length"))) {
 		length = libft::strtoul_base(request_obj->_headers["content-length"], 10);
         if (request_obj->getReadBodySize() == length) {
-			size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
-			if (length == ULONG_MAX) {
-				request_obj->setStatusCode(413); // 413 (Request Entity Too Large)
-				return false;
-			}
+			long long client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
 			if (client_max_body_size && length > client_max_body_size) {
 				request_obj->setStatusCode(413);
 				return false;

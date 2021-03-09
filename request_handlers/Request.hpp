@@ -121,7 +121,7 @@ class Request {
         _read_body_size += bytes_read;
     }
 
-    unsigned long getReadBodySize(void) {
+    long long getReadBodySize(void) {
         return _read_body_size;
     }
 
@@ -232,7 +232,7 @@ private:
         bool _header_was_read;
         bool _is_wokrs_with_files;
         bool _is_file_exists;
-        unsigned long _read_body_size;
+        long long _read_body_size;
 
         bool _is_need_writing_body_to_file;
 };
