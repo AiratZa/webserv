@@ -23,6 +23,7 @@ std::list<int> Request::initOkStatusCodes(void) {
     std::list<int> codes;
 
     codes.push_back(DEFAULT_REQUEST_STATUS_CODE);
+    codes.push_back(204);
     codes.push_back(201);
     codes.push_back(100);
     return codes;
@@ -221,61 +222,62 @@ bool Request::isStatusCodeOk() {
 /*
  * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
  */
-void Request::parseChunkedContent() { // TODO:we can remove all length and validity checks because all work done by Listener::continueReadBody()
-	std::string chunk_length_field;
-	std::string start_line;
-	size_t chunk_length;
-	size_t sum_content_length = 0;
-	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+//void Request::parseChunkedContent() { // TODO:we can remove all length and validity checks because all work done by Listener::continueReadBody()
+//	std::string chunk_length_field;
+//	std::string start_line;
+//	size_t chunk_length;
+//	size_t sum_content_length = 0;
+//	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+//
+//	size_t start_line_length = _raw_request.find("\r\n");
+//	if (start_line_length == std::string::npos)
+//		return setStatusCode(400);
+//	while (!_raw_request.empty()) {
+//		if (start_line_length > MAX_HEADER_LINE_LENGTH
+//			|| start_line_length == std::string::npos) {
+//			return setStatusCode(400);
+//		}
+//		start_line = _raw_request.substr(0, start_line_length);
+//
+//		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
+//
+//		libft::string_to_lower(chunk_length_field);
+//		if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
+//			return setStatusCode(400);
+//		chunk_length = libft::strtoul_base(chunk_length_field, 16);
+//		if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length)
+//			return setStatusCode(413); // 413 (Request Entity Too Large)
+//		sum_content_length += chunk_length;
+//		if (client_max_body_size && sum_content_length > client_max_body_size)
+//			return setStatusCode(413);
+//
+//		_raw_request.erase(0, start_line_length + 2); // remove start line
+//
+//		if (_raw_request.size() < chunk_length + 2)
+//			return setStatusCode(400);
+//
+//		_content.append(_raw_request.substr(0, chunk_length));
+//
+//		_raw_request.erase(0, chunk_length + 2); // remove rest of chunk
+//
+//		start_line_length = _raw_request.find("\r\n");
+//	}
+//	_raw_request.clear();
+//}
 
-	size_t start_line_length = _raw_request.find("\r\n");
-	if (start_line_length == std::string::npos)
-		return setStatusCode(400);
-	while (!_raw_request.empty()) {
-		if (start_line_length > MAX_HEADER_LINE_LENGTH
-			|| start_line_length == std::string::npos) {
-			return setStatusCode(400);
-		}
-		start_line = _raw_request.substr(0, start_line_length);
-
-		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
-
-		libft::string_to_lower(chunk_length_field);
-		if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
-			return setStatusCode(400);
-		chunk_length = libft::strtoul_base(chunk_length_field, 16);
-		if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length)
-			return setStatusCode(413); // 413 (Request Entity Too Large)
-		sum_content_length += chunk_length;
-		if (client_max_body_size && sum_content_length > client_max_body_size)
-			return setStatusCode(413);
-
-		_raw_request.erase(0, start_line_length + 2); // remove start line
-
-		if (_raw_request.size() < chunk_length + 2)
-			return setStatusCode(400);
-
-		_content.append(_raw_request.substr(0, chunk_length));
-
-		_raw_request.erase(0, chunk_length + 2); // remove rest of chunk
-
-		start_line_length = _raw_request.find("\r\n");
-	}
-	_raw_request.clear();
-}
-
-void Request::getContentByLength() {
-	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
-
-	size_t content_length = libft::strtoul_base(_headers["content-length"], 10);
-	if (content_length == ULONG_MAX)
-		return setStatusCode(413); // 413 (Request Entity Too Large)
-	if (client_max_body_size && content_length > client_max_body_size)
-		return setStatusCode(413);
-	_content.append(_raw_request.substr(0, content_length));
-	_raw_request.erase(0, content_length);
-	_raw_request.clear();
-}
+//void Request::getContentByLength() {
+//	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+//
+//	size_t content_length = libft::strtoul_base(_headers["content-length"], 10);
+//	if (content_length == ULONG_MAX)
+//		return setStatusCode(413); // 413 (Request Entity Too Large)
+//	if (client_max_body_size && content_length > client_max_body_size)
+//		return setStatusCode(413);
+//	_content.append(_raw_request, 0, content_length);
+////	_content.append(_raw_request.substr(0, content_length));
+////	_raw_request.erase(0, content_length);
+//	_raw_request.clear();
+//}
 
 bool Request::checkToClientMaxBodySize(void) {
     long long client_max_body_size;
@@ -297,25 +299,25 @@ bool Request::checkToClientMaxBodySize(void) {
 }
 
 
-void Request::parseBody() {
-	if (isStatusCodeOk()) {
-		if (_headers.count("transfer-encoding")) {
-			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"
-			if (_headers["transfer-encoding"].find("chunked") != std::string::npos) {
-				if (_headers["transfer-encoding"].find("chunked") == _headers["transfer-encoding"].size() - 7)
-					parseChunkedContent();
-				else {
-					_close_connection = true; // rfc 7230 3.3.3
-					return setStatusCode(400);
-				}
-			}
-		}
-		else if (_headers.count("content-length"))
-			getContentByLength();
-		else
-			_content.swap(_raw_request);
-	}
-}
+//void Request::parseBody() {
+//	if (isStatusCodeOk()) {
+//		if (_headers.count("transfer-encoding")) {
+//			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"
+//			if (_headers["transfer-encoding"].find("chunked") != std::string::npos) {
+//				if (_headers["transfer-encoding"].find("chunked") == _headers["transfer-encoding"].size() - 7) // chunked must be last encoding
+//					parseChunkedContent();
+//				else {
+//					_close_connection = true; // rfc 7230 3.3.3
+//					return setStatusCode(400);
+//				}
+//			}
+//		}
+//		else if (_headers.count("content-length"))
+//			getContentByLength();
+//		else
+//			_content.swap(_raw_request);
+//	}
+//}
 
 
 

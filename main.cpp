@@ -104,6 +104,9 @@ int main(int argc, char *argv[])
 //todo: what if autoindex is folder
 //todo: not found or forbidden (test returns 404 when there is index set in location in config, but it is not found; but nginx returns 403 )
 //todo: config file: index "345 6"; => unexpected end of file, expecting ";" or "}"
+//todo: it asks for user pass when request target is http://localhost:8080/htlsakflsda
+//todo: Test GET http://localhost:8080/directory/youpi.bla doesnt work with cgi_tester
+//todo: dont know how error_page work
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;

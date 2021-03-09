@@ -48,7 +48,7 @@ class Request {
 		static std::set<std::string> initRequestHeaders();
 		static std::list<int> initOkStatusCodes(void);
 
-	private:
+	public:
 		std::string _raw_request;
 
 	public:
@@ -104,12 +104,12 @@ class Request {
     void setHeaderWasRead(void) { _header_was_read = true; }
 
 
-    long long getHeaderContentLength(void) const {
-        std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
-        if (it == _headers.end())
-            return -1;
-        return libft::stoll_base((*it).second, 10);
-    }
+//    long long getHeaderContentLength(void) const {
+//        std::map<std::string, std::string>::const_iterator it = _headers.find("content-length");
+//        if (it == _headers.end())
+//            return -1;
+//        return libft::stoll_base((*it).second, 10);
+//    }
 
     void setHeaderEndPos(std::size_t val) { _header_end_pos = val;}
 
@@ -121,7 +121,7 @@ class Request {
         _read_body_size += bytes_read;
     }
 
-    long long getReadBodySize(void) {
+    unsigned long getReadBodySize(void) {
         return _read_body_size;
     }
 
@@ -133,23 +133,25 @@ class Request {
 
     std::string _full_filename;
 
-    bool writeBodyReadBytesIntoFile(void) {
+    bool writeBodyReadBytesIntoFile() {
         int file = open(_full_filename.c_str(), O_RDWR | O_APPEND, 0666);
         if (file <= 0) {
             _status_code = 500;
             return false;
         }
 
-        if (shift_from_buf_start > 0)
-        {
-            int len = _bytes_read - shift_from_buf_start;
-            write(file, _buf + shift_from_buf_start, len);
-            shift_from_buf_start = 0;
-        }
-        else
-        {
-            write(file, _buf, _bytes_read);
-        }
+		write(file, _content.c_str(), _content.size());
+//        if (shift_from_buf_start > 0)
+//        {
+//            int len = _bytes_read - shift_from_buf_start;
+//            write(file, _buf + shift_from_buf_start, len);
+//            shift_from_buf_start = 0;
+//        }
+//        else
+//        {
+//            write(file, _buf, _bytes_read);
+//        }
+		_content.clear();
         close(file);
         return true;
     }
@@ -230,7 +232,7 @@ private:
         bool _header_was_read;
         bool _is_wokrs_with_files;
         bool _is_file_exists;
-        long long _read_body_size;
+        unsigned long _read_body_size;
 
         bool _is_need_writing_body_to_file;
 };

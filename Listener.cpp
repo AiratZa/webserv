@@ -140,17 +140,17 @@ bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
 
 //    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
-    const std::string& body = request_obj->getRawRequest();
-    long long length;
+    std::string& body = request_obj->getRawRequest();
+	unsigned long length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
-    if ((it != headers.end()) && ((*it).second == "chunked")) {
+    if ((it != headers.end()) && ((*it).second.find("chunked") != std::string::npos)) {
 //        size_t      len;
-        std::string tmp_body = body;
+//        std::string tmp_body = body;
 
 
-		size_t start_line_length = tmp_body.find("\r\n");
+		size_t start_line_length = body.find("\r\n");
 		if (start_line_length == std::string::npos)
 			return false;
 
@@ -160,7 +160,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 		size_t sum_content_length = 0;
 		size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
 
-        while (!tmp_body.empty()) { // jnannie: remade like Request::parseChunkedContent()
+        while (!body.empty()) { // jnannie: remade like Request::parseChunkedContent()
 
 			if (start_line_length == std::string::npos)
 				return false;
@@ -168,9 +168,9 @@ bool Listener::continueReadBody(Request* request_obj) {
 				request_obj->setStatusCode(400);
 				return true;
 			}
-			start_line = tmp_body.substr(0, start_line_length);
+			start_line = body.substr(0, start_line_length);
 
-			chunk_length_field = start_line.substr(0, tmp_body.find(';')); // to ';' or full line
+			chunk_length_field = start_line.substr(0, body.find(';')); // to ';' or full line
 
 			libft::string_to_lower(chunk_length_field);
 			if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos) {
@@ -188,16 +188,19 @@ bool Listener::continueReadBody(Request* request_obj) {
 				return true;
 			}
 
-			tmp_body.erase(0, start_line_length + 2); // remove start line
+			if (body.size() < start_line_length + 2 + chunk_length + 2)
+				return false;
+
+			body.erase(0, start_line_length + 2); // remove start line
 
 //			_content.append(_raw_request.substr(0, chunk_length));
 
-			if (tmp_body.size() < chunk_length + 2)
-				return false;
 
-			tmp_body.erase(0, chunk_length + 2); // remove rest of chunk
+			request_obj->_content.append(request_obj->_raw_request.substr(0, chunk_length));
 
-			start_line_length = tmp_body.find("\r\n");
+			body.erase(0, chunk_length + 2); // remove rest of chunk
+
+			start_line_length = body.find("\r\n");
 
 //            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
 //                return true;
@@ -208,9 +211,23 @@ bool Listener::continueReadBody(Request* request_obj) {
 
         }
     }
-    else if ((length = request_obj->getHeaderContentLength()) >= 0) {
-        if (request_obj->getReadBodySize() == length)
-            return true;
+    else if ((request_obj->_headers.count("content-length"))) {
+		length = libft::strtoul_base(request_obj->_headers["content-length"], 10);
+        if (request_obj->getReadBodySize() == length) {
+			size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
+			if (length == ULONG_MAX) {
+				request_obj->setStatusCode(413); // 413 (Request Entity Too Large)
+				return false;
+			}
+			if (client_max_body_size && length > client_max_body_size) {
+				request_obj->setStatusCode(413);
+				return false;
+			}
+			request_obj->_content.append(body, 0, length);
+			body.clear();
+			return true;
+        }
+
         return false;
     }
     return true;
@@ -388,7 +405,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				_time[*it] = _get_time();
 			request->_buf[request->_bytes_read] = '\0';
 
-			std::cout << request->getReadBodySize() << std::endl;
+//			std::cout << request->getReadBodySize() << std::endl;
 //            std::cout << "=========================" << std::endl;
 //            std::cout << buf << std::endl;
 //            std::cout << std::endl << "=========================" << std::endl;
@@ -508,7 +525,7 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //					WebServ::routeRequests(_host, _port, _client_requests);
 //			}
 
-			request->parseBody();
+//			request->parseBody();
 
 			Response response(request, fd);
 			response.generateResponse();

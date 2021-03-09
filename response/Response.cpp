@@ -445,8 +445,8 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 //	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
 //	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
-	if (_file_ext == "php") { // php doesnt work without it, dont know why yet
-		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true";
+	if (_file_ext == "php") {
+		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true"; // php doesnt work without it, dont know why yet
 //		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
 	}
 	int i = 0;
@@ -454,7 +454,7 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 		env[i] = const_cast<char *>(it->second.c_str());
 		i++;
 	}
-	//all elements of env is initialized to NULL
+	//all elements of env are initialized to NULL
 }
 
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
