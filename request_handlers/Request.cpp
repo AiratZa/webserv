@@ -429,6 +429,28 @@ void Request::setAbsoluteRootPathForRequest(void) {
     }
 }
 
+std::string Request::getAbsolutePathForPUTRequests(void) const {
+    std::string globalRootPath = WebServ::getWebServRootPath();
+    std::string cont_root_path;
+
+    if (_handling_location) {
+        cont_root_path = _handling_location->getAliasPath();
+        if (!cont_root_path.empty()) {
+            return cont_root_path;
+        } else {
+            cont_root_path = _handling_location->getRootPath();
+        }
+    } else {
+        cont_root_path = _handling_server->getRootPath();
+    }
+
+    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
+       return cont_root_path;
+    } else {
+        return (globalRootPath + cont_root_path);
+    }
+}
+
 const std::list<std::string>& Request::getIndexPagesListForRequest(void) const {
     if (_handling_location)
         return _handling_location->getIndexPagesDirectiveInfo();

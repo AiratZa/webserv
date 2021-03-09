@@ -216,6 +216,9 @@ class Request {
         return _is_need_writing_body_to_file;
     }
 
+    std::string getAbsolutePathForPUTRequests(void) const;
+
+
 private:
 	bool _isValidValue(std::string & hex_str);
 

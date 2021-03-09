@@ -328,7 +328,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         }
 
         std::string target = request->_request_target.substr(1);
-        request->_full_filename = request->getAbsoluteRootPathForRequest() + target;
+        request->_full_filename = request->getAbsolutePathForPUTRequests() + "/" + target;
 
         bool status = request->isFileExists();
         request->setFileExistenceStatus(status);
@@ -396,6 +396,11 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             try
             {
                 request->getRawRequest().append(request->_buf);// собираем строку пока весь запрос не соберем
+                //// FOR TEST! TODO: need delete
+                if (request->getRawRequest().find("PUT") !=  std::string::npos) {
+                    std::cout << "hey" << std::endl;
+                }
+
                 if (header_was_read_client) {
                     request->increaseReadBodySize(request->_bytes_read);
                 }
