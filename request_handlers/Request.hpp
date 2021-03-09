@@ -147,7 +147,7 @@ class Request {
         }
         else
         {
-            if (!is_chunked &&(shift_from_buf_start > 0))
+            if (shift_from_buf_start > 0)
             {
                 int len = _bytes_read - shift_from_buf_start;
                 write(file, _buf + shift_from_buf_start, len);
@@ -245,6 +245,8 @@ private:
 
 public:
         bool is_chunked;
+        bool checkToClientMaxBodySize(long long int value_to_check);
+
 
 };
 

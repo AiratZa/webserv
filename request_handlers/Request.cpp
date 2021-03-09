@@ -299,6 +299,22 @@ bool Request::checkToClientMaxBodySize(void) {
     return true;
 }
 
+bool Request::checkToClientMaxBodySize(long long int value_to_check) {
+    long long client_max_body_size;
+    if (_handling_location) {
+        client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
+    } else {
+        client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+    }
+
+
+    if (client_max_body_size && (value_to_check > client_max_body_size)) {
+        setStatusCode(413);
+        return false;
+    }
+    return true;
+}
+
 
 //void Request::parseBody() {
 //	if (isStatusCodeOk()) {

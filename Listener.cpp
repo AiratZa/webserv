@@ -156,7 +156,6 @@ bool Listener::continueReadBody(Request* request_obj) {
 		std::string chunk_length_field;
 		size_t chunk_length;
 		size_t sum_content_length = 0;
-		size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
 
         while (!body.empty()) { // jnannie: remade like Request::parseChunkedContent()
 
@@ -181,9 +180,10 @@ bool Listener::continueReadBody(Request* request_obj) {
 				return true;
 			}
 			sum_content_length += chunk_length;
-			if (client_max_body_size && sum_content_length > client_max_body_size) {
-				request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
-				return true;
+
+			bool size_check = request_obj->checkToClientMaxBodySize(sum_content_length); // 413 set inside if needed
+			if (!size_check) {
+			    return true; // finished beacuse of SIZE
 			}
 
 			if (body.size() < start_line_length + 2 + chunk_length + 2)
@@ -216,12 +216,13 @@ bool Listener::continueReadBody(Request* request_obj) {
     }
     else if ((request_obj->_headers.count("content-length"))) {
 		length = libft::strtoul_base(request_obj->_headers["content-length"], 10);
-        if (request_obj->getReadBodySize() == length) {
-			long long client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
-			if (client_max_body_size && length > client_max_body_size) {
-				request_obj->setStatusCode(413);
-				return false;
-			}
+
+		bool size_check = request_obj->checkToClientMaxBodySize(length); // 413 set inside if needed
+        if (!size_check) {
+            return true; // finished beacuse of SIZE
+        }
+
+		if (request_obj->getReadBodySize() == length) {
 			request_obj->_content.append(body, 0, length);
 			body.clear();
 			return true;
