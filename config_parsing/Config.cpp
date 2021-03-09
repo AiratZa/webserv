@@ -823,7 +823,7 @@ std::map<int, std::map<std::string, std::string> >  Config::_errorPageKeywordHan
     std::map<std::string, std::string> error_page_params;
 
     error_page_params[ERROR_PAGE_CHANGE_ERROR_CODE] = "";
-    error_page_params[ERROR_PAGE_REDIRECT_URI] = directive_params.back();
+    error_page_params[ERROR_PAGE_REDIRECT_URI] = checkAndRemoveQuotes(directive_params.back());
 
     if (len > 2) {
         error_page_params[ERROR_PAGE_CHANGE_ERROR_CODE] = _checkForChangeErrorCodeParam(directive_params);
