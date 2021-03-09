@@ -79,7 +79,9 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _header_end_pos(0),
 		  _header_was_read(false),
 		  _read_body_size(0),
-		  _is_need_writing_body_to_file(false)
+		  _is_need_writing_body_to_file(false),
+          _is_chuncked_request(false),
+          _is_all_chunks_read(false)
 {  };
 
 //Request::Request(const std::string& request)
@@ -264,6 +266,154 @@ void Request::parseChunkedContent() { // TODO:we can remove all length and valid
 	_raw_request.clear();
 }
 
+
+
+int Request::parseChunks(void) {
+    if (!isLastChunkReadFinished()) {
+        int status_reading_exact_chunk = finishChunckReadingGDRAKE();
+        if (status_reading_exact_chunk != 0)
+            return status_reading_exact_chunk;
+    }
+    return parseChunkedContentGDRAKE();
+}
+
+int Request::readEndOfChunkSymbols(Chunk& chunk, std::string& body) {
+    bool chunk_finished_correctly = true;
+    if (chunk.count_of_new_line_symbols == 0){
+        std::size_t end_line_symbol_pos = body.find("\r");
+        if (end_line_symbol_pos == 0) {
+            chunk.count_of_new_line_symbols++;
+            body.erase(0, 1);
+        }
+        else if (!body.size()) {
+            return 1;
+        }
+        else {
+            chunk_finished_correctly = false;
+        }
+    }
+    if (chunk.count_of_new_line_symbols == 1) {
+        std::size_t end_line_symbol_pos = body.find("\n");
+        if (end_line_symbol_pos == 0) {
+            chunk.count_of_new_line_symbols++;
+            body.erase(0, 1);
+        }
+        else if (!body.size()) {
+            return 1;
+        }
+        else {
+            chunk_finished_correctly = false;
+        }
+    }
+
+    if (!chunk_finished_correctly) {
+        this->setStatusCode(400);
+        return -1;
+    }
+    return 0;
+}
+
+int Request::finishChunckReadingGDRAKE() {
+    std::string& body = this->getRawRequest();
+
+    Chunk& lst = _chunks.back();
+
+
+    std::size_t need_to_read = lst.length - (lst.content).size();
+
+    if (need_to_read) {
+        lst.content += body.substr(0, need_to_read);
+        std::size_t body_size = body.size();
+
+        body.erase(0, need_to_read); // remove rest of chunk
+
+        if (body_size < need_to_read) {
+            _read_body_size += body_size;
+            return 1;
+        }
+        _read_body_size += body_size;
+    }
+
+    return readEndOfChunkSymbols(lst, body);
+}
+
+//TODO: TEST MAYBE NEED DELETE
+// returns 0 -> all chucnks was read
+// returns -1 -> error
+int Request::parseChunkedContentGDRAKE() { // TODO:we can remove all length and validity checks because all work done by Listener::continueReadBody()
+    std::string start_line;
+    std::string chunk_length_field;
+    size_t chunk_length;
+//    size_t client_max_body_size = this->_handling_server->getClientMaxBodySizeInfo();
+
+    std::string& body = this->getRawRequest();
+
+    std::size_t start_line_length;
+
+    while (body.size() && !isAllChunksRead()) {
+        start_line_length = body.find("\r\n");
+        if (start_line_length == std::string::npos)
+            return 0;
+        start_line = body.substr(0, start_line_length);
+
+        chunk_length_field = start_line.substr(0, body.find(';')); // to ';' or full line
+
+        libft::string_to_lower(chunk_length_field);
+        if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos) {
+            this->setStatusCode(400);
+            return -1;
+        }
+        chunk_length = libft::strtoul_base(chunk_length_field, 16);
+        if (!chunk_length) {
+            setAllChunksRead();
+            return 0;
+        }
+        if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - _read_body_size) {
+            this->setStatusCode(413);// 413 (Request Entity Too Large)
+            return -1;
+        }
+        if (!checkToClientMaxBodySize(_read_body_size + chunk_length)) // if size > limit
+            return -1;
+//        if (client_max_body_size && ((_read_body_size + chunk_length) > client_max_body_size) ){
+//            this->setStatusCode(413);// 413 (Request Entity Too Large)
+//            return -1;
+//        }
+        Chunk new_chunk = Chunk();
+
+        new_chunk.length = chunk_length;
+
+        body.erase(0, start_line_length + 2); // remove start line
+
+        new_chunk.content = body.substr(0, chunk_length);
+        this->_chunks.push_back(new_chunk);
+
+        std::size_t body_size = body.size();
+        body.erase(0, chunk_length); // remove rest of chunk
+
+        if (body_size < chunk_length) {
+            _read_body_size += body_size;
+            return 1;
+        }
+        _read_body_size += chunk_length;
+
+
+        int chunk_finished_correctly = readEndOfChunkSymbols(new_chunk, body);
+        if (chunk_finished_correctly == -1){
+            return chunk_finished_correctly;
+        }
+
+
+    }
+    if (!isAllChunksRead())
+        return 0;
+    else
+        return 1;
+}
+
+
+
+
+
 void Request::getContentByLength() {
 	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
 
@@ -292,6 +442,22 @@ bool Request::checkToClientMaxBodySize(void) {
             setStatusCode(413);
             return false;
         }
+    }
+    return true;
+}
+
+bool Request::checkToClientMaxBodySize(long long int value_to_check) {
+    long long client_max_body_size;
+    if (_handling_location) {
+        client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
+    } else {
+        client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+    }
+
+
+    if (client_max_body_size && value_to_check > client_max_body_size) {
+        setStatusCode(413);
+        return false;
     }
     return true;
 }

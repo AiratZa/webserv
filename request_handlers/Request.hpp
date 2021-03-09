@@ -126,6 +126,7 @@ class Request {
     }
 
     bool checkToClientMaxBodySize(void);
+    bool checkToClientMaxBodySize(long long int value_to_check);
 
     int shift_from_buf_start;
     char _buf[BUFFER_LENGHT];
@@ -233,6 +234,55 @@ private:
         long long _read_body_size;
 
         bool _is_need_writing_body_to_file;
+
+// for work with chuncked content
+
+public:
+    class Chunk {
+    public:
+        Chunk() :
+                count_of_new_line_symbols(0),
+                read_is_finished(false)
+        {};
+
+        std::size_t length;
+        std::string content;
+        int count_of_new_line_symbols; //should be 2 \r\n
+        bool read_is_finished;
+    };
+
+    bool isChunckedRequest(void) const {return _is_chuncked_request;}
+    void setStatusChunckedRequest(void) {_is_chuncked_request = true;}
+
+
+    int parseChunks(void);
+    int finishChunckReadingGDRAKE();
+    int parseChunkedContentGDRAKE();
+    int readEndOfChunkSymbols(Chunk& chunk, std::string& body);
+
+
+    bool isLastChunkReadFinished() const {
+        if (_chunks.size() == 0) {
+            return true;
+        }
+        const Chunk& lst = _chunks.back();
+        return lst.read_is_finished;
+    }
+
+    void setAllChunksRead(void)  {
+        _is_all_chunks_read = true;
+    }
+
+    bool isAllChunksRead(void) const {
+        return _is_all_chunks_read;
+    }
+
+private:
+        std::size_t sum_all_body_length;
+        std::list<Chunk> _chunks;
+        bool _is_chuncked_request;
+        bool _is_all_chunks_read;
+
 };
 
 

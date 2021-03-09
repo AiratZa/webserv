@@ -140,64 +140,76 @@ bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
 
 //    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
+
     const std::string& body = request_obj->getRawRequest();
+
     long long length;
 
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second == "chunked")) {
+        if (request_obj->_method == "PUT") {
+            int res = request_obj->parseChunks();
+
+            if (res == 1)
+                return false;
+            else
+                return true;
+        }
+        else {
+
 //        size_t      len;
-        std::string tmp_body = body;
+            std::string tmp_body = body;
 
 
-		size_t start_line_length = tmp_body.find("\r\n");
-		if (start_line_length == std::string::npos)
-			return false;
+            size_t start_line_length = tmp_body.find("\r\n");
+            if (start_line_length == std::string::npos)
+                return false;
 
-		std::string start_line;
-		std::string chunk_length_field;
-		size_t chunk_length;
-		size_t sum_content_length = 0;
-		size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
+            std::string start_line;
+            std::string chunk_length_field;
+            size_t chunk_length;
+            size_t sum_content_length = 0;
+            size_t client_max_body_size = request_obj->_handling_server->getClientMaxBodySizeInfo();
 
-        while (!tmp_body.empty()) { // jnannie: remade like Request::parseChunkedContent()
+            while (!tmp_body.empty()) { // jnannie: remade like Request::parseChunkedContent()
 
-			if (start_line_length == std::string::npos)
-				return false;
-			if (start_line_length > MAX_HEADER_LINE_LENGTH) {
-				request_obj->setStatusCode(400);
-				return true;
-			}
-			start_line = tmp_body.substr(0, start_line_length);
+                if (start_line_length == std::string::npos)
+                    return false;
+                if (start_line_length > MAX_HEADER_LINE_LENGTH) {
+                    request_obj->setStatusCode(400);
+                    return true;
+                }
+                start_line = tmp_body.substr(0, start_line_length);
 
-			chunk_length_field = start_line.substr(0, tmp_body.find(';')); // to ';' or full line
+                chunk_length_field = start_line.substr(0, tmp_body.find(';')); // to ';' or full line
 
-			libft::string_to_lower(chunk_length_field);
-			if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos) {
-				request_obj->setStatusCode(400);
-				return true;
-			}
-			chunk_length = libft::strtoul_base(chunk_length_field, 16);
-			if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length) {
-				request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
-				return true;
-			}
-			sum_content_length += chunk_length;
-			if (client_max_body_size && sum_content_length > client_max_body_size) {
-				request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
-				return true;
-			}
+                libft::string_to_lower(chunk_length_field);
+                if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos) {
+                    request_obj->setStatusCode(400);
+                    return true;
+                }
+                chunk_length = libft::strtoul_base(chunk_length_field, 16);
+                if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length) {
+                    request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
+                    return true;
+                }
+                sum_content_length += chunk_length;
+                if (client_max_body_size && sum_content_length > client_max_body_size) {
+                    request_obj->setStatusCode(413);// 413 (Request Entity Too Large)
+                    return true;
+                }
 
-			tmp_body.erase(0, start_line_length + 2); // remove start line
+                tmp_body.erase(0, start_line_length + 2); // remove start line
 
 //			_content.append(_raw_request.substr(0, chunk_length));
 
-			if (tmp_body.size() < chunk_length + 2)
-				return false;
+                if (tmp_body.size() < chunk_length + 2)
+                    return false;
 
-			tmp_body.erase(0, chunk_length + 2); // remove rest of chunk
+                tmp_body.erase(0, chunk_length + 2); // remove rest of chunk
 
-			start_line_length = tmp_body.find("\r\n");
+                start_line_length = tmp_body.find("\r\n");
 
 //            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
 //                return true;
@@ -205,8 +217,9 @@ bool Listener::continueReadBody(Request* request_obj) {
 //                tmp_body = tmp_body.substr(tmp_body.find("\r\n") + 2 + len);
 //            else
 //                break;
-
+            }
         }
+
     }
     else if ((length = request_obj->getHeaderContentLength()) >= 0) {
         if (request_obj->getReadBodySize() == length)
@@ -377,6 +390,8 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             Request* request = _client_requests[fd];
             bool header_was_read_client = request->isHeaderWasRead();
 
+
+
             request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
 			if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
 				readError(it); // ERASES iterator instance inside
@@ -388,7 +403,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				_time[*it] = _get_time();
 			request->_buf[request->_bytes_read] = '\0';
 
-			std::cout << request->getReadBodySize() << std::endl;
+//			std::cout << request->getReadBodySize() << std::endl;
 //            std::cout << "=========================" << std::endl;
 //            std::cout << buf << std::endl;
 //            std::cout << std::endl << "=========================" << std::endl;
@@ -508,10 +523,11 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //					WebServ::routeRequests(_host, _port, _client_requests);
 //			}
 
-			request->parseBody();
+            if (request->_method != "PUT")
+                request->parseBody();
 
 			Response response(request, fd);
-			response.generateResponse();
+            response.generateResponse();
 			response.sendResponse();
 
 //			close(fd);
