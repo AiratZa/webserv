@@ -80,7 +80,8 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _header_end_pos(0),
 		  _header_was_read(false),
 		  _read_body_size(0),
-		  _is_need_writing_body_to_file(false)
+		  _is_need_writing_body_to_file(false),
+          is_chunked(false)
 {  };
 
 //Request::Request(const std::string& request)

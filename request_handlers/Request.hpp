@@ -140,18 +140,25 @@ class Request {
             return false;
         }
 
-		write(file, _content.c_str(), _content.size());
-//        if (shift_from_buf_start > 0)
-//        {
-//            int len = _bytes_read - shift_from_buf_start;
-//            write(file, _buf + shift_from_buf_start, len);
-//            shift_from_buf_start = 0;
-//        }
-//        else
-//        {
-//            write(file, _buf, _bytes_read);
-//        }
-		_content.clear();
+        if (is_chunked)
+        {
+            write(file, _content.c_str(), _content.size());
+            _content.clear();
+        }
+        else
+        {
+            if (!is_chunked &&(shift_from_buf_start > 0))
+            {
+                int len = _bytes_read - shift_from_buf_start;
+                write(file, _buf + shift_from_buf_start, len);
+                shift_from_buf_start = 0;
+            }
+            else
+            {
+                write(file, _buf, _bytes_read);
+            }
+        }
+
         close(file);
         return true;
     }
@@ -235,6 +242,10 @@ private:
         long long _read_body_size;
 
         bool _is_need_writing_body_to_file;
+
+public:
+        bool is_chunked;
+
 };
 
 

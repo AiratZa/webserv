@@ -146,7 +146,7 @@ bool Listener::continueReadBody(Request* request_obj) {
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second.find("chunked") != std::string::npos)) {
-
+        request_obj->is_chunked = true;
 
 		size_t start_line_length = body.find("\r\n");
 		if (start_line_length == std::string::npos)

@@ -4,14 +4,17 @@ import pytest
 import os
 
 import requests
+import time
 
 
 @pytest.fixture()
 def webserv():
     # Setup
+
     proc = subprocess.Popen(["./WEBSERV.CONF"], executable='/home/airat/CLionProjects/webserv/webserv')
 
     yield  # здесь происходит тестирование
+    time.sleep(1)
     proc.kill()
 
 
