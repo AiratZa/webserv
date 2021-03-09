@@ -621,7 +621,7 @@ void Response::generateHeadResponse() {
 						break ;
 					}
 				}
-				if (matching_index.empty() && !S_ISREG(stat_buf.st_mode) && !_request->_handling_server->isAutoindexEnabled() && (!_request->_handling_location || (_request->_handling_location && !_request->_handling_location->isAutoindexEnabled()))) { // test from subject wants 404 if there is index in config but file doesnt exist
+				if (matching_index.empty() && !_request->_handling_server->isAutoindexEnabled() && (!_request->_handling_location || (_request->_handling_location && !_request->_handling_location->isAutoindexEnabled()))) { // test from subject wants 404 if there is index in config but file doesnt exist
 					return _request->setStatusCode(404);
 				}
 			}
