@@ -27,8 +27,7 @@
 #include "../../utils/cpp_libft/libft.hpp"
 #include "../../WebServ.hpp"
 
-void write_html();
-std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& root,
-                                                                     const std::string& uri);
+std::string write_html(std::string filename, Request * request);
+std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& root);
 
 #endif //WEBSERV_AUTOINDEX_HANDLING_HPP

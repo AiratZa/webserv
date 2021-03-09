@@ -40,7 +40,7 @@ public:
 	void generateContent();
 	void readFileToContent(std::string & filename);
 //	bool isStatusCodeOk();
-	void generateAutoindex();
+	void generateAutoindex(std::string & filename);
 	void setContentTypeByFileExt(std::string & ext);
 	bool isMethodAllowed();
 //	void setStatusCode(int status_code);

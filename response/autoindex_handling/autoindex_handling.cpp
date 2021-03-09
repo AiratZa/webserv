@@ -30,44 +30,46 @@ std::size_t getCharsLen(const std::string& str)
     return (str.length() - count_if(str.begin(), str.end(), isUtf_8));
 }
 
-void write_html()
+std::string write_html(std::string dir_name, Request * request)
 {
-    int autoindex = open("test_autoindex.html", O_RDWR | O_CREAT | O_TRUNC, 0666);
+//    int autoindex = open("test_autoindex.html", O_RDWR | O_CREAT | O_TRUNC, 0666);
 
-    if (autoindex <= 0) {
-        std::cerr << std::strerror(errno) << std::endl;
-        throw std::exception();
-    }
+//    if (autoindex <= 0) {
+//        std::cerr << std::strerror(errno) << std::endl;
+//        throw std::exception();
+//    }
 
-    std::string root = "";
-    std::string uri = "/";
+//    std::string root = "";
+//    std::string uri = "/";
 
-    std::string host_n_port = "http://localhost";
-    std::string url = host_n_port + uri;
+    std::string host_n_port = "http://";
+    host_n_port += request->_headers["host"];
+    std::string url = host_n_port + request->_request_target;
 
     std::string response_body = "<html>";
 
     response_body += "<head>\n"
                      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"
                      "<title>Index of ";
-    response_body += uri;
+    response_body += request->_request_target;
     response_body +="</title>\n"
                      "</head>\n";
 
     response_body += "<body>\n";
     response_body += "<h1>Index of ";
-    response_body += uri;
+    response_body += request->_request_target;
     response_body += "</h1><hr>\n";
     response_body += "<pre>\n";
 
 
     response_body += "<a href=\"";
-    response_body += "http://localhost/"; // current page root
+//    response_body += "http://localhost/"; // current page root
+    response_body += host_n_port + request->_request_target.substr(0, request->_request_target.rfind('/', request->_request_target.size() - 2) + 1);
     response_body += "\">../</a>\n";
 
 
 
-    std::list<std::map<std::string, std::list<std::string> > > info = dir_opers(root, uri);
+    std::list<std::map<std::string, std::list<std::string> > > info = dir_opers(dir_name);
     std::list<std::map<std::string, std::list<std::string> > >::iterator it = info.begin();
 
     while (it != info.end()) {
@@ -116,8 +118,10 @@ void write_html()
     response_body += "</body>\n";
     response_body += "</html>\n";
 
-    write(autoindex, response_body.c_str(), response_body.size());
-    close(autoindex);
+//    write(autoindex, response_body.c_str(), response_body.size());
+//    close(autoindex);
+
+	return response_body;
 }
 
 void ft_exit()
@@ -127,10 +131,9 @@ void ft_exit()
 }
 
 
-std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& root,
-                                                                     const std::string& uri)
+std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& dir_name)
 {
-    std::string dir_name = root + uri;
+//    std::string dir_name = root + uri;
 
     DIR* dir_stream;
     dir_stream = opendir(dir_name.c_str());

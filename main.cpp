@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 //TODO: make autoindex
 //TODO: when there is cgi_script there must be also cgi_ext
 //TODO: why new connection always opened
-
+//TODO: moving back with ../ in autoindex
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;

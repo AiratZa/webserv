@@ -9,6 +9,7 @@
 #include "../utils/cpp_libft/libft.hpp"
 #include <time.h>
 #include "../base64_coding/base64.hpp"
+#include "autoindex_handling/autoindex_handling.hpp"
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -285,8 +286,9 @@ void Response::readFileToContent(std::string & filename) {
 	close(fd);
 }
 
-void Response::generateAutoindex() { // TODO:replace by normal autoindex
-	_content = "generated autoindex";
+void Response::generateAutoindex(std::string & filename) { // TODO:replace by normal autoindex
+	_content = write_html(filename, _request);
+//	_content = "generated autoindex";
 }
 
 void Response::setContentTypeByFileExt(std::string & ext) {
@@ -376,14 +378,19 @@ std::string Response::_inet_ntoa(struct in_addr sin_addr) {
 	buf += libft::ultostr_base(static_cast<unsigned long>(str[2]), 10) + ".";
 	buf += libft::ultostr_base(static_cast<unsigned long>(str[3]), 10);
 
-	std::cout << "buf content: "<< buf << std::endl;
+//	std::cout << "buf content: "<< buf << std::endl;
 	return buf;
 }
 
 std::string Response::_getUserFromCredentials() {
-	std::string credentials = _request->_headers["authorization"].substr(6);
-	credentials = credentials.substr(credentials.find_first_not_of(" "));
-	std::string user = Base64::base64_decode(credentials).substr(0, credentials.find(':'));
+	std::string user;
+	size_t credential_pos = _request->_headers["authorization"].find(" ");
+	credential_pos++;
+	if (credential_pos != std::string::npos && _request->_headers["authorization"].size() > credential_pos) {
+		std::string credentials = _request->_headers["authorization"].substr(credential_pos);
+		credentials = credentials.substr(credentials.find_first_not_of(" "));
+		user = Base64::base64_decode(credentials).substr(0, credentials.find(':'));
+	}
 	return user;
 }
 
@@ -635,7 +642,7 @@ void Response::generateHeadResponse() {
 			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
-				generateAutoindex();
+				generateAutoindex(filename);
 				_content_type = "Content-Type: text/html\r\n";
 			} else {
 				return _request->setStatusCode(403);
