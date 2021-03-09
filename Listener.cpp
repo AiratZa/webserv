@@ -146,8 +146,6 @@ bool Listener::continueReadBody(Request* request_obj) {
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second.find("chunked") != std::string::npos)) {
-//        size_t      len;
-//        std::string tmp_body = body;
 
 
 		size_t start_line_length = body.find("\r\n");
@@ -200,6 +198,10 @@ bool Listener::continueReadBody(Request* request_obj) {
 
 			body.erase(0, chunk_length + 2); // remove rest of chunk
 
+			std::cout << chunk_length << std::endl;
+			if (chunk_length == 0)
+			    return true;
+
 			start_line_length = body.find("\r\n");
 
 //            if ((len = libft::strtoul_base(tmp_body, 16)) == 0 && tmp_body.find("0\r\n\r\n") == 0)
@@ -210,6 +212,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 //                break;
 
         }
+        return false;
     }
     else if ((request_obj->_headers.count("content-length"))) {
 		length = libft::strtoul_base(request_obj->_headers["content-length"], 10);
@@ -395,8 +398,9 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
             bool header_was_read_client = request->isHeaderWasRead();
 
             request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
-			if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
-				readError(it); // ERASES iterator instance inside
+
+            if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
+			    readError(it); // ERASES iterator instance inside
 				continue;
 			}
 			else if (request->_bytes_read < 0)
