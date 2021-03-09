@@ -45,6 +45,9 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _locationContext.push_back(ROOT_KW); //UNIVERSAL
     _locationContext.push_back(PARAM_CGI_SCRIPT);
     _locationContext.push_back(PARAM_CGI_EXTENSION);
+    _locationContext.push_back(PARAM_CGI_AUTH_ENABLE);
+
+
 
 
     _ite_server = _serverContext.end();
@@ -64,8 +67,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[ROOT_KW] = false;
 
     _isMultipleParamDirective[PARAM_CGI_SCRIPT] = false;
-
-
+    _isMultipleParamDirective[PARAM_CGI_AUTH_ENABLE] = false;
 
 
 }
@@ -403,6 +405,10 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
     else if (directive_keyword == PARAM_CGI_EXTENSION) {
         std::list<std::string> cgi_exts = _cgiExtensionsParamKeywordHandler(current_context, directive_params);
         checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiExtensionsParam(cgi_exts);
+    }
+    else if (directive_keyword == PARAM_CGI_AUTH_ENABLE) {
+        bool auth_enable_value = _cgiAuthEnableParamKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiAuthEnableParam(auth_enable_value);
     }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
@@ -1023,3 +1029,24 @@ std::list<std::string> Config::_cgiExtensionsParamKeywordHandler(AContext* curre
     }
     return values_to_return;
 }
+
+bool Config::_cgiAuthEnableParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+    (void)current_context;
+
+    std::string value = checkAndRemoveQuotes(directive_params.front());
+    if (value.size() == 0) {
+        _badConfigError("cgi_auth_enable param can't be empty");
+    }
+    libft::string_to_lower(value); // get param by link
+
+    if ((value != "on") && (value != "off")) {
+        _badConfigError("cgi_auth_enable param can be 'on' OR 'off'");
+    }
+    if (value == "on")
+        return true;
+
+    return false;
+}
+
+
+

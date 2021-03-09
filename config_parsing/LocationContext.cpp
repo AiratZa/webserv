@@ -8,7 +8,10 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
                     : _is_error_pages_info_was_updated(false),
                       _alias_path(""),
                       _is_alias_path_already_was_set(false),
-                      _is_cgi_location(false) {
+                      _is_cgi_location(false),
+                      _cgi_auth_enable_was_set(false),
+                      _cgi_auth_enable(false)
+{
     _is_exact = (location_uri_params.size() == 2);
     _uri = location_uri_params.back();
 
@@ -89,10 +92,25 @@ bool LocationContext::setCgiExtensionsParam(const std::list<std::string>& value)
     return false;
 }
 
+bool LocationContext::setCgiAuthEnableParam(bool value) {
+    _is_cgi_location = true;
+
+    if (_cgi_auth_enable_was_set) {
+        return false;
+    }
+    _cgi_auth_enable_was_set = true;
+    _cgi_auth_enable = value;
+    return true;
+}
+
 const std::string& LocationContext::getCgiScript(void) const {
     return _cgi_script;
 }
 
 const std::list<std::string>& LocationContext::getCgiExtensions(void) const {
     return _cgi_extensions;
+}
+
+bool LocationContext::getCgiAuthEnable(void) const {
+    return _cgi_auth_enable;
 }

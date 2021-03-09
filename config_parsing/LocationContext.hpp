@@ -41,9 +41,13 @@ public:
 
     bool setCgiExtensionsParam(const std::list<std::string>& value);
 
+    bool setCgiAuthEnableParam(bool value);
+
     const std::string& getCgiScript(void) const;
 
     const std::list<std::string>& getCgiExtensions(void) const;
+
+    bool getCgiAuthEnable(void) const;
 
 private:
 
@@ -63,6 +67,8 @@ private:
     std::string _cgi_script;
     std::list<std::string> _cgi_extensions;
 
+    bool _cgi_auth_enable_was_set;
+    bool _cgi_auth_enable;
 };
 
 

@@ -47,6 +47,9 @@ WebServ::WebServ(const Config& config)
                     std::cout << std::endl;
                 }
                 std::cout << "      ____________________________________________" << std::endl;
+
+                std::cout << "      CGI_PARAM cgi_auth_enable: " << std::boolalpha << (*loc_it)->getCgiAuthEnable() << std::endl;
+                std::cout << "      ____________________________________________" << std::endl;
             }
             ++loc_it;
             std::cout << std::endl << "============================================" << std::endl;
