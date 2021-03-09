@@ -101,6 +101,9 @@ int main(int argc, char *argv[])
 //TODO: when there is cgi_script there must be also cgi_ext
 //TODO: why new connection always opened
 //TODO: moving back with ../ in autoindex
+//todo: what if autoindex is folder
+//todo: not found or forbidden (test returns 404 when there is index set in location in config, but it is not found; but nginx returns 403 )
+//todo: config file: index "345 6"; => unexpected end of file, expecting ";" or "}"
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;

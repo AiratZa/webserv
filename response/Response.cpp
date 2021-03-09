@@ -598,6 +598,7 @@ void Response::generateHeadResponse() {
 	}
 
 	struct stat stat_buf;
+	std::string matching_index;
 
 	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
 		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
@@ -615,11 +616,12 @@ void Response::generateHeadResponse() {
 			if (!index_list.empty()) {
 				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
 					if (stat((filename + *it).c_str(), &stat_buf) == 0) {
+						matching_index = *it;
 						filename += *it;
 						break ;
 					}
 				}
-				if (!S_ISREG(stat_buf.st_mode) && _request->_handling_location && !_request->_handling_location->isAutoindexEnabled()) { // test from subject wants 404 if there is index in config but file doesnt exist
+				if (matching_index.empty() && !S_ISREG(stat_buf.st_mode) && !_request->_handling_server->isAutoindexEnabled() && (!_request->_handling_location || (_request->_handling_location && !_request->_handling_location->isAutoindexEnabled()))) { // test from subject wants 404 if there is index in config but file doesnt exist
 					return _request->setStatusCode(404);
 				}
 			}
@@ -641,7 +643,13 @@ void Response::generateHeadResponse() {
 				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
 			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
-			if (_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) {
+			if (filename[filename.size() - 1] != '/') {
+				_request->_request_target += matching_index;
+				_location = getLocationHeader();
+
+				return _request->setStatusCode(301); //Moved Permanently
+			}
+			if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
 				generateAutoindex(filename);
 				_content_type = "Content-Type: text/html\r\n";
 			} else {
