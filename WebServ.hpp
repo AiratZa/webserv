@@ -20,8 +20,8 @@ public:
     int getServersCount(void) const { return _servers.size(); }
     Server* getServerByPosition(int i);
 
-    fd_set* getReadSetPtr(void) { return &_readset; };
-    fd_set* getWriteSetPtr(void) { return &_writeset; };
+//    fd_set* getReadSetPtr(void) { return &_readset; };
+//    fd_set* getWriteSetPtr(void) { return &_writeset; };
 
     void setToReadFDSet(const std::list<int>& clientsFD);
     void setToWriteFDSet(const std::list<int>& clientsFD);
@@ -61,8 +61,8 @@ private:
 
     Config _config;
     // Для заполнения множества сокетов
-    fd_set _readset;
-    fd_set _writeset;
+//    fd_set _readset;
+//    fd_set _writeset;
     int _max_fd;
 
 

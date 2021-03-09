@@ -510,11 +510,13 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			response.sendResponse();
 
 //			close(fd);
-			delete _client_requests[fd];
+
 			if (request->_close_connection) {
+				delete _client_requests[fd];
 				_client_requests.erase(fd);
 				close(fd);
 			} else {
+				delete _client_requests[fd];
 				_client_requests[fd] = new Request(_remote_addr, _port);
 				_clients_read.push_back(fd);
 			}

@@ -15,7 +15,7 @@ class Request;
 #define DEFAULT_REQUEST_STATUS_CODE 200
 
 #define BUFFER_LENGHT 1024
-#define TIME_OUT 150000
+#define TIME_OUT 20000
 
 
 class Request {

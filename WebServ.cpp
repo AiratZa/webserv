@@ -68,15 +68,15 @@ void WebServ::addServer(Server* server) {
     _servers.push_back(server);
 }
 
-void WebServ::setToReadFDSet(const std::list<int>& clientsFD) {
-    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-        FD_SET(*it, &_readset);
-}
-
-void WebServ::setToWriteFDSet(const std::list<int>& clientsFD) {
-    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-        FD_SET(*it, &_writeset);
-}
+//void WebServ::setToReadFDSet(const std::list<int>& clientsFD) {
+//    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+//        FD_SET(*it, &_readset);
+//}
+//
+//void WebServ::setToWriteFDSet(const std::list<int>& clientsFD) {
+//    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
+//        FD_SET(*it, &_writeset);
+//}
 
 void WebServ::updateMaxFD(void) {
     _max_fd = 0;
