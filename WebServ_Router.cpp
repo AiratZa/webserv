@@ -104,13 +104,38 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
 }
 
 LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Request* current_request) {
+    const std::string& request_target = current_request->_request_target;
+
     const std::list<LocationContext*>& exact = handling_server->R_getExactLocationsList();
     std::list<LocationContext*>::const_iterator it_exact = exact.begin();
     while (it_exact != exact.end()) {
-        if ((*it_exact)->getLocationPath() == current_request->_request_target) {
+        if ((*it_exact)->getLocationPath() == request_target) {
             return (*it_exact); // exact route(location) is found
         }
         ++it_exact;
+    }
+
+    const std::list<LocationContext*>& extension_loc = handling_server->R_getExtensionLocationsList();
+    std::list<LocationContext*>::const_iterator it_extension = extension_loc.begin();
+    while (it_extension != extension_loc.end()) {
+        const std::string& tmp_loc_ext = (*it_extension)->getLocationExtension();
+        std::size_t tmp_loc_ext_len = tmp_loc_ext.size();
+
+        if (request_target.size() > tmp_loc_ext_len) {
+            std::size_t start_pos = request_target.size() - tmp_loc_ext_len;
+            std::string end_of_request_target = request_target.substr(start_pos);
+
+            if (end_of_request_target == tmp_loc_ext) {
+                bool not_allowed = isMethodLimited(*(*it_extension), current_request->_method);
+
+                // no limits
+                if (!not_allowed) {
+                    return (*it_extension);
+                }
+            }
+        }
+
+        ++it_extension;
     }
 
     /*

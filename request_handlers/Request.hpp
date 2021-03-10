@@ -114,7 +114,6 @@ class Request {
     void setHeaderEndPos(std::size_t val) { _header_end_pos = val;}
 
 
-    bool isMethodLimited(const std::string& method) const;
     void handleExpectHeader(void);
 
     void increaseReadBodySize(int bytes_read) {
@@ -257,6 +256,8 @@ public:
 
 
 };
+
+bool isMethodLimited(const LocationContext& handling_location, const std::string& method);
 
 
 #endif

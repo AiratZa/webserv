@@ -22,6 +22,7 @@ public:
     // 'R' stands for router using
     const std::list<LocationContext*>& R_getExactLocationsList(void) const;
     const std::list<LocationContext*>& R_getNonExactLocationsList(void) const;
+    const std::list<LocationContext*>& R_getExtensionLocationsList(void) const;
 
 
 
@@ -60,9 +61,10 @@ private:
     // AFTER PARSING
     std::list<LocationContext*> _exact_locations;
     std::list<LocationContext*> _non_exact_locations;
+    std::list<LocationContext*> _ext_locations;
 
 
-    void _divideLocationExactNonExact(void);
+    void _divideLocationExactNonExactExt(void);
 };
 
 #endif //WEBSERV_SERVERCONTEXT_HPP

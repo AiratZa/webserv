@@ -12,12 +12,20 @@ const std::list<LocationContext*>& ServerContext::R_getNonExactLocationsList(voi
     return _non_exact_locations;
 }
 
-void ServerContext::_divideLocationExactNonExact(void) {
+const std::list<LocationContext*>& ServerContext::R_getExtensionLocationsList(void) const {
+    return _ext_locations;
+}
+
+void ServerContext::_divideLocationExactNonExactExt(void) {
     std::list<LocationContext*>::const_iterator it = _locations.begin();
     while (it != _locations.end()) {
         if ((*it)->isExact()) {
             _exact_locations.push_back(*it);
-        } else {
+        }
+        else if ((*it)->isExtLocation()) {
+            _ext_locations.push_back(*it);
+        }
+        else {
             _non_exact_locations.push_back(*it);
         }
         ++it;
@@ -26,7 +34,7 @@ void ServerContext::_divideLocationExactNonExact(void) {
 
 
 void ServerContext::structure_properties(void) {
-    _divideLocationExactNonExact();
+    _divideLocationExactNonExactExt();
 }
 
 

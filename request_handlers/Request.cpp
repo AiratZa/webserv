@@ -482,22 +482,19 @@ const std::list<std::string>& Request::getIndexPagesListForRequest(void) const {
  * return true if METHOD IS NOT ALLOWED BY CONFIG
  * Author: Airat (GDrake)
  */
-bool Request::isMethodLimited(const std::string& method) const {
-    if (_handling_location) {
-        const std::list<std::string> limit_except = (_handling_location)->getLimitExceptMethods();
-        if (limit_except.empty())
-            return false;
+bool isMethodLimited(const LocationContext& handling_location, const std::string& method) {
+    const std::list<std::string> limit_except = (handling_location).getLimitExceptMethods();
+    if (limit_except.empty())
+        return false;
 
-        std::list<std::string>::const_iterator it = limit_except.begin();
-        while (it != limit_except.end()) {
-            if (method == (*it)) {
-                return false;
-            }
-            ++it;
+    std::list<std::string>::const_iterator it = limit_except.begin();
+    while (it != limit_except.end()) {
+        if (method == (*it)) {
+            return false;
         }
-        return true;
+        ++it;
     }
-    return false;
+    return true;
 }
 
 /*
