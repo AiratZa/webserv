@@ -35,19 +35,16 @@ public:
 
     virtual bool setRootPath(const std::string& root_path);
 
-    bool IsCgiLocation(void) const { return _is_cgi_location; }
+    bool isExtLocation(void) const { return _is_ext_location; }
 
     bool setCgiScriptParam(const std::string& value);
 
-    bool setCgiExtensionsParam(const std::list<std::string>& value);
-
-    bool setCgiAuthEnableParam(bool value);
+    bool setAuthEnableParam(bool value);
 
     const std::string& getCgiScript(void) const;
 
-    const std::list<std::string>& getCgiExtensions(void) const;
-
-    bool getCgiAuthEnable(void) const;
+    const std::string& getLocationExtension(void) const;
+    bool getAuthEnable(void) const;
 
 private:
 
@@ -62,13 +59,14 @@ private:
     std::string _alias_path;
     bool _is_alias_path_already_was_set;
 
-    bool _is_cgi_location;
+    bool _is_ext_location;
 
     std::string _cgi_script;
-    std::list<std::string> _cgi_extensions;
 
-    bool _cgi_auth_enable_was_set;
-    bool _cgi_auth_enable;
+    bool _auth_enable_was_set;
+    bool _auth_enable;
+
+    std::string _extension;
 };
 
 

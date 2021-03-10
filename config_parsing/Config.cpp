@@ -44,8 +44,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _locationContext.push_back(INDEX_KW); //UNIVERSAL
     _locationContext.push_back(ROOT_KW); //UNIVERSAL
     _locationContext.push_back(PARAM_CGI_SCRIPT);
-    _locationContext.push_back(PARAM_CGI_EXTENSION);
-    _locationContext.push_back(PARAM_CGI_AUTH_ENABLE);
+    _locationContext.push_back(AUTH_ENABLE_KW);
 
 
 
@@ -58,7 +57,6 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[INDEX_KW] = true;
     _isMultipleParamDirective[LIMIT_EXCEPT_KW] = true;
 
-    _isMultipleParamDirective[PARAM_CGI_EXTENSION] = true;
 
     _isMultipleParamDirective[LISTEN_KW] = false;
     _isMultipleParamDirective[CLIENT_MAX_BODY_SIZE_KW] = false;
@@ -67,7 +65,7 @@ void Config::_fillAllowedContextForKeyWords(void) {
     _isMultipleParamDirective[ROOT_KW] = false;
 
     _isMultipleParamDirective[PARAM_CGI_SCRIPT] = false;
-    _isMultipleParamDirective[PARAM_CGI_AUTH_ENABLE] = false;
+    _isMultipleParamDirective[AUTH_ENABLE_KW] = false;
 
 
 }
@@ -223,6 +221,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
     while (! (tmp_word = libft::get_next_word(const_config_text.substr(_tmp_len))).empty()) { //while returns words
         location_uri_params.push_back(tmp_word);
         _tmp_len += tmp_word.size();
+        _skipSpacesInConfig();
     }
 
     location_uri_params = _locationKeywordHandler(location_uri_params); // THROW EXCEPTION IF ERROR OCCURRED
@@ -235,8 +234,10 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
 
     LocationContext* current_location = current_server->addLocation(location_uri_params);
     if (current_location == NULL) {
-        if (location_uri_params.size() == 2)
+        if ((location_uri_params.size() == 2) && (location_uri_params.front() == "="))
             _badConfigError("duplicate location \"= " + location_uri_params.back() + "\"");
+        else if ((location_uri_params.size() == 2) && (location_uri_params.front() == "ext"))
+            _badConfigError("duplicate ext location \"" + location_uri_params.back() + "\"");
         else
             _badConfigError("duplicate location \"" + location_uri_params.back() + "\"");
     }
@@ -402,13 +403,9 @@ void Config::_checkAndSetParams(ServerContext* current_server, AContext* current
         std::string script_name = _cgiScriptParamKeywordHandler(current_context, directive_params);
         checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiScriptParam(script_name);
     }
-    else if (directive_keyword == PARAM_CGI_EXTENSION) {
-        std::list<std::string> cgi_exts = _cgiExtensionsParamKeywordHandler(current_context, directive_params);
-        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiExtensionsParam(cgi_exts);
-    }
-    else if (directive_keyword == PARAM_CGI_AUTH_ENABLE) {
-        bool auth_enable_value = _cgiAuthEnableParamKeywordHandler(current_context, directive_params);
-        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setCgiAuthEnableParam(auth_enable_value);
+    else if (directive_keyword == AUTH_ENABLE_KW) {
+        bool auth_enable_value = _authEnableParamKeywordHandler(current_context, directive_params);
+        checkIfParamWasNotAlreadySet = static_cast<LocationContext*>(current_context)->setAuthEnableParam(auth_enable_value);
     }
     else
         _badConfigError("NOT EXPEXTED DIRECTIVE KEYWORD IS FOUND: '" + directive_keyword + "'");
@@ -427,14 +424,26 @@ std::list<std::string>  Config::_locationKeywordHandler(const std::list<std::str
     if (!params_len || (params_len > 2)) {
         _badConfigError("invalid number of arguments in \"location\" directive");
     }
-
     std::list<std::string>::const_iterator it = context_params.begin();
 
     if (params_len == 2) {
-        if (*it != "=") {
-            _badConfigError("invalid location modifier \"" + *it + "\"");
+        if ((*it == "=") || (*it == "ext")) {
+            std::string second_param = checkAndRemoveQuotes(context_params.back());
+
+            if (*it == "ext") {
+                if (second_param[0] != '.') {
+                    _badConfigError("invalid extension. it should begin from dot('.') symbol");
+                }
+            }
+
+            std::list<std::string> to_return;
+            to_return.push_back(context_params.front());
+            to_return.push_back(second_param);
+
+            return to_return; // returns same thing ["=", "uri"] or ["ext", ".ext"]
         }
-        return context_params; // returns same thing ["=", "uri"]
+        _badConfigError("invalid location modifier \"" + *it + "\"");
+
     }
     // check for "=" modifier at same string as uri (like "=/")
 
@@ -1030,7 +1039,7 @@ std::list<std::string> Config::_cgiExtensionsParamKeywordHandler(AContext* curre
     return values_to_return;
 }
 
-bool Config::_cgiAuthEnableParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
+bool Config::_authEnableParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
 
     std::string value = checkAndRemoveQuotes(directive_params.front());

@@ -31,25 +31,19 @@ WebServ::WebServ(const Config& config)
             std::cout << "      ____________________________________________" << std::endl;
             std::cout << "      LOCATION LEVEL INDEX DIRECTIVE PARAMS: "  << (*loc_it)->getIndexPagesDirectiveInfo() << std::endl;
             std::cout << "      ____________________________________________" << std::endl;
-            std::cout << std::boolalpha << "IS CGI LOCATION: " << (*loc_it)->IsCgiLocation() << std::endl;
-            if ((*loc_it)->IsCgiLocation()) {
+            std::cout << "      PARAM auth_enable: " << std::boolalpha << (*loc_it)->getAuthEnable() << std::endl;
+            std::cout << "      ____________________________________________" << std::endl;
+            std::cout << std::boolalpha << "IS CGI LOCATION: " << (*loc_it)->isExtLocation() << std::endl;
+            if ((*loc_it)->isExtLocation()) {
                 std::cout << "      CGI_PARAM cgi_script: "  << (*loc_it)->getCgiScript() << std::endl;
                 std::cout << "      ____________________________________________" << std::endl;
-                const std::list<std::string>& exts = (*loc_it)->getCgiExtensions();
-                if (exts.size()) {
-                    std::list<std::string>::const_iterator ext_it = exts.begin();
-                    std::cout << "      CGI_PARAM cgi_exts: " ;
-
-                    while (ext_it != exts.end()) {
-                        std::cout << *ext_it << "  ";
-                        ++ext_it;
-                    }
-                    std::cout << std::endl;
+                const std::string& ext = (*loc_it)->getLocationExtension();
+                if (!ext.empty()) {
+                    std::cout << "      CGI_PARAM cgi_exts: " << ext << std::endl;
                 }
                 std::cout << "      ____________________________________________" << std::endl;
 
-                std::cout << "      CGI_PARAM cgi_auth_enable: " << std::boolalpha << (*loc_it)->getCgiAuthEnable() << std::endl;
-                std::cout << "      ____________________________________________" << std::endl;
+
             }
             ++loc_it;
             std::cout << std::endl << "============================================" << std::endl;

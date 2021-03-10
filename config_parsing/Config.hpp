@@ -43,8 +43,7 @@
 #define ROOT_KW "root"
 
 #define PARAM_CGI_SCRIPT "cgi_script"
-#define PARAM_CGI_EXTENSION "cgi_ext"
-#define PARAM_CGI_AUTH_ENABLE "cgi_auth_enable"
+#define AUTH_ENABLE_KW "auth_enable"
 
 #define ERROR_PAGE_REDIRECT_URI "ERROR_PAGE_REDIRECT_URI"
 #define ERROR_PAGE_CHANGE_ERROR_CODE "ERROR_PAGE_CHANGE_ERROR_CODE"
@@ -193,7 +192,7 @@ private:
     std::string _rootKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::string _cgiScriptParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
     std::list<std::string> _cgiExtensionsParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
-    bool _cgiAuthEnableParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
+    bool _authEnableParamKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params);
 
 
     const std::string parseHost(const std::string& param) const;

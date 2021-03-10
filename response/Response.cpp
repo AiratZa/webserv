@@ -446,13 +446,12 @@ std::string Response::_getExt(std::string filename) {
 }
 
 bool Response::_isCgiExt(std::string & ext) {
-	const std::list<std::string> & cgi_extensions = _request->_handling_location->getCgiExtensions();
-	for (std::list<std::string>::const_iterator it = cgi_extensions.begin(); it != cgi_extensions.end(); ++it) {
-		if (*it  == "." + ext)
-			return true;
-	}
-	return false;
-//	return ext == "php" || ext == "bla";
+    const std::string& loc_ext = (_request->_handling_location)->getLocationExtension();
+
+    if (!(loc_ext == ("." + ext)))
+        return false;
+    return true;
+    //	return ext == "php" || ext == "bla";
 }
 
 /*

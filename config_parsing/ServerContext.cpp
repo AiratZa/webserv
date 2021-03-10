@@ -42,19 +42,38 @@ const std::list<std::string>& ServerContext::getServerNames(void) const {
 
 bool ServerContext::_is_location_exist(const std::list<std::string>& location_uri_params) {
     std::string str_for_search;
-    if (location_uri_params.size() == 2) {
-        str_for_search = "= " + location_uri_params.back();
-    } else {
-        str_for_search = location_uri_params.back();
+
+    bool is_ext_loc = false;
+
+    if ((location_uri_params.size() == 2) && (location_uri_params.front() == "ext")) {
+        is_ext_loc = true;
     }
 
     const std::list<LocationContext*>& locations = this->getLocationsList();
 
     std::list<LocationContext*>::const_iterator it_l = locations.begin();
     while (it_l != locations.end()) {
-        if ((*it_l)->getLocationPathForComparison() == str_for_search){
-            return true;
+
+        if ((*it_l)->isExtLocation() == is_ext_loc) {
+
+            if (is_ext_loc)
+            {
+                if (location_uri_params.back() == (*it_l)->getLocationExtension()) {
+                    return true;
+                }
+            }
+            else
+            {
+                if ((*it_l)->getLocationPath() == location_uri_params.back())
+                {
+                    if (((location_uri_params.size() == 2) && ((*it_l)->isExact())) ||
+                            ((location_uri_params.size() == 1) && !((*it_l)->isExact()))) {
+                        return true;
+                    }
+                }
+            }
         }
+
         ++it_l;
     }
     return false;
