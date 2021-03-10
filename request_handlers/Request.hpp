@@ -247,6 +247,14 @@ public:
         bool is_chunked;
         bool checkToClientMaxBodySize(long long int value_to_check);
 
+        std::string _host;
+        int _port;
+
+        void setHostAndPort(const std::string& host, const int port) {
+            _host = host;
+            _port = port;
+        }
+
 
 };
 

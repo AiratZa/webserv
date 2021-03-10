@@ -292,6 +292,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         return false;
     }
 
+    
     WebServ::routeRequest(_host, _port, request);
 //    if (request->isMethodLimited(request->_method)) { // TODO: jnannie: its 405, but we check for allowed methods in Response, and set 'location' header if method is not allowed, maybe later move it here, but xz
 //        request->_status_code = 403;
@@ -392,6 +393,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 		if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
 		    // Check client header info was read or not
             Request* request = _client_requests[fd];
+            request->setHostAndPort(_host, _port);
             bool header_was_read_client = request->isHeaderWasRead();
 
             request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
@@ -406,10 +408,6 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 				_time[*it] = _get_time();
 			request->_buf[request->_bytes_read] = '\0';
 
-//			std::cout << request->getReadBodySize() << std::endl;
-//            std::cout << "=========================" << std::endl;
-//            std::cout << buf << std::endl;
-//            std::cout << std::endl << "=========================" << std::endl;
 
             try
             {
