@@ -1,1 +1,45 @@
 content of 1.txt from /html/234/
+
+      location / {
+            limit_except GET;
+            client_max_body_size 9220000000000;
+            cgi_script /home/airat/CLionProjects/webserv/default_folder/html/php-cgi;
+            cgi_ext  .php;
+      }
+
+        location /post_body {
+            client_max_body_size 100;
+        }
+
+        location /put_test {
+            limit_except PUT;
+        }
+
+        location /directory {
+            alias /home/airat/CLionProjects/webserv/default_folder/html/YoupiBanane/;
+            limit_except GET POST;
+            index youpi.bad_extension;
+
+
+
+        }
+
+        location /hey {
+          client_max_body_size 2879721937;
+
+        }
+
+        location /home {
+            cgi_script ./subject_testers/ubuntu_cgi_tester;
+            cgi_ext  .php .bla;
+        }
+
+        location /ht {
+            index hello.php;
+            cgi_script /home/airat/CLionProjects/webserv/default_folder/html/php-cgi;
+            cgi_ext  .php;
+        }
+
+        location /234 {
+            index 345;
+        }

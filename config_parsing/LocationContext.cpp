@@ -8,12 +8,20 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
                     : _is_error_pages_info_was_updated(false),
                       _alias_path(""),
                       _is_alias_path_already_was_set(false),
-                      _is_cgi_location(false),
-                      _cgi_auth_enable_was_set(false),
-                      _cgi_auth_enable(false)
+                      _is_ext_location(false),
+                      _auth_enable_was_set(false),
+                      _auth_enable(false)
 {
-    _is_exact = (location_uri_params.size() == 2);
-    _uri = location_uri_params.back();
+    if ((location_uri_params.size() == 2) && (location_uri_params.front() == "ext"))
+    {
+        _is_ext_location = true;
+        _extension = location_uri_params.back();
+    }
+    else
+    {
+        _is_exact = (location_uri_params.size() == 2);
+        _uri = location_uri_params.back();
+    }
 
     _error_pages_info = serv_context.getErrorPagesDirectiveInfo();
     _index_pages = serv_context.getIndexPagesDirectiveInfo();
@@ -72,34 +80,22 @@ bool LocationContext::setAliasPath(const std::string& alias) {
 }
 
 bool LocationContext::setCgiScriptParam(const std::string& value) {
-    _is_cgi_location = true;
-
-
-    if (!_cgi_script.size()) {
+    if (_cgi_script.empty()) {
         _cgi_script = value;
         return true;
     }
     return false;
 }
 
-bool LocationContext::setCgiExtensionsParam(const std::list<std::string>& value) {
-    _is_cgi_location = true;
 
-    if (!_cgi_extensions.size()) {
-        _cgi_extensions = value;
-        return true;
-    }
-    return false;
-}
 
-bool LocationContext::setCgiAuthEnableParam(bool value) {
-    _is_cgi_location = true;
+bool LocationContext::setAuthEnableParam(bool value) {
 
-    if (_cgi_auth_enable_was_set) {
+    if (_auth_enable_was_set) {
         return false;
     }
-    _cgi_auth_enable_was_set = true;
-    _cgi_auth_enable = value;
+    _auth_enable_was_set = true;
+    _auth_enable = value;
     return true;
 }
 
@@ -107,10 +103,10 @@ const std::string& LocationContext::getCgiScript(void) const {
     return _cgi_script;
 }
 
-const std::list<std::string>& LocationContext::getCgiExtensions(void) const {
-    return _cgi_extensions;
+const std::string& LocationContext::getLocationExtension(void) const {
+    return _extension;
 }
 
-bool LocationContext::getCgiAuthEnable(void) const {
-    return _cgi_auth_enable;
+bool LocationContext::getAuthEnable(void) const {
+    return _auth_enable;
 }
