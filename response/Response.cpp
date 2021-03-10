@@ -241,9 +241,11 @@ void Response::generateHeaders() {
 	_raw_response += getDateHeader();
 	_raw_response += _content_type;
 	_raw_response += _allow;
-	_raw_response += "Content-Length: ";
-	_raw_response += libft::ultostr_base(_content.length(), 10);
-	_raw_response += "\r\n";
+//	if (!_content.empty()) {
+		_raw_response += "Content-Length: ";
+		_raw_response += libft::ultostr_base(_content.length(), 10);
+		_raw_response += "\r\n";
+//	}
 	_raw_response += _last_modified;
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
@@ -497,7 +499,12 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	 * TODO: PATH_INFO=/YoupieBanane/youpi.bla
 	 * TODO: for http://host:port/directory/youpi.bla (in tester)
 	 */
-	cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(filename);
+	if (_file_ext == "php")
+		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(filename);
+	else
+		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(_request->_request_target);
+//		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append("./YoupiBanane/youpi.bla");
+
 //	env[4] = const_cast<char *>(cgiVariables["PATH_INFO"].c_str());
 
 	cgiVariables["PATH_TRANSLATED"].assign("PATH_TRANSLATED=").append(filename);
@@ -544,6 +551,8 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	//all elements of env are initialized to NULL
 }
 
+
+
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	int pid;
 	int exit_status;
@@ -563,50 +572,116 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	std::map<std::string, std::string> cgiVariables;
 	_setEnv(env, filename, cgiVariables);
 
-	int filedes_in[2]; // in php-cgi
-	int filedes_out[2]; // out of php-cgi
-	if (pipe(filedes_in) == -1 || pipe(filedes_out) == -1)
-		return _request->setStatusCode(500);
+//	int filedes_in[2]; // in php-cgi
+//	int filedes_out[2]; // out of php-cgi
+//	if (pipe(filedes_in) == -1 || pipe(filedes_out) == -1)
+//		return _request->setStatusCode(500);
 
-	int stdin_backup = dup(0);
-	int stdout_backup = dup(1);
-	dup2(filedes_in[1], 1);
-	close(filedes_in[1]);
-	dup2(filedes_out[0], 0);
-	close(filedes_out[0]);
-	write(1, _request->_content.c_str(), _request->_content.length());
+
+	std::string out_file_path = WebServ::getWebServRootPath() + "temp_out";
+	std::string in_file_path = WebServ::getWebServRootPath() + "temp_in";
+
+	int fd_write;
+	if ((fd_write = open(in_file_path.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
+		utils::exitWithLog();
+
+//	int stdin_backup = dup(0);
+//	int stdout_backup = dup(1);
+//	dup2(fd_read, 1);
+//	close(fd_read);
+//	dup2(fd_write, 0);
+//	close(fd_write);
+//	dup2(filedes_in[1], 1);
+//	close(filedes_in[1]);
+//	dup2(filedes_out[0], 0);
+//	close(filedes_out[0]);
+
+	long ret;
+//	if (!_request->_content.empty()) {
+		ret = write(fd_write, _request->_content.c_str(), _request->_content.size());
+		if (ret < 0) {
+			return _request->setStatusCode(500);
+		}
+//	}
+
 	if ((pid = fork()) == -1) {
-		close(filedes_in[0]);
-		close(filedes_out[1]);
-		return _request->setStatusCode(500); // Internal Server Error
+//		close(filedes_in[0]);
+//		close(filedes_out[1]);
+//		return _request->setStatusCode(500); // Internal Server Error
+		 utils::exitWithLog();
 	} else if (pid == 0) {
-		dup2(filedes_in[0], 0);
-		dup2(filedes_out[1], 1);
+//		dup2(filedes_in[0], 0);
+//		dup2(filedes_out[1], 1);
+		dup2(fd_write, 0);
+		close(fd_write);
+		int fd_read;
+//		std::string out_file_path = WebServ::getWebServRootPath() + "temp_out";
+		if ((fd_read = open(out_file_path.c_str(), O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU)) == -1)
+			utils::exitWithLog();
+		dup2(fd_read, 1);
+		close(fd_read);
 		execve(argv[0], argv, env);
 		exit(EXIT_FAILURE);
 	}
+	close(fd_write);
+
+//	fcntl(1, F_SETFL, O_NONBLOCK);
+//	while ((ret = write(1, _request->_content.c_str(), _request->_content.size() <= 1024 ? _request->_content.size() : 1024)) != 0) {
+//		if (ret != -1)
+//			_request->_content.erase(0, ret);
+//	}
+//	dup2(stdout_backup, 1);
+
+//errno = 0;
 	waitpid(pid, &exit_status, 0); // TODO: maybe we should use not blocking wait, then we need to save stdin and out backups and pass pipe descritpors to select
 	if (WIFEXITED(exit_status))
 		exit_status = WEXITSTATUS(exit_status);
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
 	if (!exit_status) {
+		size_t content_length;
 		char buf[1024] = {0};
-		fcntl(0, F_SETFL, O_NONBLOCK);
-		int ret;
-		while ((ret = read(0, buf, 1024)) > 0) {
+//		fcntl(0, F_SETFL, O_NONBLOCK);
+//		int ret;
+		int fd_read;
+
+		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
+			utils::exitWithLog();
+		while ((ret = read(fd_read, buf, 1023)) > 0) {
+//			buf[ret] = '\0';
 			try {
-				_content.append(buf, ret);
+				_cgi_response.append(buf, ret);
+				size_t headers_end = _cgi_response.find("\r\n\r\n");
+				if (headers_end != std::string::npos) {
+					if (_cgi_response.find("content-length", 0, headers_end + 1) != std::string::npos) {
+						content_length = libft::strtoul_base(_cgi_response.substr(_cgi_response.find("content-length:") + 15), 10);
+						if (_cgi_response.size() - headers_end - 4 >= content_length)
+							break ;
+					}
+				}
 			} catch (std::bad_alloc& ba) {
-				_request->setStatusCode(500);
-				break ;
+				return _request->setStatusCode(500);
+//				break ;
 			}
 		}
+		close(fd_read);
+//		std::cout << "strerror " << strerror(errno) << std::endl;
 	}
-	dup2(stdin_backup, 0);
-	dup2(stdout_backup, 1);
+//	dup2(stdin_backup, 0);
+
+	unlink(in_file_path.c_str());
+	unlink(out_file_path.c_str());
+
 	if (exit_status)
 		_request->setStatusCode(500);
+}
+
+//void Response::_parseStatusLineFromCgiResponse() {
+//
+//}
+
+void Response::_parseStatusLineFromCgiResponse() {
+
 }
 
 void Response::_parseHeadersFromCgiResponse() { // the same as in request headers parsing
@@ -617,52 +692,53 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 	size_t field_name_length;
 	size_t field_value_length;
 
-	size_t line_length = _content.find("\r\n");
+	size_t line_length = _cgi_response.find("\r\n");
 	while (line_length != 0) {
 		if (line_length > MAX_HEADER_LINE_LENGTH
 			|| line_length == std::string::npos) {
 			return _request->setStatusCode(500); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
 
-		field_name_length = _content.find(':'); // field-name
+		field_name_length = _cgi_response.find(':'); // field-name
 		if (field_name_length == std::string::npos) {
 			return _request->setStatusCode(500);
 		}
-		field_name = _content.substr(0, field_name_length);
+		field_name = _cgi_response.substr(0, field_name_length);
 
 		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
 		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
 			return _request->setStatusCode(500);
 		}
-		_content.erase(0, field_name_length + 1);
+		_cgi_response.erase(0, field_name_length + 1);
 
 
 		field_value_length = line_length - field_name_length - 1; // field-value
-		if (_content[0] == ' ') {
-			_content.erase(0, 1); // remove optional whitespace in the beginning of field-value
+		if (_cgi_response[0] == ' ') {
+			_cgi_response.erase(0, 1); // remove optional whitespace in the beginning of field-value
 			field_value_length--;
 		}
-		if (_content[field_value_length - 1] == ' ') {
-			_content.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
+		if (_cgi_response[field_value_length - 1] == ' ') {
+			_cgi_response.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
 			field_value_length--;
 		}
-		field_value = _content.substr(0, field_value_length);
-		_content.erase(0, field_value_length + 2);
+		field_value = _cgi_response.substr(0, field_value_length);
+		_cgi_response.erase(0, field_value_length + 2);
 
-		if (Request::implemented_headers.count(field_name))
-		{
-			if (_cgi_headers.count(field_name)) {
-				if (field_name == "host" || field_name == "content-length")
-					return _request->setStatusCode(500);
-				_cgi_headers[field_name].append(",");
-			}
-			_cgi_headers[field_name].append(field_value); // add field_name-field_value to map
-		}
+//		if (Request::implemented_headers.count(field_name))
+//		{
+//			if (_cgi_headers.count(field_name)) {
+//				if (field_name == "host" || field_name == "content-length")
+//					return _request->setStatusCode(500);
+//				_cgi_headers[field_name].append(",");
+//			}
+//			_cgi_headers[field_name].append(field_value); // add field_name-field_value to map
+//		}
+		_cgi_headers[field_name].append(field_value);
 
-		line_length = _content.find("\r\n");
+		line_length = _cgi_response.find("\r\n");
 	}
-	_content.erase(0, 2);
+	_cgi_response.erase(0, 2);
 }
 
 
@@ -676,14 +752,24 @@ void Response::generateHeadResponseCore() {
 //TODO: need to figure out what path to use instead of root
     std::string filename = _request->getAbsoluteRootPathForRequest();
 //	if (_request->_is_alias_path) {
-    if (_request->_handling_location) {
-        filename += _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
-    } else {
-        if (filename[filename.size() - 1] != '/')
-            filename += _request->_request_target; // _request->_request_target always starts with '/'
-        else
-            filename += _request->_request_target.substr(1); // remove '/'
-    }
+	if (_request->_handling_location) {
+		std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
+		if (filename[filename.size() - 1] != '/') {
+			if (request_substr[0] != '/')
+				filename += '/';
+			filename += request_substr; // _request->_request_target always starts with '/'
+		} else {
+			if (request_substr[0] == '/')
+				filename += request_substr.substr(1); // remove '/'
+			else
+				filename += request_substr;
+		}
+	} else {
+		if (filename[filename.size() - 1] != '/')
+			filename += _request->_request_target; // _request->_request_target always starts with '/'
+		else
+			filename += _request->_request_target.substr(1); // remove '/'
+	}
 
     struct stat stat_buf;
     std::string matching_index;
@@ -715,25 +801,27 @@ void Response::generateHeadResponseCore() {
             }
         }
 
-        if (S_ISREG(stat_buf.st_mode)) {
-            _file_ext = _getExt(filename);
-            if (_isCgiExt(_file_ext)) {
-                _runCgi(filename);
-                if (_file_ext == "php") { //TODO: do test cgi response with headers?
-                    _parseHeadersFromCgiResponse();
-                    if (_cgi_headers.count("content-length")) {
-                        _content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
-                    }
-                }
-            } else {
-                setContentTypeByFileExt(_file_ext);
-                readFileToContent(filename);
-                _last_modified = getLastModifiedHeader(stat_buf.st_mtime);
-            }
-        } else if (S_ISDIR(stat_buf.st_mode)) {
-            if (filename[filename.size() - 1] != '/') {
-                _request->_request_target += matching_index;
-                _location = getLocationHeader();
+		if (S_ISREG(stat_buf.st_mode)) {
+			_file_ext = _getExt(filename);
+			if (_isCgiExt(_file_ext)) {
+				_runCgi(filename);
+//				if (_file_ext == "php") { //TODO: do test cgi response with headers?
+					_parseStatusLineFromCgiResponse();
+					_parseHeadersFromCgiResponse();
+					if (_cgi_headers.count("content-length")) {
+						_cgi_response.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
+					}
+					_content.swap(_cgi_response);
+//				}
+			} else {
+				setContentTypeByFileExt(_file_ext);
+				readFileToContent(filename);
+				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+			}
+		} else if (S_ISDIR(stat_buf.st_mode)) {
+			if (filename[filename.size() - 1] != '/') {
+				_request->_request_target += matching_index;
+				_location = getLocationHeader();
 
                 return _request->setStatusCode(301); //Moved Permanently
             }
@@ -792,17 +880,16 @@ void Response::generatePostResponse() {
 	_file_ext = _getExt(filename);
 	if (_isCgiExt(_file_ext)) {
 		_runCgi(filename);
-		if (_file_ext == "php" || _file_ext == "bla") {
-			_parseHeadersFromCgiResponse();
-			if (_cgi_headers.count("content-length")) {
-				_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
-			}
+		_parseStatusLineFromCgiResponse();
+		_parseHeadersFromCgiResponse();
+		if (!_request->isStatusCodeOk())
+			return ;
+		if (_cgi_headers.count("content-length")) {
+			_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
 		}
 	}
-
 	if (!_request->isStatusCodeOk())
 		return ;
-
 	generateStatusLine();
 	generateHeaders();
 	_raw_response += _content;
