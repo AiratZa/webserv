@@ -80,7 +80,8 @@ std::map<int,std::string> Response::initStatusCodes() {
 
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket),
-				_raw_response(""), _content("") { };
+				_raw_response(""), _content(""),
+                error_code_for_generaion(200) { };
 
 Response::~Response(void) { };
 
@@ -253,23 +254,104 @@ void Response::generateHeaders() {
 	_raw_response += "\r\n";
 }
 
-void Response::generateResponseByStatusCode() {
-	_content_type = "Content-Type: text/html\r\n";
-	if (_request->_method != "HEAD")
-		_content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
+void Response::updateRequestForErrorPage(const std::string& error_page_link) {
+    error_code_for_generaion = _request->_status_code;
+
+    _request->_status_code = 200;
+    if (_request->_method != "HEAD") {
+        _request->_method = "GET";
+    }
+    _request->_request_target = error_page_link;
+    WebServ::routeRequest(_request->_host, _request->_port, _request);
+
+}
+
+void Response::generateResponseForErrorPage(void) {
+
+
+    generateHeadResponseCore();
+
+    // check for the same error
+    if (_request->_status_code == error_code_for_generaion) {
+        return generateDefaultResponseByStatusCode();
+    }
+    _request->_status_code = error_code_for_generaion;
+    error_code_for_generaion = 200;
+
+    generateStatusLine();
+    generateHeaders();
+    if (_request->_method != "PUT") {
+        _raw_response += _content;
+    }
+}
+
+const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const {
+
+    AContext * context = (_request->_handling_location != NULL)?
+                         static_cast<AContext*>(_request->_handling_location) :
+                         static_cast<AContext*> (_request->_handling_server);
+
+    const std::map<int, std::map<std::string, std::string> >&  error_page_info = context->getErrorPagesDirectiveInfo();
+
+    std::map<int, std::map<std::string, std::string> >::const_iterator it_search = error_page_info.find(_request->_status_code);
+
+    if ( it_search != error_page_info.end() ) {
+        const std::map<std::string, std::string>& params_map = (it_search->second);
+
+        std::string change_error_code = "";
+        std::string redirect_uri = "";
+
+        std::map<std::string, std::string>::const_iterator param_it;
+
+        param_it = params_map.find(ERROR_PAGE_CHANGE_ERROR_CODE);
+        if (param_it != params_map.end()) {
+            change_error_code = param_it->second;
+            if (change_error_code.size()) {
+                _request->_status_code = libft::stoll_base(change_error_code, 10);
+            }
+        }
+
+        param_it = params_map.find(ERROR_PAGE_REDIRECT_URI);
+        if (param_it != params_map.end()) {
+            redirect_uri = param_it->second;
+        }
+        return redirect_uri;
+    }
+    return "";
+}
+
+
+void Response::generateDefaultResponseByStatusCode() {
+    _content_type = "Content-Type: text/html\r\n";
+    if (_request->_method != "HEAD")
+        _content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
 
     generateStatusLine();
 
-	if (_request->getStatusCode() == 401) {
-		_www_authenticate = getWwwAuthenticateHeader();
-	}
+    if (_request->getStatusCode() == 401) {
+        _www_authenticate = getWwwAuthenticateHeader();
+    }
 
     if (_request->getStatusCode() != 100){ // cURL dont recognize 100 status code response with headers
         generateHeaders();
-		_raw_response.append(_content);
+        _raw_response.append(_content);
     }
 //	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
+}
+
+void Response::generateResponseByStatusCode() {
+
+    std::string link = searchForErrorPageLinkAndSetChangeError();
+	if (link.size()) {
+        updateRequestForErrorPage(link);
+        generateResponseForErrorPage();
+    }
+	else
+    {
+        generateDefaultResponseByStatusCode();
+    }
+
 }
 
 void Response::readFileToContent(std::string & filename) {
@@ -278,6 +360,11 @@ void Response::readFileToContent(std::string & filename) {
 	int fd;
 
 	fd = open(filename.c_str(), O_RDONLY);
+    if (fd <= 0) {
+        _request->_status_code = 500;
+        return ;
+    }
+
 	while ((ret = read(fd, buf, 1024))) {
 		if (ret < 0)
 			utils::exitWithLog();
@@ -578,90 +665,95 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 	_content.erase(0, 2);
 }
 
-void Response::generateHeadResponse() {
 
-	if (!isMethodAllowed()) {
-		_allow = getAllowHeader();
-		return _request->setStatusCode(405);
-	}
+void Response::generateHeadResponseCore() {
+
+    if (!isMethodAllowed()) {
+        _allow = getAllowHeader();
+        return _request->setStatusCode(405);
+    }
 
 //TODO: need to figure out what path to use instead of root
-	std::string filename = _request->getAbsoluteRootPathForRequest();
+    std::string filename = _request->getAbsoluteRootPathForRequest();
 //	if (_request->_is_alias_path) {
-	if (_request->_handling_location) {
-		filename += _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
-	} else {
-		if (filename[filename.size() - 1] != '/')
-			filename += _request->_request_target; // _request->_request_target always starts with '/'
-		else
-			filename += _request->_request_target.substr(1); // remove '/'
-	}
+    if (_request->_handling_location) {
+        filename += _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
+    } else {
+        if (filename[filename.size() - 1] != '/')
+            filename += _request->_request_target; // _request->_request_target always starts with '/'
+        else
+            filename += _request->_request_target.substr(1); // remove '/'
+    }
 
-	struct stat stat_buf;
-	std::string matching_index;
+    struct stat stat_buf;
+    std::string matching_index;
 
-	if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
-		if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
-			if (filename[filename.size() - 1] != '/') {
-				_location = getLocationHeader();
+    if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
+        if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
+            if (filename[filename.size() - 1] != '/') {
+                _location = getLocationHeader();
 
-				return _request->setStatusCode(301); //Moved Permanently
-			}
-			std::list<std::string> index_list;
-			if (_request->_handling_location)
-				index_list = _request->_handling_location->getIndexPagesDirectiveInfo(); // try to search one of index file
-			else
-				index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
+                return _request->setStatusCode(301); //Moved Permanently
+            }
+            std::list<std::string> index_list;
+            if (_request->_handling_location)
+                index_list = _request->_handling_location->getIndexPagesDirectiveInfo(); // try to search one of index file
+            else
+                index_list = _request->_handling_server->getIndexPagesDirectiveInfo(); // try to search one of index file
 
-			if (!index_list.empty()) {
-				for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
-					if (stat((filename + *it).c_str(), &stat_buf) == 0) {
-						matching_index = *it;
-						filename += *it;
-						break ;
-					}
-				}
-				if (matching_index.empty() && !_request->_handling_server->isAutoindexEnabled() && (!_request->_handling_location || (_request->_handling_location && !_request->_handling_location->isAutoindexEnabled()))) { // test from subject wants 404 if there is index in config but file doesnt exist
-					return _request->setStatusCode(404);
-				}
-			}
-		}
+            if (!index_list.empty()) {
+                for (std::list<std::string>::const_iterator it = index_list.begin(); it != index_list.end(); ++it) {
+                    if (stat((filename + *it).c_str(), &stat_buf) == 0) {
+                        matching_index = *it;
+                        filename += *it;
+                        break ;
+                    }
+                }
+                if (matching_index.empty() && !_request->_handling_server->isAutoindexEnabled() && (!_request->_handling_location || (_request->_handling_location && !_request->_handling_location->isAutoindexEnabled()))) { // test from subject wants 404 if there is index in config but file doesnt exist
+                    return _request->setStatusCode(404);
+                }
+            }
+        }
 
-		if (S_ISREG(stat_buf.st_mode)) {
-			_file_ext = _getExt(filename);
-			if (_isCgiExt(_file_ext)) {
-				_runCgi(filename);
-				if (_file_ext == "php") { //TODO: do test cgi response with headers?
-					_parseHeadersFromCgiResponse();
-					if (_cgi_headers.count("content-length")) {
-						_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
-					}
-				}
-			} else {
-				setContentTypeByFileExt(_file_ext);
-				readFileToContent(filename);
-				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
-			}
-		} else if (S_ISDIR(stat_buf.st_mode)) {
-			if (filename[filename.size() - 1] != '/') {
-				_request->_request_target += matching_index;
-				_location = getLocationHeader();
+        if (S_ISREG(stat_buf.st_mode)) {
+            _file_ext = _getExt(filename);
+            if (_isCgiExt(_file_ext)) {
+                _runCgi(filename);
+                if (_file_ext == "php") { //TODO: do test cgi response with headers?
+                    _parseHeadersFromCgiResponse();
+                    if (_cgi_headers.count("content-length")) {
+                        _content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
+                    }
+                }
+            } else {
+                setContentTypeByFileExt(_file_ext);
+                readFileToContent(filename);
+                _last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+            }
+        } else if (S_ISDIR(stat_buf.st_mode)) {
+            if (filename[filename.size() - 1] != '/') {
+                _request->_request_target += matching_index;
+                _location = getLocationHeader();
 
-				return _request->setStatusCode(301); //Moved Permanently
-			}
-			if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
-				generateAutoindex(filename);
-				_content_type = "Content-Type: text/html\r\n";
-			} else {
-				return _request->setStatusCode(403);
-			}
-		} else {
-			return _request->setStatusCode(403); // TODO:check what code to return if file is not a directory and not a regular file
-		}
-	} else {
-		return _request->setStatusCode(404);
-	}
+                return _request->setStatusCode(301); //Moved Permanently
+            }
+            if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
+                generateAutoindex(filename);
+                _content_type = "Content-Type: text/html\r\n";
+            } else {
+                return _request->setStatusCode(403);
+            }
+        } else {
+            return _request->setStatusCode(403); // TODO:check what code to return if file is not a directory and not a regular file
+        }
+    } else {
+        return _request->setStatusCode(404);
+    }
+}
 
+void Response::generateHeadResponse() {
+
+    generateHeadResponseCore();
 	if (!_request->isStatusCodeOk())
 		return ;
 

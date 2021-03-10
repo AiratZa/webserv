@@ -30,7 +30,8 @@ public:
 	void sendResponse();
 
 	void generateGetResponse();
-	void generateHeadResponse();
+    void generateHeadResponseCore();
+    void generateHeadResponse();
 	void generatePutResponse();
 	void generatePostResponse();
 	void generateResponse();
@@ -99,6 +100,14 @@ private: // headers
 	std::string _www_authenticate;
 
     bool setIndexFileContentToResponseContent(void); // Airat
+
+    void updateRequestForErrorPage(const std::string& error_page_link);
+
+    void generateDefaultResponseByStatusCode();
+    void generateResponseForErrorPage(void);
+    const std::string searchForErrorPageLinkAndSetChangeError() const;
+    int error_code_for_generaion;
+
 
 
 };
