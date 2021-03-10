@@ -127,10 +127,10 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 
     // Searching in Non Exact Locations
 //    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
-    std::size_t target_len = current_request->_request_target.size();
+	size_t pos_slash = current_request->_request_target.find_last_of('/');
 
-    while (target_len > 1) {
-        std::string target_substr = current_request->_request_target.substr(0, (target_len-1));
+    while (pos_slash > 1) {
+        std::string target_substr = current_request->_request_target.substr(0, pos_slash);
 
         std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
         while (it_non_exact != non_exact.end()) {
@@ -139,8 +139,7 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
             }
             ++it_non_exact;
         }
-
-        target_len--;
+        pos_slash = current_request->_request_target.find_last_of('/', pos_slash);
     }
     return NULL; // Not match to locations (404 Not Found)
 }
