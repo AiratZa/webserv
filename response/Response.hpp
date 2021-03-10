@@ -61,6 +61,7 @@ private:
 	bool _isCgiExt(std::string & ext);
 	void _runCgi(std::string & filename);
 	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
+	void _parseStatusLineFromCgiResponse();
 	void _parseHeadersFromCgiResponse();
 	std::string _inet_ntoa(struct in_addr sin_addr);
 
@@ -85,6 +86,8 @@ private:
 	std::string _content;
 
 	std::string _file_ext;
+	std::string _cgi_response;
+	std::string _cgi_status_line;
 	std::map<std::string, std::string> _cgi_headers;
 
 //	Server* _server;

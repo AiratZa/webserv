@@ -139,7 +139,7 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
 
-//    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request is the body
+//    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request in the body
     std::string& body = request_obj->getRawRequest();
 	long long length;
 
@@ -199,7 +199,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 			body.erase(0, chunk_length + 2); // remove rest of chunk
 
 			std::cout << chunk_length << std::endl;
-			if (chunk_length == 0)
+			if (chunk_length == 0) // why? body is now empty so loop is over
 			    return true;
 
 			start_line_length = body.find("\r\n");
