@@ -122,7 +122,7 @@ std::list<std::string> divideURIBySlashSymbols(const std::string& uri) {
     std::string uri_to = uri;
     std::list<std::string> divided;
 
-    if (uri.back() != '/') {
+    if (uri[uri.size()-1] != '/') {
         uri_to += '/';
     }
     while (!uri_to.empty()) {
