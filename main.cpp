@@ -90,26 +90,27 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-//TODO: make connections persistent
+////TODO: make connections persistent
 //TODO: accept all incoming connettions in Listener::acceptConnection(), not only one
+
+////TODO: set timeout in select
+////TODO: close connection after sending 400, frc 7230 3.3.3-4
+////TODO: make autoindex
+////TODO: when there is cgi_script there must be also cgi_ext
+////TODO: moving back with ../ in autoindex
+
+////todo: not found or forbidden (test returns 404 when there is index set in location in config, but it is not found; but nginx returns 403 )
+////todo: config file: index "345 6"; => unexpected end of file, expecting ";" or "}"
+////todo: location /ht matches http://localhost:8080/htlsakflsda
+////todo: Test GET http://localhost:8080/directory/youpi.bla doesnt work with cgi_tester
+////todo: dont know how error_page work
+////todo: unlink temp files in cgi
+////todo: "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla" in cgi, directory should be replaced by alias
+
+//todo: check cgi script when extension is set in config
+//todo: what if autoindex is folder http://localhost:8085/qq/tt http://localhost:8080/234345/
 //TODO: check accept-charset, accept-language and other request headers before response
-//TODO: set timeout in select
-//TODO: close connection after sending 400, frc 7230 3.3.3-4
-//TODO: check "Если разрешён метод GET, то метод HEAD также будет разрешён."
-//TODO: dont forget about cgi bug
-//TODO: make autoindex
-//TODO: when there is cgi_script there must be also cgi_ext
-//TODO: why new connection always opened
-//TODO: moving back with ../ in autoindex
-//todo: what if autoindex is folder
-//todo: not found or forbidden (test returns 404 when there is index set in location in config, but it is not found; but nginx returns 403 )
-//todo: config file: index "345 6"; => unexpected end of file, expecting ";" or "}"
-//todo: location /ht matches http://localhost:8080/htlsakflsda
-//todo: Test GET http://localhost:8080/directory/youpi.bla doesnt work with cgi_tester
-//todo: dont know how error_page work
-//todo: parse status line before headers in cgi response
-//todo: unlink temp files in cgi
-//todo: "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla" in cgi, directory should be replaced by alias
+
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
