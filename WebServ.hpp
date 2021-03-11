@@ -11,6 +11,12 @@ class WebServ;
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 
+#define DEFAULT_RESPONSE_CHARSET "utf-8"
+#define DEFAULT_RESPONSE_LANGUAGE "ru-RU"
+
+#define CHECK_ACCEPT_CHARSET_HEADER 0
+#define CHECK_ACCEPT_LANGUAGE_HEADER 1
+
 
 class WebServ {
 public:
@@ -53,20 +59,20 @@ public:
         _webserv_root_path = path;
     }
 
+    static std::list<std::string>& getCharsetList(void) { return _charset_list; }
+    static void initCharsetList(void);
+
+
 private:
     std::vector<Server*> _servers;
 
     static int correction_minutes_to_GMT; // TIMEZONE
     static std::string _webserv_root_path;
 
+    static std::list<std::string> _charset_list; // https://www.iana.org/assignments/character-sets/character-sets.txt
+
     Config _config;
-    // Для заполнения множества сокетов
-//    fd_set _readset;
-//    fd_set _writeset;
     int _max_fd;
-
-
-
 
 };
 

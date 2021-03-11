@@ -292,8 +292,12 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         return false;
     }
 
-    
+
+
+
+
     WebServ::routeRequest(_host, _port, request);
+
 //    if (request->isMethodLimited(request->_method)) { // TODO: jnannie: its 405, but we check for allowed methods in Response, and set 'location' header if method is not allowed, maybe later move it here, but xz
 //        request->_status_code = 403;
 //    }
@@ -301,6 +305,21 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (!request->isStatusCodeOk()) {
         return false;
     }
+
+    if (request->_headers.count("accept-charset")) {
+        request->handleAcceptCharsetHeader();
+        if (!request->isStatusCodeOk()) {
+            return false;
+        }
+    }
+
+    if (request->_headers.count("accept-language")) {
+        request->handleAcceptLanguageHeader();
+        if (!request->isStatusCodeOk()) {
+            return false;
+        }
+    }
+
 
     if (request->_handling_location) {
 		if (request->_handling_location->getLocationPath() == "/ht") { // TODO: add to config file

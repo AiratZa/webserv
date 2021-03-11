@@ -265,6 +265,11 @@ public:
             _port = port;
         }
 
+        void handleAcceptCharsetHeader(void);
+
+        void handleAcceptLanguageHeader(void);
+
+
 
 };
 

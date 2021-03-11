@@ -517,3 +517,154 @@ void Request::handleExpectHeader(void) {
 
     }
 }
+
+
+
+//// Accept-Charset and Accept-Language Headers Handlers BEGIN
+/*
+ * https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/Accept-Charset
+ * https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/Accept-Language
+ * https://developer.mozilla.org/en-US/docs/Glossary/Quality_values
+ *
+ * cURL TEST REQUESTS
+ *
+ * curl --header "Accept-Charset: utf-8, iso-8859-1;q=0.025, *;q=0.7" localhost:8080
+ *
+ * curl --header "Accept-Language: fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5, ru-RU" localhost:8080
+ *
+ * Author: Airat (GDrake)
+ */
+
+Pair<int, float> parseSpecificFloatValueForHeader(std::string str) {
+    int i = 0;
+    float value = 0;
+
+    Pair<int, float> err = Pair<int, float>(-1, -1);
+
+    std::size_t size = str.size();
+    if ((size > 5) || (size == 0)) {
+        return err;
+    }
+
+    // ===
+    if (str[i] == '0') {
+        i++;
+    } else if (str[i] == '1') {
+        value += 1;
+        i++;
+    } else {
+        return err;
+    }
+    size--;
+
+    if (!size)
+        return Pair<int, float>(i, value);
+
+    // ===
+    if (str[i] != '.')
+        return err;
+
+    i++;
+    size--;
+    if (!size)
+        return Pair<int, float>(i, value);
+
+    // ===
+    float divider = 10.0f;
+    while(size) {
+        if (libft::isdigit(str[i])) {
+            float tmp = static_cast<float>(str[i] - '0');
+            value += ( tmp / divider);
+            divider *= 10.0f;
+        }
+        else
+            return err;
+
+        i++;
+        size--;
+    }
+    return Pair<int, float>(i, value);
+}
+
+Pair<std::string, float> parseValueAndQuality(std::string str) {
+    float quality = 1.0f;
+    std::size_t q_pos = str.find(";q=");
+
+    if (q_pos == std::string::npos) {
+        return Pair<std::string, float>(str, quality);
+    }
+
+    std::string q_str = str.substr(q_pos+3);
+    Pair<int, float> quality_pair = parseSpecificFloatValueForHeader(q_str);
+    if (quality_pair.first != static_cast<int>(q_str.size())) {
+        quality = -1.0f;
+    }
+    quality = quality_pair.second;
+
+    return Pair<std::string, float>(str.substr(0, q_pos), quality);
+}
+
+
+bool quality_sort_func(const Pair<std::string, float>& one, const Pair<std::string, float>& two) {
+    if (one.second >= two.second)
+        return true;
+    return false;
+}
+
+std::list<std::string> sortValuesByQuality(std::list<Pair<std::string, float> >& values_list) {
+
+    std::list<std::string> sorted_strs;
+
+    values_list.sort(quality_sort_func);
+
+    std::list<Pair<std::string, float> >::const_iterator it = values_list.begin();
+    while (it != values_list.end()) {
+        sorted_strs.push_back(it->first);
+        ++it;
+    }
+    return sorted_strs;
+}
+
+std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::string& header_name, std::string value) {
+    std::list<Pair<std::string, float> > with_quality;
+
+    std::size_t pos;
+
+    while(!value.empty()) {
+        pos = value.find_first_of(',');
+        with_quality.push_back(parseValueAndQuality(value.substr(0, pos)));
+
+        if (pos != std::string::npos)
+            pos++; // for comma delete
+        value.erase(0, pos);
+
+        while(libft::isspace(value[0])) {
+            value.erase(0, 1);
+        }
+    }
+
+    return sortValuesByQuality(with_quality);
+}
+
+
+void Request::handleAcceptCharsetHeader(void) {
+    std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
+                                                                             _headers["accept-charset"]);
+
+    bool is_found = (std::find(values.begin(), values.end(), DEFAULT_RESPONSE_CHARSET) != values.end());
+    if (!is_found && CHECK_ACCEPT_CHARSET_HEADER) {
+        setStatusCode(406);
+    }
+}
+
+void Request::handleAcceptLanguageHeader(void) {
+    std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
+                                                                             _headers["accept-language"]);
+    bool is_found = (std::find(values.begin(), values.end(), DEFAULT_RESPONSE_LANGUAGE) != values.end());
+    if (!is_found && CHECK_ACCEPT_LANGUAGE_HEADER) {
+        setStatusCode(406);
+    }
+}
+
+//// Accept-Charset and Accept-Language Headers Handlers END
+
