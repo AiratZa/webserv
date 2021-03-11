@@ -46,11 +46,15 @@ public:
     const std::string& getLocationExtension(void) const;
     bool getAuthEnable(void) const;
 
+    const std::list<std::string>& getLocationPathDividedBySlahes(void) const { return _uri_divided_by_slashes; }
+
 private:
 
     LocationContext() { }
     bool _is_exact; //is contains "=" modifier
     std::string _uri;
+
+    std::list<std::string> _uri_divided_by_slashes;
 
     bool _is_error_pages_info_was_updated;
 
@@ -68,6 +72,8 @@ private:
 
     std::string _extension;
 };
+
+std::list<std::string> divideURIBySlashSymbols(const std::string& uri);
 
 
 #endif //WEBSERV_LOCATIONCONTEXT_HPP

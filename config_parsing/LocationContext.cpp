@@ -4,6 +4,9 @@
 
 #include "LocationContext.hpp"
 
+
+
+
 LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
                     : _is_exact(false)
                       ,_is_error_pages_info_was_updated(false),
@@ -23,6 +26,7 @@ LocationContext::LocationContext(const std::list<std::string>& location_uri_para
     {
         _is_exact = (location_uri_params.size() == 2);
         _uri = location_uri_params.back();
+        _uri_divided_by_slashes = divideURIBySlashSymbols(_uri);
     }
 
     _error_pages_info = serv_context.getErrorPagesDirectiveInfo();
@@ -111,4 +115,27 @@ const std::string& LocationContext::getLocationExtension(void) const {
 
 bool LocationContext::getAuthEnable(void) const {
     return _auth_enable;
+}
+
+
+std::list<std::string> divideURIBySlashSymbols(const std::string& uri) {
+    std::string uri_to = uri;
+    std::list<std::string> divided;
+
+    if (uri.back() != '/') {
+        uri_to += '/';
+    }
+    while (!uri_to.empty()) {
+        std::size_t pos = uri_to.find_first_of('/');
+
+        if (pos == std::string::npos) {
+            divided.push_back(uri_to);
+            break;
+        }
+        std::string tmp = uri_to.substr(0, pos+1);
+        divided.push_back(tmp);
+
+        uri_to.erase(0, pos+1);
+    }
+    return divided;
 }

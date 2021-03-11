@@ -103,6 +103,26 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
     return default_serv;
 }
 
+
+bool isPartOfLocationPath(const std::list<std::string>& request_target, const std::list<std::string>& location_path) {
+    std::list<std::string>::const_iterator it1 = request_target.begin();
+    std::list<std::string>::const_iterator it1_e = request_target.end();
+
+    std::list<std::string>::const_iterator it2 = location_path.begin();
+    std::list<std::string>::const_iterator it2_e = location_path.end();
+
+
+    while((it1 != it1_e) && (it2 != it2_e)) {
+        if ((*it1) != (*it2)) {
+            return false;
+        }
+        ++it1;
+        ++it2;
+    }
+    return true;
+}
+
+
 LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Request* current_request) {
     const std::string& request_target = current_request->_request_target;
 
@@ -158,28 +178,19 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 
 
     // Searching in Non Exact Locations
-//    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
-//	size_t pos_slash = current_request->_request_target.find_last_of('/'); TODO::
-    std::size_t target_len = current_request->_request_target.size();
-//    while (pos_slash > 1) {
-//        std::string target_substr = current_request->_request_target.substr(0, pos_slash);
-    while (target_len > 1) {
-        std::string target_substr = current_request->_request_target.substr(0, (target_len-1));
-
-        std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
-        while (it_non_exact != non_exact.end()) {
-            if ((*it_non_exact)->getLocationPath() == target_substr) {
-                if (ext_location) {
-                    current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
-                }
-                return (*it_non_exact); // exact route(location) is found
+    std::list<std::string> request_target_divided = divideURIBySlashSymbols(request_target);
+    it_non_exact = non_exact.begin();
+    while (it_non_exact != non_exact.end()) {
+        bool is_part = isPartOfLocationPath(request_target_divided,(*it_non_exact)->getLocationPathDividedBySlahes());
+        if (is_part) {
+            if (ext_location) {
+                current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
             }
-            ++it_non_exact;
+            return (*it_non_exact); // exact route(location) is found
         }
-        target_len--;
-//        pos_slash = current_request->_request_target.find_last_of('/', pos_slash);
+        ++it_non_exact;
     }
-    return NULL; // Not match to locations (404 Not Found)
+    return NULL; // Not match to locations
 }
 
 void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request) {

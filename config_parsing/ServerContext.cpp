@@ -16,6 +16,14 @@ const std::list<LocationContext*>& ServerContext::R_getExtensionLocationsList(vo
     return _ext_locations;
 }
 
+bool compare_uri_by_slash_length (LocationContext* first, LocationContext* second)
+{
+    if ((first->getLocationPathDividedBySlahes()).size() >= (second->getLocationPathDividedBySlahes()).size()) {
+        return true;
+    }
+    return false;
+}
+
 void ServerContext::_divideLocationExactNonExactExt(void) {
     std::list<LocationContext*>::const_iterator it = _locations.begin();
     while (it != _locations.end()) {
@@ -27,6 +35,7 @@ void ServerContext::_divideLocationExactNonExactExt(void) {
         }
         else {
             _non_exact_locations.push_back(*it);
+            _non_exact_locations.sort(compare_uri_by_slash_length);
         }
         ++it;
     }
