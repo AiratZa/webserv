@@ -566,8 +566,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
 //	else
 //		cgi_script = "/Users/jnannie/Desktop/webserv/cgi_tester";
-	if (filename == "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla") // todo:temporary, to delete
-		filename.assign("/Users/jnannie/Desktop/webserv/default_folder/html/YoupiBanane/youpi.bla");
+//	if (filename == "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla") // todo:temporary, to delete
+//		filename.assign("/Users/jnannie/Desktop/webserv/default_folder/html/YoupiBanane/youpi.bla");
 	char * argv[3] = {
 			const_cast<char *>(cgi_script.c_str()),
 			const_cast<char *>(filename.c_str()),
@@ -649,7 +649,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		exit_status = WEXITSTATUS(exit_status);
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
-//	if (!exit_status) {
+
+//	if (exit_status == 0) {
 //		size_t content_length;
 		char buf[1024] = {0};
 //		fcntl(0, F_SETFL, O_NONBLOCK);
@@ -754,16 +755,7 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 }
 
 
-void Response::generateHeadResponseCore() {
-
-    if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
-        _allow = getAllowHeader();
-        return _request->setStatusCode(405);
-    }
-
-//TODO: need to figure out what path to use instead of root
-    std::string filename = _request->getAbsoluteRootPathForRequest();
-//	if (_request->_is_alias_path) {
+void Response::_appendRequestTarget(std::string & filename) {
 	if (_request->_handling_location) {
 		std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
 		if (filename[filename.size() - 1] != '/') {
@@ -782,6 +774,19 @@ void Response::generateHeadResponseCore() {
 		else
 			filename += _request->_request_target.substr(1); // remove '/'
 	}
+}
+
+void Response::generateHeadResponseCore() {
+
+    if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
+        _allow = getAllowHeader();
+        return _request->setStatusCode(405);
+    }
+
+//TODO: need to figure out what path to use instead of root
+    std::string filename = _request->getAbsoluteRootPathForRequest();
+//	if (_request->_is_alias_path) {
+	_appendRequestTarget(filename);
 
     struct stat stat_buf;
     std::string matching_index;
@@ -885,10 +890,11 @@ void Response::generatePostResponse() {
 
 //TODO: need to figure out what path to use instead of root
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	if (filename[filename.size() - 1] != '/')
-		filename += _request->_request_target; // _request->_request_target always starts with '/'
-	else
-		filename += _request->_request_target.substr(1); // remove '/'
+	_appendRequestTarget(filename);
+//	if (filename[filename.size() - 1] != '/')
+//		filename += _request->_request_target; // _request->_request_target always starts with '/'
+//	else
+//		filename += _request->_request_target.substr(1); // remove '/'
 
 	_file_ext = _getExt(filename);
 	if (_isCgiExt()) {
