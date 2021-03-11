@@ -17,3 +17,5 @@ webserv
 *.d
 *.dSYM
 file_should_exist_after
+temp_in
+temp_out

@@ -190,8 +190,8 @@ void Request::parseHeaders() {
 		field_value = _raw_request.substr(0, field_value_length);
 		_raw_request.erase(0, field_value_length + 2);
 
-		if (Request::implemented_headers.count(field_name))
-		{
+//		if (Request::implemented_headers.count(field_name))
+//		{
 			if (_headers.count(field_name)) {
 				if (field_name == "host")
 					return setStatusCode(400);
@@ -202,7 +202,7 @@ void Request::parseHeaders() {
 				_headers[field_name].append(",");
 			}
 			_headers[field_name].append(field_value); // add field_name-field_value to map
-		}
+//		}
 
 		line_length = _raw_request.find("\r\n");
 	}
