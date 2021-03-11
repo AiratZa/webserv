@@ -275,7 +275,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
         // ext location can has only cgi_script / limit_except
         if (current_location->isExtLocation()) {
             if ((tmp_word != PARAM_CGI_SCRIPT) && (tmp_word != LIMIT_EXCEPT_KW)) {
-                _badConfigError( "location ext context can has 'cgi_script' || 'limit_except' directives inside");
+                _badConfigError( "location ext context can has 'cgi_script' || 'limit_except' directives inside. keyword '" + tmp_word + "' is found"  );
             }
         }
         std::list<std::string> tmp_params;
