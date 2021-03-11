@@ -272,6 +272,12 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
                                                                     "' NOT EXPECTED THERE IN 'location' CONTEXT LEVEL");
         }
 
+        // ext location can has only cgi_script / limit_except
+        if (current_location->isExtLocation()) {
+            if ((tmp_word != PARAM_CGI_SCRIPT) && (tmp_word != LIMIT_EXCEPT_KW)) {
+                _badConfigError( "location ext context can has 'cgi_script' || 'limit_except' directives inside");
+            }
+        }
         std::list<std::string> tmp_params;
         if (_isMultipleParamDirective[tmp_word]) {
             tmp_params = parseMultipleParamDirective(tmp_word);
