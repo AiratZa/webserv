@@ -837,7 +837,7 @@ void Response::generateHeadResponseCore() {
 			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (filename[filename.size() - 1] != '/') {
-				_request->_request_target += matching_index;
+				_request->_request_target += ('/' + matching_index);
 				_location = getLocationHeader();
 
                 return _request->setStatusCode(301); //Moved Permanently
