@@ -445,14 +445,17 @@ std::string Response::_getExt(std::string filename) {
 	return ext;
 }
 
-bool Response::_isCgiExt(std::string & ext) {
-	if (!_request->_handling_location)
+bool Response::_isCgiExt() {
+	if (_request->getCgiScriptPathForRequest().empty())
 		return false;
-	const std::string& loc_ext = (_request->_handling_location)->getLocationExtension();
+	return true;
 
-    if (!(loc_ext == ("." + ext)))
-        return false;
-    return true;
+	//// in Webserv_Router
+	//	const std::string& loc_ext = (_request->_handling_location)->getLocationExtension();
+//
+//    if (!(loc_ext == ("." + ext)))
+//        return false;
+//    return true;
     //	return ext == "php" || ext == "bla";
 }
 
@@ -753,7 +756,7 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 
 void Response::generateHeadResponseCore() {
 
-    if (!isMethodAllowed()) {
+    if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
         _allow = getAllowHeader();
         return _request->setStatusCode(405);
     }
@@ -812,7 +815,7 @@ void Response::generateHeadResponseCore() {
 
 		if (S_ISREG(stat_buf.st_mode)) {
 			_file_ext = _getExt(filename);
-			if (_isCgiExt(_file_ext)) {
+			if (_isCgiExt()) {
 				_runCgi(filename);
 //				if (_file_ext == "php") { //TODO: do test cgi response with headers?
 					_parseStatusLineFromCgiResponse();
@@ -874,7 +877,8 @@ void Response::generatePutResponse() {
 
 void Response::generatePostResponse() {
 
-	if (!isMethodAllowed()) {
+    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
+	if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
 		_allow = getAllowHeader();
 		return _request->setStatusCode(405);
 	}
@@ -887,7 +891,7 @@ void Response::generatePostResponse() {
 		filename += _request->_request_target.substr(1); // remove '/'
 
 	_file_ext = _getExt(filename);
-	if (_isCgiExt(_file_ext)) {
+	if (_isCgiExt()) {
 		_runCgi(filename);
 		_parseStatusLineFromCgiResponse();
 		_parseHeadersFromCgiResponse();

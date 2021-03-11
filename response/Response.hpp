@@ -59,7 +59,7 @@ private:
 	struct tm _getCalendarTime(time_t tv_sec);
 	struct tm _gmtime(time_t tv_sec);
 	std::string _getExt(std::string filename);
-	bool _isCgiExt(std::string & ext);
+	bool _isCgiExt();
 	void _runCgi(std::string & filename);
 	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
 	void _parseStatusLineFromCgiResponse();

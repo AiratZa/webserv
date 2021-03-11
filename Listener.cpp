@@ -198,7 +198,7 @@ bool Listener::continueReadBody(Request* request_obj) {
 
 			body.erase(0, chunk_length + 2); // remove rest of chunk
 
-			std::cout << chunk_length << std::endl;
+//			std::cout << chunk_length << std::endl;
 			if (chunk_length == 0) // why? body is now empty so loop is over
 			    return true;
 
