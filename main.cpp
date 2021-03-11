@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 //todo: dont know how error_page work
 //todo: parse status line before headers in cgi response
 //todo: unlink temp files in cgi
+//todo: "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla" in cgi, directory should be replaced by alias
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;

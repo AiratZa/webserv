@@ -250,9 +250,9 @@ void Response::generateHeaders() {
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
-		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
-	}
+//	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
+//		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
+//	}
 	_raw_response += "\r\n";
 }
 
@@ -446,7 +446,9 @@ std::string Response::_getExt(std::string filename) {
 }
 
 bool Response::_isCgiExt(std::string & ext) {
-    const std::string& loc_ext = (_request->_handling_location)->getLocationExtension();
+	if (!_request->_handling_location)
+		return false;
+	const std::string& loc_ext = (_request->_handling_location)->getLocationExtension();
 
     if (!(loc_ext == ("." + ext)))
         return false;
@@ -561,6 +563,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
 //	else
 //		cgi_script = "/Users/jnannie/Desktop/webserv/cgi_tester";
+	if (filename == "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla") // todo:temporary, to delete
+		filename.assign("/Users/jnannie/Desktop/webserv/default_folder/html/YoupiBanane/youpi.bla");
 	char * argv[3] = {
 			const_cast<char *>(cgi_script.c_str()),
 			const_cast<char *>(filename.c_str()),
@@ -576,6 +580,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //	if (pipe(filedes_in) == -1 || pipe(filedes_out) == -1)
 //		return _request->setStatusCode(500);
 
+//std::cout <<"filename " << filename << std::endl;
 
 	std::string out_file_path = WebServ::getWebServRootPath() + "temp_out";
 	std::string in_file_path = WebServ::getWebServRootPath() + "temp_in";
@@ -603,6 +608,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		}
 //	}
 
+	close(fd_write);
+
 	if ((pid = fork()) == -1) {
 //		close(filedes_in[0]);
 //		close(filedes_out[1]);
@@ -611,6 +618,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	} else if (pid == 0) {
 //		dup2(filedes_in[0], 0);
 //		dup2(filedes_out[1], 1);
+		if ((fd_write = open(in_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
+			utils::exitWithLog();
 		dup2(fd_write, 0);
 		close(fd_write);
 		int fd_read;
@@ -637,8 +646,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		exit_status = WEXITSTATUS(exit_status);
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
-	if (!exit_status) {
-		size_t content_length;
+//	if (!exit_status) {
+//		size_t content_length;
 		char buf[1024] = {0};
 //		fcntl(0, F_SETFL, O_NONBLOCK);
 //		int ret;
@@ -646,18 +655,19 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 
 		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
 			utils::exitWithLog();
-		while ((ret = read(fd_read, buf, 1023)) > 0) {
+		ret = 0;
+		while ((ret = read(fd_read, buf, 1024)) != 0) {
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(buf, ret);
-				size_t headers_end = _cgi_response.find("\r\n\r\n");
-				if (headers_end != std::string::npos) {
-					if (_cgi_response.find("content-length", 0, headers_end + 1) != std::string::npos) {
-						content_length = libft::strtoul_base(_cgi_response.substr(_cgi_response.find("content-length:") + 15), 10);
-						if (_cgi_response.size() - headers_end - 4 >= content_length)
-							break ;
-					}
-				}
+//				size_t headers_end = _cgi_response.find("\r\n\r\n");
+//				if (headers_end != std::string::npos) {
+//					if (_cgi_response.find("content-length", 0, headers_end + 1) != std::string::npos) {
+//						content_length = libft::strtoul_base(_cgi_response.substr(_cgi_response.find("content-length:") + 15), 10);
+//						if (_cgi_response.size() - headers_end - 4 >= content_length)
+//							break ;
+//					}
+//				}
 			} catch (std::bad_alloc& ba) {
 				return _request->setStatusCode(500);
 //				break ;
@@ -665,14 +675,14 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		}
 		close(fd_read);
 //		std::cout << "strerror " << strerror(errno) << std::endl;
-	}
+//	}
 //	dup2(stdin_backup, 0);
 
 	unlink(in_file_path.c_str());
 	unlink(out_file_path.c_str());
 
-	if (exit_status)
-		_request->setStatusCode(500);
+//	if (exit_status)
+//		_request->setStatusCode(500);
 }
 
 //void Response::_parseStatusLineFromCgiResponse() {
@@ -884,11 +894,29 @@ void Response::generatePostResponse() {
 		if (!_request->isStatusCodeOk())
 			return ;
 		if (_cgi_headers.count("content-length")) {
-			_content.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
+			_cgi_response.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
 		}
+		_content.swap(_cgi_response);
 	}
 	if (!_request->isStatusCodeOk())
 		return ;
+
+//	generateStatusLine();
+//	_raw_response = "Content-Language: en-US\r\n";
+//	_raw_response = "Allow: GET, POST\r\n";
+////	_raw_response = "Connection: keep-alive\r\n";
+//	_content_type = "Content-Type: text/html\r\n";
+//	generateHeaders();
+//	_raw_response += "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAllow: GET, POST\r\nDate: Thu, 11 March 2021 12:31:25 GMT\r\nContent-Length: 100000000\r\nContent-Language: en-US\r\nHost: Webserv/1.0\r\nConnection: keep-alive\r\n\r\n";
+
+	//"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAllow: GET, POST\r\nDate: Thu, 11 March 2021 12:31:25 GMT\r\nContent-Length: 100000000\r\nContent-Language: en-US\r\nHost: Webserv/1.0\r\nConnection: keep-alive\r\n\r\n"
+//	_raw_response += "Content-Length: ";
+//	_raw_response += libft::ultostr_base(_content.length(), 10);
+//	_raw_response += "\r\n";
+//	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
+//		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
+//	}
+//	_raw_response += "\r\n";
 	generateStatusLine();
 	generateHeaders();
 	_raw_response += _content;
@@ -923,8 +951,16 @@ void Response::sendResponse() {
 //	std::cout << _raw_response.substr(0, 200) << std::endl;
 
 	// Отправляем ответ клиенту с помощью функции send
-    std::cout << _raw_response << std::endl;
-    send(_socket, _raw_response.c_str(), _raw_response.length(), 0);
+//    std::cout << _raw_response << std::endl;
+	long ret = 0;
+	long sent_len = 0;
+	long remains = _raw_response.size();
+	while (remains > 0) {
+		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
+		sent_len += ret;
+		remains -= ret;
+	}
+return;
 }
 
 
