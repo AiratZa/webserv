@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 ////todo: unlink temp files in cgi
 ////todo: "/Users/jnannie/Desktop/webserv/default_folder/html/directory/youpi.bla" in cgi, directory should be replaced by alias
 
-//todo: check cgi script when extension is set in config
+////todo: check cgi script when extension is set in config
 //todo: what if autoindex is folder http://localhost:8085/qq/tt http://localhost:8080/234345/
 //TODO: check accept-charset, accept-language and other request headers before response
 

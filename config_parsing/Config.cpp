@@ -286,6 +286,14 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
         }
         _checkAndSetParams(current_server, current_location, tmp_word, tmp_params);
     }
+
+    if (current_location->isExtLocation()) {
+        if (current_location->getCgiScript().empty()) {
+            _badConfigError("location with 'ext' prefix should contain 'cgi_script' param inside");
+
+        }
+    }
+
     if ((const_config_text[_tmp_len] != '}')) {
         _badConfigError("SYMBOL '}' THAT SHOULD CLOSE 'location' CONTEXT KEYWORD IS NOT FOUND");
     }
