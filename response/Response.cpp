@@ -250,9 +250,9 @@ void Response::generateHeaders() {
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 //	_raw_response += "Content-Language: en\r\n";
-//	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
-//		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
-//	}
+	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
+		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
+	}
 	_raw_response += "\r\n";
 }
 
@@ -967,6 +967,8 @@ void Response::sendResponse() {
 	long remains = _raw_response.size();
 	while (remains > 0) {
 		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
+		if (ret == -1)
+			continue;
 		sent_len += ret;
 		remains -= ret;
 	}
