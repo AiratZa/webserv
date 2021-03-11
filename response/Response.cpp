@@ -743,7 +743,7 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 
 void Response::generateHeadResponseCore() {
 
-    if (!isMethodAllowed()) {
+    if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
         _allow = getAllowHeader();
         return _request->setStatusCode(405);
     }
@@ -864,7 +864,8 @@ void Response::generatePutResponse() {
 
 void Response::generatePostResponse() {
 
-	if (!isMethodAllowed()) {
+    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
+	if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
 		_allow = getAllowHeader();
 		return _request->setStatusCode(405);
 	}

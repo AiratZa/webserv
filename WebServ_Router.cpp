@@ -115,6 +115,8 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
         ++it_exact;
     }
 
+    LocationContext* ext_location = NULL;
+
     const std::list<LocationContext*>& extension_loc = handling_server->R_getExtensionLocationsList();
     std::list<LocationContext*>::const_iterator it_extension = extension_loc.begin();
     while (it_extension != extension_loc.end()) {
@@ -130,7 +132,8 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 
                 // no limits
                 if (!not_allowed) {
-                    return (*it_extension);
+                    ext_location = *it_extension;
+                    break;
                 }
             }
         }
@@ -145,10 +148,14 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 	std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
 	while (it_non_exact != non_exact.end()) {
 		if ((*it_non_exact)->getLocationPath() == current_request->_request_target) {
+		    if (ext_location) {
+                current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
+		    }
 			return (*it_non_exact); // exact route(location) is found
 		}
 		++it_non_exact;
 	}
+
 
     // Searching in Non Exact Locations
 //    const std::list<LocationContext*>& non_exact = handling_server->R_getNonExactLocationsList();
@@ -162,6 +169,9 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
         std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
         while (it_non_exact != non_exact.end()) {
             if ((*it_non_exact)->getLocationPath() == target_substr) {
+                if (ext_location) {
+                    current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
+                }
                 return (*it_non_exact); // exact route(location) is found
             }
             ++it_non_exact;

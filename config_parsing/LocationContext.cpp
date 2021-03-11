@@ -5,12 +5,14 @@
 #include "LocationContext.hpp"
 
 LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
-                    : _is_error_pages_info_was_updated(false),
+                    : _is_exact(false)
+                      ,_is_error_pages_info_was_updated(false),
                       _alias_path(""),
                       _is_alias_path_already_was_set(false),
                       _is_ext_location(false),
                       _auth_enable_was_set(false),
                       _auth_enable(false)
+
 {
     if ((location_uri_params.size() == 2) && (location_uri_params.front() == "ext"))
     {

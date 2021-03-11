@@ -242,9 +242,20 @@ private:
 
         bool _is_need_writing_body_to_file;
 
+
+        std::string cgi_script_path;
+
 public:
         bool is_chunked;
         bool checkToClientMaxBodySize(long long int value_to_check);
+
+        void setCgiScriptPathForRequest(const std::string& path) {
+            cgi_script_path = path;
+        }
+
+        const std::string& getCgiScriptPathForRequest(void) const {
+            return cgi_script_path;
+        }
 
         std::string _host;
         int _port;
