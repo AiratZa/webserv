@@ -596,9 +596,9 @@ void Response::_setEnv(std::vector<char *> & env, std::string & filename, std::m
 
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	int pid;
-	int exit_status = 0;
+    	int exit_status = 0;
 	std::string cgi_script;
-	cgi_script = _request->_handling_location->getCgiScript();
+	cgi_script = _request->getCgiScriptPathForRequest();
 //	if (_file_ext == "php")
 //		cgi_script = "/Users/jnannie/.brew/bin/php-cgi";
 //	else
