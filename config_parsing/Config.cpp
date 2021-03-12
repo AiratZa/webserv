@@ -265,6 +265,7 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
         tmp_it = std::find(_locationContext.begin(), _locationContext.end(), tmp_word);
 
         if (tmp_it == _ite_location) { // word is not keyword
+
             if (tmp_word.size())
                 _badConfigError( "WORD " + tmp_word + " NOT EXPECTED THERE IN 'location' CONTEXT LEVEL");
             else
@@ -278,6 +279,12 @@ void Config::parseInsideLocationContext(ServerContext* current_server) {
                 _badConfigError( "location ext context can has 'cgi_script' || 'limit_except' directives inside. keyword '" + tmp_word + "' is found"  );
             }
         }
+        else {
+            if (tmp_word == PARAM_CGI_SCRIPT) {
+                _badConfigError( "general-purpose locations shouldn't have '" +  std::string(PARAM_CGI_SCRIPT) + "' param inside");
+            }
+        }
+
         std::list<std::string> tmp_params;
         if (_isMultipleParamDirective[tmp_word]) {
             tmp_params = parseMultipleParamDirective(tmp_word);
