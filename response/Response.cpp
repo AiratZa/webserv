@@ -11,7 +11,7 @@
 #include "../base64_coding/base64.hpp"
 #include "autoindex_handling/autoindex_handling.hpp"
 
-#define BUF_SIZE 4096
+#define BUF_SIZE 1000000
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -691,7 +691,9 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //	if (exit_status == 0) {
 //		size_t content_length;
 
-		char buf[BUF_SIZE] = {0};
+//		char buf[BUF_SIZE] = {0};
+		std::vector<char> buf;
+		buf.reserve(BUF_SIZE);
 //		fcntl(0, F_SETFL, O_NONBLOCK);
 //		int ret;
 		int fd_read;
@@ -699,10 +701,10 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
 			utils::exitWithLog();
 		ret = 0;
-		while ((ret = read(fd_read, buf, BUF_SIZE)) != 0) {
+		while ((ret = read(fd_read, &buf[0], BUF_SIZE)) != 0) {
 //			buf[ret] = '\0';
 			try {
-				_cgi_response.append(buf, ret);
+				_cgi_response.append(&buf[0], ret);
 //				size_t headers_end = _cgi_response.find("\r\n\r\n");
 //				if (headers_end != std::string::npos) {
 //					if (_cgi_response.find("content-length", 0, headers_end + 1) != std::string::npos) {
