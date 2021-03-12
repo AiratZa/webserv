@@ -19,3 +19,5 @@ webserv
 file_should_exist_after
 temp_in
 temp_out
+file_should_exist_after
+multiple_same

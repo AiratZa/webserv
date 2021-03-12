@@ -110,6 +110,8 @@ int main(int argc, char *argv[])
 ////todo: check cgi script when extension is set in config
 ////todo: what if autoindex is folder http://localhost:8085/qq/tt http://localhost:8080/234345/
 //TODO: check accept-charset, accept-language and other request headers before response
+//todo: searchForErrorPageLinkAndSetChangeError() gives error
+//todo: Test multiple workers(20) doing multiple times(5): Put on /put_test/multiple_same with size 1000000; the file multiple_same should exists with a size of 1000000 bytes // we have 20Mb file
 
 //location /ht {
 //auth_basic "closed site";

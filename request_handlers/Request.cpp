@@ -310,6 +310,7 @@ bool Request::checkToClientMaxBodySize(long long int value_to_check) {
 
     if (client_max_body_size && (value_to_check > client_max_body_size)) {
         setStatusCode(413);
+//        _close_connection = true;
         return false;
     }
     return true;
@@ -626,6 +627,8 @@ std::list<std::string> sortValuesByQuality(std::list<Pair<std::string, float> >&
 }
 
 std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::string& header_name, std::string value) {
+	(void)header_name;
+
     std::list<Pair<std::string, float> > with_quality;
 
     std::size_t pos;

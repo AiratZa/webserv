@@ -181,10 +181,10 @@ bool Listener::continueReadBody(Request* request_obj) {
 			}
 			sum_content_length += chunk_length;
 
-			bool size_check = request_obj->checkToClientMaxBodySize(sum_content_length); // 413 set inside if needed
-			if (!size_check) {
-			    return true; // finished beacuse of SIZE
-			}
+//			bool size_check = request_obj->checkToClientMaxBodySize(sum_content_length); // 413 set inside if needed
+//			if (!size_check) {
+//			    return true; // finished beacuse of SIZE
+//			}
 
 			if (body.size() < start_line_length + 2 + chunk_length + 2)
 				return false;
@@ -306,19 +306,19 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         return false;
     }
 
-    if (request->_headers.count("accept-charset")) {
-        request->handleAcceptCharsetHeader();
-        if (!request->isStatusCodeOk()) {
-            return false;
-        }
-    }
-
-    if (request->_headers.count("accept-language")) {
-        request->handleAcceptLanguageHeader();
-        if (!request->isStatusCodeOk()) {
-            return false;
-        }
-    }
+//    if (request->_headers.count("accept-charset")) {
+//        request->handleAcceptCharsetHeader();
+//        if (!request->isStatusCodeOk()) {
+//            return false;
+//        }
+//    }
+//
+//    if (request->_headers.count("accept-language")) {
+//        request->handleAcceptLanguageHeader();
+//        if (!request->isStatusCodeOk()) {
+//            return false;
+//        }
+//    }
 
 
     if (request->_handling_location) {
@@ -545,6 +545,10 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 //			request->parseBody();
 
+			request->checkToClientMaxBodySize(request->_content.size()); // 413 set inside if needed
+//			if (!size_check) {
+//				return true; // finished beacuse of SIZE
+//			}
 			Response response(request, fd);
 			response.generateResponse();
 			response.sendResponse();

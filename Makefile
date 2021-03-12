@@ -17,7 +17,9 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/string_to_lower.cpp \
                 utils/cpp_libft/ultostr_base.cpp \
                 utils/cpp_libft/stoll_base.cpp \
-                utils/cpp_libft/percent_decode.cpp
+                utils/cpp_libft/percent_decode.cpp \
+                utils/cpp_libft/toupper.cpp \
+                utils/cpp_libft/string_to_upper.cpp
 
 
 

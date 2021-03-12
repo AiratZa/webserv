@@ -11,6 +11,8 @@
 #include "../base64_coding/base64.hpp"
 #include "autoindex_handling/autoindex_handling.hpp"
 
+#define BUF_SIZE 1024 * 1024
+
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
 std::map<int, std::string> Response::status_codes = Response::initStatusCodes();
@@ -324,7 +326,7 @@ const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const 
 
 
 void Response::generateDefaultResponseByStatusCode() {
-    _content_type = "Content-Type: text/html\r\n";
+    _content_type = "Content-Type: text/html;charset=utf-8\r\n";
     if (_request->_method != "HEAD")
         _content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
 
@@ -344,7 +346,8 @@ void Response::generateDefaultResponseByStatusCode() {
 
 void Response::generateResponseByStatusCode() {
 
-    std::string link = searchForErrorPageLinkAndSetChangeError();
+//    std::string link = searchForErrorPageLinkAndSetChangeError();
+    std::string link = "searchForErrorPageLinkAndSetChangeError()";
 	if (link.size()) {
         updateRequestForErrorPage(link);
         generateResponseForErrorPage();
@@ -385,9 +388,9 @@ void Response::setContentTypeByFileExt(std::string & ext) {
 		_content_type = "Content-Type: application/octet-stream\r\n";
 	else {
 		if (ext == "txt")
-			_content_type = "Content-Type: text/plain\r\n";
+			_content_type = "Content-Type: text/plain;charset=utf-8\r\n";
 		else if (ext == "html")
-			_content_type = "Content-Type: text/html\r\n";
+			_content_type = "Content-Type: text/html;charset=utf-8\r\n";
 		else if (ext == "jpg")
 			_content_type = "Content-Type: image/jpeg;\r\n";
 		else
@@ -487,6 +490,10 @@ std::string Response::_getUserFromCredentials() {
 	return user;
 }
 
+//std::string Response::_replaceDashes(std::string str) {
+//
+//}
+
 void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
 	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"].substr(0, _request->_headers["authorization"].find(' ')); // TODO: should be scheme only, "Basic"
 //	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
@@ -543,10 +550,25 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 //	env[15] = const_cast<char *>(cgiVariables["SERVER_PROTOCOL"].c_str());
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
 //	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
+
+	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it) {
+		if (it->first != "content-length" && it->first != "content-Type" && it->first != "authorization") {
+			std::string first = it->first;
+			std::replace(first.begin(), first.end(), '-', '_');
+			libft::string_to_upper(first);
+			cgiVariables[first] = "HTTP_" + first + "=" + it->second;
+		}
+	}
+
+
 	if (_file_ext == "php") {
 		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true"; // php doesnt work without it, dont know why yet
 //		env[17] = const_cast<char *>(cgiVariables["REDIRECT_STATUS"].c_str());
 	}
+//	else {
+//		cgiVariables["HTTP_X_SECRET_HEADER_FOR_TEST"] = "HTTP_X_SECRET_HEADER_FOR_TEST=1";
+////		cgiVariables["HTTP_X_SECRET_HEADER_FOR_TEST="] = "1";
+//	}
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it = cgiVariables.begin(); it != cgiVariables.end(); ++it) {
 		env[i] = const_cast<char *>(it->second.c_str());
@@ -573,7 +595,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 			const_cast<char *>(filename.c_str()),
 			NULL
 	};
-	char * env[19] = {0};
+	char * env[30] = {0};
+//	char * env[19] = {0};
 
 	std::map<std::string, std::string> cgiVariables;
 	_setEnv(env, filename, cgiVariables);
@@ -652,7 +675,8 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 
 //	if (exit_status == 0) {
 //		size_t content_length;
-		char buf[1024] = {0};
+
+		char buf[BUF_SIZE] = {0};
 //		fcntl(0, F_SETFL, O_NONBLOCK);
 //		int ret;
 		int fd_read;
@@ -660,7 +684,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
 			utils::exitWithLog();
 		ret = 0;
-		while ((ret = read(fd_read, buf, 1024)) != 0) {
+		while ((ret = read(fd_read, buf, BUF_SIZE)) != 0) {
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(buf, ret);
@@ -844,7 +868,7 @@ void Response::generateHeadResponseCore() {
             }
             if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
                 generateAutoindex(filename);
-                _content_type = "Content-Type: text/html\r\n";
+                _content_type = "Content-Type: text/html;charset=utf-8\r\n";
             } else {
                 return _request->setStatusCode(403);
             }
@@ -972,6 +996,9 @@ void Response::sendResponse() {
 		sent_len += ret;
 		remains -= ret;
 	}
+	static int i;
+	std::cout << "response sent, i = " << i << std::endl;
+	i++;
 return;
 }
 

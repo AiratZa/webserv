@@ -66,6 +66,7 @@ private:
 	void _parseHeadersFromCgiResponse();
 	std::string _inet_ntoa(struct in_addr sin_addr);
 	void _appendRequestTarget(std::string & filename);
+//	std::string _replaceDashes(std::string str);
 
 
 
