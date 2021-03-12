@@ -894,7 +894,7 @@ void Response::generateHeadResponseCore() {
                     if (stat((filename + *it).c_str(), &stat_buf) == 0) {
                         matching_index = *it;
                         filename += *it;
-//                        WebServ::routeRequest(_request->_host, _request->_port, _request, _request->_request_target + *it);
+                        WebServ::routeRequest(_request->_host, _request->_port, _request, _request->_request_target + *it);
                         break ;
                     }
                 }

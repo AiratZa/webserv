@@ -123,9 +123,9 @@ bool isPartOfLocationPath(const std::list<std::string>& request_target, const st
 }
 
 
-LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Request* current_request) {
-    const std::string& request_target = current_request->_request_target;
-
+LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
+                                            Request* current_request,
+                                            const std::string& request_target) {
     const std::list<LocationContext*>& exact = handling_server->R_getExactLocationsList();
     std::list<LocationContext*>::const_iterator it_exact = exact.begin();
     while (it_exact != exact.end()) {
@@ -194,7 +194,7 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 }
 
 void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request, const std::string& request_target) {
-	_client_request->_request_target = request_target;
+	std::string tmp_request_target = request_target;
     std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
 
     std::string host_from_header;
@@ -208,7 +208,7 @@ void WebServ::routeRequest(const std::string& host, const int port, Request* _cl
     ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
     _client_request->setHandlingServer(handling_server);
 
-    LocationContext* location_to_route = searchForBestMatchLocation(handling_server, _client_request);
+    LocationContext* location_to_route = searchForBestMatchLocation(handling_server, _client_request, tmp_request_target);
     _client_request->setHandlingLocation(location_to_route);
 
     _client_request->setAbsoluteRootPathForRequest();
