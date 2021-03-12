@@ -302,23 +302,18 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 //        request->_status_code = 403;
 //    }
 
+
+    std::size_t lang_start_pos;
+    if ((lang_start_pos = request->_request_target.find("_lang_")) != std::string::npos) {
+        lang_start_pos += 6; // pass "_lang_"
+        request->_is_lang_file_pos = lang_start_pos;
+    }
+
     if (!request->isStatusCodeOk()) {
         return false;
     }
 
-//    if (request->_headers.count("accept-charset")) {
-//        request->handleAcceptCharsetHeader();
-//        if (!request->isStatusCodeOk()) {
-//            return false;
-//        }
-//    }
-//
-//    if (request->_headers.count("accept-language")) {
-//        request->handleAcceptLanguageHeader();
-//        if (!request->isStatusCodeOk()) {
-//            return false;
-//        }
-//    }
+
 
 
     if (request->_handling_location) {

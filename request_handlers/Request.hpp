@@ -185,6 +185,11 @@ class Request {
         return (stat (_full_filename.c_str(), &buffer) == 0);
     }
 
+    bool isFileExists(const std::string& full_filename) {
+        struct stat buffer;
+        return (stat (full_filename.c_str(), &buffer) == 0);
+    }
+
     void setFileExistenceStatus(bool value) {
         _is_file_exists = value;
     }
@@ -244,6 +249,7 @@ private:
 
 
         std::string cgi_script_path;
+        std::string _response_content_lang;
 
 public:
         bool is_chunked;
@@ -269,8 +275,11 @@ public:
 
         void handleAcceptLanguageHeader(void);
 
+        void setReponseContentLang(const std::string& lang) { _response_content_lang = lang;}
+        const std::string& getReponseContentLang(void) { return _response_content_lang; }
 
 
+        std::size_t _is_lang_file_pos;
 };
 
 bool isMethodLimited(const LocationContext& handling_location, const std::string& method);

@@ -12,9 +12,9 @@ class WebServ;
 #include "config_parsing/Config.hpp"
 
 #define DEFAULT_RESPONSE_CHARSET "utf-8"
-#define DEFAULT_RESPONSE_LANGUAGE "ru-RU"
+#define DEFAULT_RESPONSE_LANGUAGE "en-US"
 
-#define CHECK_ACCEPT_CHARSET_HEADER 0
+#define CHECK_ACCEPT_CHARSET_HEADER 1
 #define CHECK_ACCEPT_LANGUAGE_HEADER 1
 
 
