@@ -17,7 +17,7 @@ int		end_handler(int fd, t_fd **start, char *buf, int return_value)
 	t_fd *tmp;
 	t_fd *tmp_to_del;
 
-	delete buf;
+	free(buf);
 	if (*start)
 	{
 		tmp = *start;
@@ -31,9 +31,9 @@ int		end_handler(int fd, t_fd **start, char *buf, int return_value)
 			tmp->next = tmp_to_del->next;
 			tmp = tmp_to_del;
 		}
-		delete tmp->left;
-		delete tmp->left_begin;
-		delete tmp;
+		free(tmp->left);
+		free(tmp->left_begin);
+		free(tmp);
 		tmp = NULL;
 	}
 	return (return_value);
@@ -55,13 +55,13 @@ char	*left_checker(t_fd *tmp, char **line)
 		else
 		{
 			*line = ft_strdup(tmp->left);
-			delete tmp->left_begin;
+			free(tmp->left_begin);
 			tmp->left = NULL;
 			tmp->left_begin = NULL;
 		}
 		return (end_l);
 	}
-	if ((*line = new (std::nothrow) char[1]))
+	if ((*line = static_cast<char *>(malloc(sizeof(char)))))
 		**line = '\0';
 	return (end_l);
 }
@@ -87,7 +87,7 @@ int		g_n_l_inside(t_fd *tmp, char **line, long long b_s, t_fd **start)
 	long long	ret;
 	char		*end_l;
 
-    buf =  new (std::nothrow) char[b_s + 1];
+    buf = static_cast<char *>(malloc(sizeof(char) * (b_s + 1)));
     if (!buf)
 		return (end_handler(tmp->fd, start, buf, -1));
 	end_l = left_checker(tmp, line);
@@ -104,7 +104,7 @@ int		g_n_l_inside(t_fd *tmp, char **line, long long b_s, t_fd **start)
 	}
 	if ((ret < b_s) && (tmp->left == NULL))
 		return (end_handler(tmp->fd, start, buf, 0));
-	delete buf;
+	free(buf);
 	return (1);
 }
 

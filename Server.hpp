@@ -37,7 +37,7 @@ class Server;
 class Server {
 public:
     Server(ServerContext* server_context);
-    ~Server() { };
+    ~Server();
 
     const std::list<Listener*> & getListeners(void) const { return _listeners; };
 

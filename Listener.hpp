@@ -16,6 +16,8 @@ class Listener {
 public:
 	Listener(const std::string& host, int port);
 
+	~Listener(void);
+
 	int getListener(void) const { return _listener; }
 
 	const std::list<int>& getReadClients(void) const { return _clients_read; }

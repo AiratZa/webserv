@@ -28,6 +28,8 @@ public:
 
     ServerContext() : is_server_names_were_updated(false) { _server_names.push_back("");  };
 
+    ~ServerContext(void);
+
     const std::map<std::string, std::list<int> >&  getHostsAndPorts(void) const;
     const std::list<std::string>& getServerNames(void) const;
 

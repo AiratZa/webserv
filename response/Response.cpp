@@ -692,16 +692,16 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		size_t content_length;
 
 //		char buf[BUF_SIZE] = {0};
-		std::vector<char> buf;
-		buf.reserve(BUF_SIZE);
+    std::vector<char> buf;
+    buf.reserve(BUF_SIZE);
 //		fcntl(0, F_SETFL, O_NONBLOCK);
 //		int ret;
-		int fd_read;
+    int fd_read;
 
-		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
-			utils::exitWithLog();
-		ret = 0;
-		while ((ret = read(fd_read, &buf[0], BUF_SIZE)) != 0) {
+    if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
+        utils::exitWithLog();
+    ret = 0;
+    while ((ret = read(fd_read, &buf[0], BUF_SIZE)) != 0) {
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(&buf[0], ret);

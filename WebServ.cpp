@@ -4,7 +4,21 @@
 
 #include "WebServ.hpp"
 
-WebServ::WebServ(const Config& config)
+WebServ::~WebServ(void) {
+    stop();
+}
+
+void WebServ::stop() {
+    std::vector<Server*>::iterator _servers_it = _servers.begin();
+
+    while (_servers_it != _servers.end()) {
+        delete *_servers_it;
+        ++_servers_it;
+    }
+}
+
+
+WebServ::WebServ(Config* config)
             : _config(config) {
     std::list<ServerContext*>::const_iterator it = servers_list.begin();
     std::list<ServerContext*>::const_iterator ite = servers_list.end();
@@ -156,9 +170,6 @@ void WebServ::serveConnections() {
 	}
 }
 
-void WebServ::stop() {
-	return ;
-}
 
 
 

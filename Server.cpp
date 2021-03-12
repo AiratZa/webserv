@@ -4,6 +4,14 @@
 
 #include "Server.hpp"
 
+Server::~Server() {
+    std::list<Listener*>::iterator _listeners_it = _listeners.begin();
+    while (_listeners_it != _listeners.end()) {
+        delete *_listeners_it;
+        ++_listeners_it;
+    }
+}
+
 Server::Server(ServerContext* server_context) {
 //                : server_context(server_context) {
     const std::map<std::string, std::list<int> >& hosts_n_ports = server_context->getHostsAndPorts();

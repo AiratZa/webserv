@@ -9,6 +9,19 @@
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
 
+Listener::~Listener(void)
+{
+    std::map<int, Request *>::iterator _client_requests_it = _client_requests.begin();
+
+    while (_client_requests_it != _client_requests.end()) {
+        delete _client_requests_it->second;
+        ++_client_requests_it;
+    }
+
+}
+
+
+
 Listener::Listener(const std::string &host, int port)
 		: _host(host), _port(port)
 {

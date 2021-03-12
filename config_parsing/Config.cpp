@@ -12,6 +12,16 @@ Config::Config(const std::string &path_to_config) {
 
 }
 
+Config::~Config(void)
+{
+    std::list<ServerContext*>::iterator _servers_it = _servers.begin();
+    while (_servers_it != _servers.end()) {
+        delete *_servers_it;
+        ++_servers_it;
+    }
+}
+
+
 const std::string& Config::_getConfigText(void) const {
     return _config_text;
 }
@@ -82,10 +92,10 @@ void Config::fillConfigTextFromFile(const std::string &path_to_config) {
 
     while ((ret = get_next_line(file, &str)) == 1) {
         _config_text += str;
-        delete str;
+        free(str);
     }
     _config_text += str;
-    delete str;
+    free(str);
 
     if (ret != 0) {
         utils::exitWithLog("Error happened when read config file :(");

@@ -8,15 +8,29 @@
 
 #include "base64_coding/base64.hpp"
 
-
+#define SERVER_SUCCESS_STOP_LOG "\n\n¯\\_(ツ)_/¯ WebServ is stopped ¯\\_(ツ)_/¯\n\n"
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
 #define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root // TODO:add ending '/'
 
-WebServ webserv;
 
-void intHandler(int signal) {
+
+class SuperVisor {
+public:
+    SuperVisor() : _webserv(NULL) { };
+
+    void setWebServ(WebServ* webserv) { _webserv = webserv; }
+    void stopServer(void) { _webserv->stop(); }
+
+private:
+    WebServ* _webserv;
+};
+
+SuperVisor supervisor;
+
+void StopSignalHandler(int signal) {
 	(void)signal;
-	webserv.stop();
+	supervisor.stopServer();
+	std::cout << SERVER_SUCCESS_STOP_LOG << std::endl;
 	exit(EXIT_SUCCESS);
 }
 
@@ -39,6 +53,8 @@ std::string WebServ::_webserv_root_path;
 std::list<std::string> WebServ::_lang_code_list;
 
 
+
+
 int main(int argc, char *argv[])
 {
     std::string path_to_config;
@@ -48,7 +64,9 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    signal(SIGINT, intHandler);
+    signal(SIGINT, StopSignalHandler);
+    signal(SIGTERM, StopSignalHandler);
+
     checkAndSetTimeZoneCorrection();
     WebServ::initLanguageCodesList();
 
@@ -66,7 +84,6 @@ int main(int argc, char *argv[])
     } else  {
         path_to_config = CONFIG_FILE_DEFAULT_PATH;
     }
-//    write_html(); // TODO: Autoindex temp testing
 
     try
     {
@@ -74,7 +91,8 @@ int main(int argc, char *argv[])
         std::cout << std::endl << "===================================================" << std::endl << std::endl;
 
         WebServ::servers_list = _config.getServersList();
-        webserv = WebServ(_config);
+        WebServ webserv = WebServ(&_config);
+        supervisor.setWebServ(&webserv);
 
 //        std::string test("");
 //		std::cout << "encoded: " << Base64::base64_encode(test) << std::endl;
@@ -88,7 +106,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-
+    std::cout << SERVER_SUCCESS_STOP_LOG << std::endl;
     return 0;
 }
 

@@ -24,7 +24,8 @@ class WebServ;
 class WebServ {
 public:
     WebServ() { }
-    WebServ(const Config& config);
+    WebServ(Config* config);
+    ~WebServ(void);
     void addServer(Server* server);
     int getServersCount(void) const { return _servers.size(); }
     Server* getServerByPosition(int i);
@@ -264,7 +265,7 @@ private:
 
     static std::list<std::string> _lang_code_list; //
 
-    Config _config;
+    Config* _config;
     int _max_fd;
 
 };

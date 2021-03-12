@@ -4,6 +4,17 @@
 
 #include "ServerContext.hpp"
 
+ServerContext::~ServerContext()
+{
+    std::list<LocationContext*>::iterator _locations_it = _locations.begin();
+
+    while (_locations_it != _locations.end()) {
+        delete *_locations_it;
+        ++_locations_it;
+    }
+}
+
+
 const std::list<LocationContext*>& ServerContext::R_getExactLocationsList(void) const {
     return _exact_locations;
 }

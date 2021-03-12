@@ -142,6 +142,7 @@ class Config {
 
 public:
     Config() { }
+    ~Config(void);
     Config(const std::string &path_to_config);
 
     std::list<ServerContext*>& getServersList(void);
