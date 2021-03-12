@@ -168,9 +168,9 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
 	std::list<LocationContext*>::const_iterator it_non_exact = non_exact.begin();
 	while (it_non_exact != non_exact.end()) {
 		if ((*it_non_exact)->getLocationPath() == current_request->_request_target) {
-		    if (ext_location) {
-                current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
-		    }
+			if (ext_location) {
+				current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
+			}
 			return (*it_non_exact); // exact route(location) is found
 		}
 		++it_non_exact;
@@ -184,8 +184,8 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
         bool is_part = isPartOfLocationPath(request_target_divided,(*it_non_exact)->getLocationPathDividedBySlahes());
         if (is_part) {
             if (ext_location) {
-                current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
-            }
+				current_request->setCgiScriptPathForRequest(ext_location->getCgiScript());
+			}
             return (*it_non_exact); // exact route(location) is found
         }
         ++it_non_exact;
@@ -193,7 +193,8 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server, Requ
     return NULL; // Not match to locations
 }
 
-void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request) {
+void WebServ::routeRequest(const std::string& host, const int port, Request* _client_request, const std::string& request_target) {
+	_client_request->_request_target = request_target;
     std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
 
     std::string host_from_header;

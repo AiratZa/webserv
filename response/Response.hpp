@@ -62,7 +62,7 @@ private:
 	std::string _getExt(std::string filename);
 	bool _isCgiExt();
 	void _runCgi(std::string & filename);
-	void _setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables);
+	void _setEnv(std::vector<char *> & env, std::string & filename, std::map<std::string, std::string> & cgiVariables);
 	void _parseStatusLineFromCgiResponse();
 	void _parseHeadersFromCgiResponse();
 	std::string _inet_ntoa(struct in_addr sin_addr);
