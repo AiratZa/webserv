@@ -555,7 +555,7 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 
 //			close(fd);
 
-			if (request->_close_connection) {
+			if (request->_close_connection || (request->_headers.count("connection") && request->_headers["connection"] == "close")) {
 				delete _client_requests[fd];
 				_client_requests.erase(fd);
 				close(fd);

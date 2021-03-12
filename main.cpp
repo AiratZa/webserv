@@ -112,7 +112,8 @@ int main(int argc, char *argv[])
 //TODO: check accept-charset, accept-language and other request headers before response
 //todo: searchForErrorPageLinkAndSetChangeError() gives error
 //todo: Test multiple workers(20) doing multiple times(5): Put on /put_test/multiple_same with size 1000000; the file multiple_same should exists with a size of 1000000 bytes // we have 20Mb file
-
+//todo: send response not in one chunk
+//todo: when pressing to link "../" in autoindex page "http://localhost:8080/234/345/" url is becoming "http://localhost:8080/234//345/"; or when url is "http://localhost:8080/234/"
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
