@@ -36,6 +36,8 @@ void checkAndSetTimeZoneCorrection(void) {
 std::list<ServerContext*> WebServ::servers_list;
 int WebServ::correction_minutes_to_GMT;
 std::string WebServ::_webserv_root_path;
+std::list<std::string> WebServ::_lang_code_list;
+
 
 int main(int argc, char *argv[])
 {
@@ -48,7 +50,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, intHandler);
     checkAndSetTimeZoneCorrection();
-
+    WebServ::initLanguageCodesList();
 
     char *absolute_path = getcwd(NULL, 0);
     if (!absolute_path) {

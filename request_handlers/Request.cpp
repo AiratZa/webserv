@@ -78,10 +78,13 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _is_alias_path(false),
 		  shift_from_buf_start(0),
 		  _header_end_pos(0),
+
 		  _header_was_read(false),
 		  _read_body_size(0),
 		  _is_need_writing_body_to_file(false),
-          is_chunked(false)
+          _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
+          is_chunked(false),
+          _is_lang_file_pos(0)
 {  };
 
 //Request::Request(const std::string& request)
@@ -646,6 +649,24 @@ std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::strin
         }
     }
 
+    std::list<Pair<std::string, float> >::iterator it = with_quality.begin();
+    const std::list<std::string>& lang_codes = WebServ::getLanguageCodesList();
+    while (it != with_quality.end())
+    {
+        if (it->first.size() < 2)
+        {
+            it = with_quality.erase(it);
+        }
+        else
+        {
+            if (std::find(lang_codes.begin(), lang_codes.end(), it->first.substr(0, 2)) ==  lang_codes.end()) {
+                it = with_quality.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
     return sortValuesByQuality(with_quality);
 }
 
@@ -654,19 +675,65 @@ void Request::handleAcceptCharsetHeader(void) {
     std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
                                                                              _headers["accept-charset"]);
 
+
     bool is_found = (std::find(values.begin(), values.end(), DEFAULT_RESPONSE_CHARSET) != values.end());
+    if (!is_found) {
+        is_found = (std::find(values.begin(), values.end(), "*") != values.end());
+    }
     if (!is_found && CHECK_ACCEPT_CHARSET_HEADER) {
         setStatusCode(406);
     }
 }
 
-void Request::handleAcceptLanguageHeader(void) {
-    std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
-                                                                             _headers["accept-language"]);
-    bool is_found = (std::find(values.begin(), values.end(), DEFAULT_RESPONSE_LANGUAGE) != values.end());
-    if (!is_found && CHECK_ACCEPT_LANGUAGE_HEADER) {
-        setStatusCode(406);
+void Request::handleAcceptLanguageHeader(bool is_header_exists) {
+    if (_is_lang_file_pos) {
+        if (is_header_exists)
+        {
+            std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
+                                                                                     _headers["accept-language"]);
+
+
+            std::list<std::string>::const_iterator it = values.begin();
+
+            bool is_found = false;
+            while (it != values.end()) {
+                std::string target = _request_target;
+                target.insert(_is_lang_file_pos, *it);
+
+                std::string full_filename = getAbsoluteRootPathForRequest();
+                _appendRequestTarget(full_filename, this, target);
+                if (isFileExists(full_filename)) {
+                    _request_target = target;
+                    is_found = true;
+                    setReponseContentLang(*it);
+                    break;
+                }
+                ++it;
+            }
+            if (!is_found) {
+                is_found = (std::find(values.begin(), values.end(), "*") != values.end());
+                if (is_found) {
+                    std::string target = _request_target;
+                    target.insert(_is_lang_file_pos, DEFAULT_RESPONSE_LANGUAGE);
+                    is_found = true;
+                    setReponseContentLang(*it);
+                    _request_target = target;
+                }
+            }
+
+            if (!is_found && CHECK_ACCEPT_LANGUAGE_HEADER) {
+                setStatusCode(406);
+            }
+        }
+        else if (_request_target[_is_lang_file_pos] == '.')
+        {
+            std::string target = _request_target;
+            target.insert(_is_lang_file_pos, DEFAULT_RESPONSE_LANGUAGE);
+            _request_target = target;
+        }
+
     }
+
 }
 
 //// Accept-Charset and Accept-Language Headers Handlers END

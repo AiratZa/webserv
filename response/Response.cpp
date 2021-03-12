@@ -258,7 +258,7 @@ void Response::generateHeaders() {
 	_raw_response += _last_modified;
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
-//	_raw_response += "Content-Language: en\r\n";
+	_raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
 	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
 		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
 	}
@@ -359,8 +359,8 @@ void Response::generateDefaultResponseByStatusCode() {
 
 void Response::generateResponseByStatusCode() {
 
-//    std::string link = searchForErrorPageLinkAndSetChangeError();
-    std::string link = "searchForErrorPageLinkAndSetChangeError()";
+    std::string link = searchForErrorPageLinkAndSetChangeError();
+    _content = "";
 	if (link.size()) {
         updateRequestForErrorPage(link);
         generateResponseForErrorPage();
@@ -448,7 +448,7 @@ void Response::generateGetResponse() {
 	if (!_request->isStatusCodeOk())
 		return ;
 
-	_raw_response += _content;
+    _raw_response += _content;
 }
 
 std::string Response::_getExt(std::string filename) {
@@ -794,25 +794,70 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 }
 
 
-void Response::_appendRequestTarget(std::string & filename) {
-	if (_request->_handling_location) {
-		std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
-		if (filename[filename.size() - 1] != '/') {
-			if (request_substr[0] != '/')
-				filename += '/';
-			filename += request_substr; // _request->_request_target always starts with '/'
-		} else {
-			if (request_substr[0] == '/')
-				filename += request_substr.substr(1); // remove '/'
-			else
-				filename += request_substr;
-		}
-	} else {
-		if (filename[filename.size() - 1] != '/')
-			filename += _request->_request_target; // _request->_request_target always starts with '/'
-		else
-			filename += _request->_request_target.substr(1); // remove '/'
-	}
+//void Response::_appendRequestTarget(std::string & filename) {
+//	if (_request->_handling_location) {
+//		std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
+//		if (filename[filename.size() - 1] != '/') {
+//			if (request_substr[0] != '/')
+//				filename += '/';
+//			filename += request_substr; // _request->_request_target always starts with '/'
+//		} else {
+//			if (request_substr[0] == '/')
+//				filename += request_substr.substr(1); // remove '/'
+//			else
+//				filename += request_substr;
+//		}
+//	} else {
+//		if (filename[filename.size() - 1] != '/')
+//			filename += _request->_request_target; // _request->_request_target always starts with '/'
+//		else
+//			filename += _request->_request_target.substr(1); // remove '/'
+//	}
+//}
+
+// like pure func
+void _appendRequestTarget(std::string & filename, Request* _request) {
+    if (_request->_handling_location) {
+        std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
+        if (filename[filename.size() - 1] != '/') {
+            if (request_substr[0] != '/')
+                filename += '/';
+            filename += request_substr; // _request->_request_target always starts with '/'
+        } else {
+            if (request_substr[0] == '/')
+                filename += request_substr.substr(1); // remove '/'
+            else
+                filename += request_substr;
+        }
+    } else {
+        if (filename[filename.size() - 1] != '/')
+            filename += _request->_request_target; // _request->_request_target always starts with '/'
+        else
+            filename += _request->_request_target.substr(1); // remove '/'
+    }
+}
+
+
+// for existence check ONLY
+void _appendRequestTarget(std::string & filename, Request* _request, const std::string& tmp_request_target) {
+    if (_request->_handling_location) {
+        std::string request_substr = tmp_request_target.substr(_request->_handling_location->getLocationPath().length());
+        if (filename[filename.size() - 1] != '/') {
+            if (request_substr[0] != '/')
+                filename += '/';
+            filename += request_substr; // _request->_request_target always starts with '/'
+        } else {
+            if (request_substr[0] == '/')
+                filename += request_substr.substr(1); // remove '/'
+            else
+                filename += request_substr;
+        }
+    } else {
+        if (filename[filename.size() - 1] != '/')
+            filename += tmp_request_target; // _request->_request_target always starts with '/'
+        else
+            filename += tmp_request_target.substr(1); // remove '/'
+    }
 }
 
 void Response::generateHeadResponseCore() {
@@ -825,7 +870,7 @@ void Response::generateHeadResponseCore() {
 //TODO: need to figure out what path to use instead of root
     std::string filename = _request->getAbsoluteRootPathForRequest();
 //	if (_request->_is_alias_path) {
-	_appendRequestTarget(filename);
+	_appendRequestTarget(filename, _request);
 
     struct stat stat_buf;
     std::string matching_index;
@@ -905,6 +950,8 @@ void Response::generateHeadResponse() {
 	if (!_request->isStatusCodeOk())
 		return ;
 
+
+
 	generateStatusLine();
 	generateHeaders();
 }
@@ -918,6 +965,7 @@ void Response::generatePutResponse() {
         _request->_status_code = 201;
         _location = getLocationHeader();
     }
+
     generateStatusLine();
     generateHeaders();
     _raw_response += _content;
@@ -933,7 +981,7 @@ void Response::generatePostResponse() {
 
 //TODO: need to figure out what path to use instead of root
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	_appendRequestTarget(filename);
+	_appendRequestTarget(filename, _request);
 //	if (filename[filename.size() - 1] != '/')
 //		filename += _request->_request_target; // _request->_request_target always starts with '/'
 //	else
@@ -972,23 +1020,29 @@ void Response::generatePostResponse() {
 //	_raw_response += "\r\n";
 	generateStatusLine();
 	generateHeaders();
+
 	_raw_response += _content;
 }
 
 void Response::generateResponse() {
 	if (_request->isStatusCodeOk()) {
-		if (_request->_method == "GET") {
-			generateGetResponse();
-		} else if (_request->_method == "HEAD") {
-			generateHeadResponse();
-		} else if (_request->_method == "PUT") {
-			generatePutResponse();
-		} else if (_request->_method == "POST") {
-			generatePostResponse();
-		} else {
-			_request->setStatusCode(501); // 501 Not Implemented
-		}
+        checkForAcceptPrefixHeaders();
+
+        if (_request->isStatusCodeOk()) {
+            if (_request->_method == "GET") {
+                generateGetResponse();
+            } else if (_request->_method == "HEAD") {
+                generateHeadResponse();
+            } else if (_request->_method == "PUT") {
+                generatePutResponse();
+            } else if (_request->_method == "POST") {
+                generatePostResponse();
+            } else {
+                _request->setStatusCode(501); // 501 Not Implemented
+            }
+        }
 	}
+
 	if (!_request->isStatusCodeOk()) {
 		generateResponseByStatusCode();
 	}
@@ -1022,6 +1076,18 @@ void Response::sendResponse() {
 return;
 }
 
+
+void Response::checkForAcceptPrefixHeaders(void) {
+    if (_request->_headers.count("accept-charset")) {
+        _request->handleAcceptCharsetHeader();
+    }
+
+    if (_request->_headers.count("accept-language")) {
+        _request->handleAcceptLanguageHeader(true);
+    } else {
+        _request->handleAcceptLanguageHeader(false);
+    }
+}
 
 /*
 PUT /nginx_meme.jpg HTTP/1.1

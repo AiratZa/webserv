@@ -302,23 +302,23 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 //        request->_status_code = 403;
 //    }
 
+
+    std::size_t lang_start_pos;
+    if ((lang_start_pos = request->_request_target.find("_lang_")) != std::string::npos) {
+        std::size_t lang_end_pos = request->_request_target.find_last_of('.');
+        lang_start_pos += 6; // pass "_lang_"
+        request->_is_lang_file_pos = lang_start_pos;
+        std::string lang_code = (request->_request_target).substr(lang_start_pos, (lang_end_pos- lang_start_pos) );
+//        if (checkForCorrectLanguageCode(lang_code)) { TODO:
+//            request->setReponseContentLang(lang_code);
+//        }
+    }
+
     if (!request->isStatusCodeOk()) {
         return false;
     }
 
-//    if (request->_headers.count("accept-charset")) {
-//        request->handleAcceptCharsetHeader();
-//        if (!request->isStatusCodeOk()) {
-//            return false;
-//        }
-//    }
-//
-//    if (request->_headers.count("accept-language")) {
-//        request->handleAcceptLanguageHeader();
-//        if (!request->isStatusCodeOk()) {
-//            return false;
-//        }
-//    }
+
 
 
     if (request->_handling_location) {
@@ -358,7 +358,6 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (request->_method == "PUT") {
 
         // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
-
         if (request->isConcreteHeaderExists("content-range")) {
             request->_status_code = 400;
             return false;
@@ -454,6 +453,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                     request->setHeaderWasRead();
                     bool is_continue_read_body = processHeaderInfoForActions(*it);
 
+                    // ONLY WITH EXPECT HEADERS
                     if (is_continue_read_body && (request->_status_code == 100))
                     {
                         Response response = Response(request, fd);
@@ -467,7 +467,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                         bool body_was_read = continueReadBody(request);
                         bool writing_to_file_result = true;
 
-                        if (request->getNeedWritingBodyToFile()) {
+                        if (request->getNeedWritingBodyToFile() && body_was_read) {
                             writing_to_file_result = request->writeBodyReadBytesIntoFile();
 
                             if (!writing_to_file_result) {
@@ -495,7 +495,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			    bool body_was_read = continueReadBody(_client_requests[*it]);
                 bool writing_to_file_result = true;
 
-                if (request->getNeedWritingBodyToFile()) {
+                if (request->getNeedWritingBodyToFile() && body_was_read) {
                     writing_to_file_result = request->writeBodyReadBytesIntoFile();
 
                     if (!writing_to_file_result) {

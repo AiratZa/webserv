@@ -66,7 +66,7 @@ private:
 	void _parseStatusLineFromCgiResponse();
 	void _parseHeadersFromCgiResponse();
 	std::string _inet_ntoa(struct in_addr sin_addr);
-	void _appendRequestTarget(std::string & filename);
+//	void _appendRequestTarget(std::string & filename);
 //	std::string _replaceDashes(std::string str);
 
 
@@ -115,9 +115,14 @@ private: // headers
     const std::string searchForErrorPageLinkAndSetChangeError() const;
     int error_code_for_generaion;
 
+    void checkForAcceptPrefixHeaders(void);
 
 
 };
+
+void _appendRequestTarget(std::string & filename, Request* _request);
+void _appendRequestTarget(std::string & filename, Request* _request, const std::string& tmp_request_target);
+
 
 
 #endif //RESPONSE_HPP
