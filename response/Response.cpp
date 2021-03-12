@@ -251,7 +251,7 @@ void Response::generateHeaders() {
 	_raw_response += _last_modified;
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
-//	_raw_response += "Content-Language: en\r\n";
+	_raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
 	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
 		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
 	}
@@ -1063,7 +1063,9 @@ void Response::checkForAcceptPrefixHeaders(void) {
     }
 
     if (_request->_headers.count("accept-language")) {
-        _request->handleAcceptLanguageHeader();
+        _request->handleAcceptLanguageHeader(true);
+    } else {
+        _request->handleAcceptLanguageHeader(false);
     }
 }
 

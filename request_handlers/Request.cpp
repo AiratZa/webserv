@@ -649,6 +649,24 @@ std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::strin
         }
     }
 
+    std::list<Pair<std::string, float> >::iterator it = with_quality.begin();
+    const std::list<std::string>& lang_codes = WebServ::getLanguageCodesList();
+    while (it != with_quality.end())
+    {
+        if (it->first.size() < 2)
+        {
+            it = with_quality.erase(it);
+        }
+        else
+        {
+            if (std::find(lang_codes.begin(), lang_codes.end(), it->first.substr(0, 2)) ==  lang_codes.end()) {
+                it = with_quality.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
     return sortValuesByQuality(with_quality);
 }
 
@@ -667,41 +685,53 @@ void Request::handleAcceptCharsetHeader(void) {
     }
 }
 
-void Request::handleAcceptLanguageHeader(void) {
+void Request::handleAcceptLanguageHeader(bool is_header_exists) {
     if (_is_lang_file_pos) {
-        std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
-                                                                                 _headers["accept-language"]);
+        if (is_header_exists)
+        {
+            std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
+                                                                                     _headers["accept-language"]);
 
 
-        std::list<std::string>::const_iterator it = values.begin();
+            std::list<std::string>::const_iterator it = values.begin();
 
-        bool is_found = false;
-        while (it != values.end()) {
-            std::string target = _request_target;
-            target.insert(_is_lang_file_pos, *it);
-
-            std::string full_filename = getAbsoluteRootPathForRequest();
-            _appendRequestTarget(full_filename, this, target);
-            if (isFileExists(full_filename)) {
-                _request_target = target;
-                is_found = true;
-                break;
-            }
-            ++it;
-        }
-        if (!is_found) {
-            is_found = (std::find(values.begin(), values.end(), "*") != values.end());
-            if (is_found) {
+            bool is_found = false;
+            while (it != values.end()) {
                 std::string target = _request_target;
-                target.insert(_is_lang_file_pos, DEFAULT_RESPONSE_LANGUAGE);
-                is_found = true;
-                _request_target = target;
+                target.insert(_is_lang_file_pos, *it);
+
+                std::string full_filename = getAbsoluteRootPathForRequest();
+                _appendRequestTarget(full_filename, this, target);
+                if (isFileExists(full_filename)) {
+                    _request_target = target;
+                    is_found = true;
+                    setReponseContentLang(*it);
+                    break;
+                }
+                ++it;
+            }
+            if (!is_found) {
+                is_found = (std::find(values.begin(), values.end(), "*") != values.end());
+                if (is_found) {
+                    std::string target = _request_target;
+                    target.insert(_is_lang_file_pos, DEFAULT_RESPONSE_LANGUAGE);
+                    is_found = true;
+                    setReponseContentLang(*it);
+                    _request_target = target;
+                }
+            }
+
+            if (!is_found && CHECK_ACCEPT_LANGUAGE_HEADER) {
+                setStatusCode(406);
             }
         }
-
-        if (!is_found && CHECK_ACCEPT_LANGUAGE_HEADER) {
-            setStatusCode(406);
+        else if (_request_target[_is_lang_file_pos] == '.')
+        {
+            std::string target = _request_target;
+            target.insert(_is_lang_file_pos, DEFAULT_RESPONSE_LANGUAGE);
+            _request_target = target;
         }
+
     }
 
 }

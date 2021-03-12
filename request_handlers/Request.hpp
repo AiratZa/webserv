@@ -133,7 +133,7 @@ class Request {
     std::string _full_filename;
 
     bool writeBodyReadBytesIntoFile() {
-        int file = open(_full_filename.c_str(), O_RDWR | O_APPEND, 0666);
+        int file = open(_full_filename.c_str(), O_RDWR | O_TRUNC, 0666);
         if (file <= 0) {
             _status_code = 500;
             return false;
@@ -165,10 +165,10 @@ class Request {
     bool checkIsMayFileBeOpenedOrCreated(void) {
         int flags;
         if (_is_file_exists) {
-            flags = O_RDWR | O_TRUNC | O_APPEND;
+            flags = O_RDWR | O_TRUNC;
         }
         else {
-            flags = O_RDWR | O_CREAT | O_APPEND;
+            flags = O_RDWR | O_CREAT;
         }
 
         int file = open(_full_filename.c_str(), flags, 0666);
@@ -273,7 +273,7 @@ public:
 
         void handleAcceptCharsetHeader(void);
 
-        void handleAcceptLanguageHeader(void);
+        void handleAcceptLanguageHeader(bool is_header_exists);
 
         void setReponseContentLang(const std::string& lang) { _response_content_lang = lang;}
         const std::string& getReponseContentLang(void) { return _response_content_lang; }
