@@ -296,7 +296,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
 
 
-    WebServ::routeRequest(_host, _port, request);
+    WebServ::routeRequest(_host, _port, request, request->_request_target);
 
 //    if (request->isMethodLimited(request->_method)) { // TODO: jnannie: its 405, but we check for allowed methods in Response, and set 'location' header if method is not allowed, maybe later move it here, but xz
 //        request->_status_code = 403;

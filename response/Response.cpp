@@ -11,7 +11,7 @@
 #include "../base64_coding/base64.hpp"
 #include "autoindex_handling/autoindex_handling.hpp"
 
-#define BUF_SIZE 1024 * 1024
+#define BUF_SIZE 4096
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -266,7 +266,7 @@ void Response::updateRequestForErrorPage(const std::string& error_page_link) {
         _request->_method = "GET";
     }
     _request->_request_target = error_page_link;
-    WebServ::routeRequest(_request->_host, _request->_port, _request);
+    WebServ::routeRequest(_request->_host, _request->_port, _request, _request->_request_target);
 
 }
 
@@ -283,6 +283,11 @@ void Response::generateResponseForErrorPage(void) {
     error_code_for_generaion = 200;
 
     generateStatusLine();
+
+	if (_request->getStatusCode() == 401) {
+		_www_authenticate = getWwwAuthenticateHeader();
+	}
+
     generateHeaders();
     if (_request->_method != "PUT") {
         _raw_response += _content;
@@ -494,7 +499,7 @@ std::string Response::_getUserFromCredentials() {
 //
 //}
 
-void Response::_setEnv(char* env[], std::string & filename, std::map<std::string, std::string> & cgiVariables) {
+void Response::_setEnv(std::vector<char *> & env, std::string & filename, std::map<std::string, std::string> & cgiVariables) {
 	cgiVariables["AUTH_TYPE"] = "AUTH_TYPE=" + _request->_headers["authorization"].substr(0, _request->_headers["authorization"].find(' ')); // TODO: should be scheme only, "Basic"
 //	env[0] = const_cast<char *>(cgiVariables["AUTH_TYPE"].c_str());
 	cgiVariables["CONTENT_LENGTH"] = "CONTENT_LENGTH=" + _request->_headers["content-length"];
@@ -513,7 +518,7 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	if (_file_ext == "php")
 		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(filename);
 	else
-		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(_request->_request_target);
+		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append(_request->_request_target); //todo: try add index if there is one
 //		cgiVariables["PATH_INFO"].assign("PATH_INFO=").append("./YoupiBanane/youpi.bla");
 
 //	env[4] = const_cast<char *>(cgiVariables["PATH_INFO"].c_str());
@@ -551,15 +556,16 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 	cgiVariables["SERVER_SOFTWARE"].assign("SERVER_SOFTWARE=").append("webserv");
 //	env[16] = const_cast<char *>(cgiVariables["SERVER_SOFTWARE"].c_str());
 
-	for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it) {
-		if (it->first != "content-length" && it->first != "content-Type" && it->first != "authorization") {
-			std::string first = it->first;
-			std::replace(first.begin(), first.end(), '-', '_');
-			libft::string_to_upper(first);
-			cgiVariables[first] = "HTTP_" + first + "=" + it->second;
+//	if (_file_ext != "php") {
+		for (std::map<std::string, std::string>::iterator it = _request->_headers.begin(); it != _request->_headers.end(); ++it) {
+			if (it->first != "content-length" && it->first != "content-Type" && it->first != "authorization") {
+				std::string first = it->first;
+				std::replace(first.begin(), first.end(), '-', '_');
+				libft::string_to_upper(first);
+				cgiVariables[first] = "HTTP_" + first + "=" + it->second;
+			}
 		}
-	}
-
+//	}
 
 	if (_file_ext == "php") {
 		cgiVariables["REDIRECT_STATUS"] = "REDIRECT_STATUS=true"; // php doesnt work without it, dont know why yet
@@ -571,9 +577,10 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 //	}
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it = cgiVariables.begin(); it != cgiVariables.end(); ++it) {
-		env[i] = const_cast<char *>(it->second.c_str());
+		env.push_back(const_cast<char *>(it->second.c_str()));
 		i++;
 	}
+	env.push_back(NULL);
 	//all elements of env are initialized to NULL
 }
 
@@ -581,7 +588,7 @@ void Response::_setEnv(char* env[], std::string & filename, std::map<std::string
 
 void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	int pid;
-	int exit_status;
+	int exit_status = 0;
 	std::string cgi_script;
 	cgi_script = _request->_handling_location->getCgiScript();
 //	if (_file_ext == "php")
@@ -595,7 +602,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 			const_cast<char *>(filename.c_str()),
 			NULL
 	};
-	char * env[30] = {0};
+	std::vector<char *> env;
 //	char * env[19] = {0};
 
 	std::map<std::string, std::string> cgiVariables;
@@ -654,10 +661,10 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 			utils::exitWithLog();
 		dup2(fd_read, 1);
 		close(fd_read);
-		execve(argv[0], argv, env);
+		execve(argv[0], argv, &env[0]);
 		exit(EXIT_FAILURE);
 	}
-	close(fd_write);
+//	close(fd_write);
 
 //	fcntl(1, F_SETFL, O_NONBLOCK);
 //	while ((ret = write(1, _request->_content.c_str(), _request->_content.size() <= 1024 ? _request->_content.size() : 1024)) != 0) {
@@ -833,6 +840,7 @@ void Response::generateHeadResponseCore() {
                     if (stat((filename + *it).c_str(), &stat_buf) == 0) {
                         matching_index = *it;
                         filename += *it;
+//                        WebServ::routeRequest(_request->_host, _request->_port, _request, _request->_request_target + *it);
                         break ;
                     }
                 }
@@ -861,7 +869,10 @@ void Response::generateHeadResponseCore() {
 			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (filename[filename.size() - 1] != '/') {
-				_request->_request_target += ('/' + matching_index);
+				if (_request->_request_target[_request->_request_target.size() - 1] != '/')
+					_request->_request_target += '/';
+				_request->_request_target += matching_index;
+
 				_location = getLocationHeader();
 
                 return _request->setStatusCode(301); //Moved Permanently
