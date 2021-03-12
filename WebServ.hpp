@@ -11,6 +11,9 @@ class WebServ;
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 
+#define  RETRY_AFTER_SECOND_DELAY "1"  // for header Retry-After
+
+
 #define DEFAULT_RESPONSE_CHARSET "utf-8"
 #define DEFAULT_RESPONSE_LANGUAGE "ru-RU"
 

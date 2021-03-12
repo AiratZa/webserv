@@ -52,6 +52,7 @@ private:
 	std::string getLocationHeader();
 	std::string getAllowHeader();
 	std::string getWwwAuthenticateHeader();
+	std::string getRetryAfterHeader();
 
 	std::string _getUserFromCredentials();
 
@@ -103,6 +104,7 @@ private: // headers
 	std::string _last_modified;
 	std::string _location;
 	std::string _www_authenticate;
+	std::string _retry_after;
 
     bool setIndexFileContentToResponseContent(void); // Airat
 

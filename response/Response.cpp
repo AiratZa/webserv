@@ -236,6 +236,12 @@ std::string Response::getWwwAuthenticateHeader() {
 	return www_authenticate;
 }
 
+std::string Response::getRetryAfterHeader() {
+    std::string retryAfter = ("Retry-After: " + std::string(RETRY_AFTER_SECOND_DELAY) + "\r\n");
+    return retryAfter;
+
+}
+
 void Response::generateHeaders() {
 //	_raw_response += "Content-Type: text/html; charset=utf-8\r\n";
 	_raw_response += "server: webserv\r\n";
@@ -243,6 +249,7 @@ void Response::generateHeaders() {
 	_raw_response += getDateHeader();
 	_raw_response += _content_type;
 	_raw_response += _allow;
+	_raw_response += _retry_after;
 //	if (!_content.empty()) {
 		_raw_response += "Content-Length: ";
 		_raw_response += libft::ultostr_base(_content.length(), 10);
@@ -342,6 +349,7 @@ void Response::generateDefaultResponseByStatusCode() {
     }
 //	_raw_response.append(_content);
 //	std::cout << "in Response::generateResponseByStatusCode()\n";
+
 }
 
 void Response::generateResponseByStatusCode() {
@@ -819,7 +827,6 @@ void Response::generateHeadResponseCore() {
         if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
             if (filename[filename.size() - 1] != '/') {
                 _location = getLocationHeader();
-
                 return _request->setStatusCode(301); //Moved Permanently
             }
             std::list<std::string> index_list;
@@ -864,6 +871,7 @@ void Response::generateHeadResponseCore() {
 				_request->_request_target += ('/' + matching_index);
 				_location = getLocationHeader();
 
+                _retry_after = getRetryAfterHeader();
                 return _request->setStatusCode(301); //Moved Permanently
             }
             if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
@@ -998,6 +1006,7 @@ void Response::sendResponse() {
 	}
 	static int i;
 	std::cout << "response sent, i = " << i << std::endl;
+	std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
 	i++;
 return;
 }
