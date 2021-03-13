@@ -13,6 +13,8 @@
 #define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root // TODO:add ending '/'
 
 
+bool g_sigpipe = false;
+
 
 class SuperVisor {
 public:
@@ -32,6 +34,12 @@ void StopSignalHandler(int signal) {
 	supervisor.stopServer();
 	std::cout << SERVER_SUCCESS_STOP_LOG << std::endl;
 	exit(EXIT_SUCCESS);
+}
+
+void sigPipeHandler(int signal) {
+	(void)signal;
+	g_sigpipe = true;
+	std::cerr << "sigpipe is received" << std::endl;
 }
 
 void checkAndSetTimeZoneCorrection(void) {
@@ -66,6 +74,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, StopSignalHandler);
     signal(SIGTERM, StopSignalHandler);
+    signal(SIGPIPE, sigPipeHandler);
 
     checkAndSetTimeZoneCorrection();
     WebServ::initLanguageCodesList();

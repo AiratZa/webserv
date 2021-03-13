@@ -11,7 +11,10 @@
 #include "../base64_coding/base64.hpp"
 #include "autoindex_handling/autoindex_handling.hpp"
 
-#define BUF_SIZE 1000000
+
+extern bool g_sigpipe;
+
+//#define BUF_SIZE 1000000
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -83,7 +86,7 @@ std::map<int,std::string> Response::initStatusCodes() {
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket),
 				_raw_response(""), _content(""),
-                error_code_for_generaion(200) { };
+				in_progress(false), sent_len(0), error_code_for_generaion(200) { };
 
 Response::~Response(void) { };
 
@@ -692,16 +695,28 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		size_t content_length;
 
 //		char buf[BUF_SIZE] = {0};
-    std::vector<char> buf;
-    buf.reserve(BUF_SIZE);
+
 //		fcntl(0, F_SETFL, O_NONBLOCK);
 //		int ret;
+
+	struct stat stat_buf;
+	long size = 0;
+
+	if (stat(out_file_path.c_str(), &stat_buf) == 0) {
+		size = stat_buf.st_size;
+	} else {
+		utils::exitWithLog();
+	}
+
     int fd_read;
 
     if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
         utils::exitWithLog();
+
+	std::vector<char> buf;
+	buf.reserve(size);
     ret = 0;
-    while ((ret = read(fd_read, &buf[0], BUF_SIZE)) != 0) {
+    while ((ret = read(fd_read, &buf[0], size)) != 0) {
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(&buf[0], ret);
@@ -1051,7 +1066,8 @@ void Response::generateResponse() {
 }
 
 void Response::sendResponse() {
-//	static int i = 0;
+	static int i = 0;
+
 //
 //	if (i == 0) {
 //		_raw_response = "HTTP/1.1 401 Authorization Required\r\nWWW-Authenticate: Basic realm=\"Access to the staging site\", charset=\"UTF-8\"\r\nContent-Type: image/jpeg;\r\nserver: webserv \r\n\r\n";
@@ -1062,20 +1078,33 @@ void Response::sendResponse() {
 	// Отправляем ответ клиенту с помощью функции send
 //    std::cout << _raw_response << std::endl;
 	long ret = 0;
-	long sent_len = 0;
-	long remains = _raw_response.size();
-	while (remains > 0) {
+//	long sent_len = 0;
+//	long remains = _raw_response.size();
 		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
-		if (ret == -1)
-			continue;
-		sent_len += ret;
-		remains -= ret;
-	}
-	static int i;
-	std::cout << "response sent, i = " << i << std::endl;
-	std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
-	i++;
-    return;
+		if (ret >= 0) {
+			sent_len += ret;
+			remains -= ret;
+			if (remains == 0) {
+				++i;
+				std::cout << "response " << i << " is sent" << std::endl;
+				in_progress = false;
+			} else {
+				in_progress =  true;
+			}
+		} else if (ret == -1) {
+			if (g_sigpipe) {
+				_request->_close_connection = true;
+				in_progress = false;
+				g_sigpipe = false;
+			} else {
+				in_progress =  true;
+			}
+		}
+
+
+
+	//	std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
+
 }
 
 
@@ -1091,6 +1120,10 @@ void Response::checkForAcceptPrefixHeaders(void) {
     }
 }
 
+
+void Response::setRemains() {
+	remains = _raw_response.size();
+}
 /*
 PUT /nginx_meme.jpg HTTP/1.1
 

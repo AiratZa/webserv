@@ -10,6 +10,7 @@ class Listener;
 #include <list>
 #include <sys/socket.h>
 #include "request_handlers/Request.hpp"
+#include "response/Response.hpp"
 
 class Listener {
 
@@ -59,6 +60,7 @@ private:
 	std::list<int> _clients_read; // second param for ready or not
 	std::list<int> _clients_write; // second param for ready or not
 	std::map<int, Request *> _client_requests;
+	std::map<int, Response *> _client_response;
 
 	int _max_fd;
 

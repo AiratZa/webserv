@@ -116,6 +116,7 @@ void Listener::acceptConnection(void) {
 
 	_client_requests[sock] =  new Request(_remote_addr, _port);
 	_time[sock] = _get_time();
+	_client_response[sock] = new Response(_client_requests[sock], sock);
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -529,6 +530,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 		else {
 			if ((_get_time() - _time[fd]) > TIME_OUT) {
 				readError(it);
+				std::cout << "socket " << fd << " closed due to timeout" << std::endl;
 				continue;
 			}
 			++it;
@@ -544,6 +546,7 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 		fd = *it;
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
 			Request* request = _client_requests[fd];
+			Response* response = _client_response[fd];
 
 			// moved to listenere opers
 //			request->parseRequestLine();
@@ -557,35 +560,36 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //			}
 
 //			request->parseBody();
+			if (!response->in_progress) {
+				request->checkToClientMaxBodySize(request->_content.size()); // 413 set inside if needed
+				//			if (!size_check) {
+				//				return true; // finished beacuse of SIZE
+				//			}
+				//			Response response(request, fd);
+				response->generateResponse();
+				response->setRemains();
+				request->_content.clear();
+			}
 
-			request->checkToClientMaxBodySize(request->_content.size()); // 413 set inside if needed
-//			if (!size_check) {
-//				return true; // finished beacuse of SIZE
-//			}
-			Response response(request, fd);
-			response.generateResponse();
-			response.sendResponse();
-
-//			close(fd);
+			response->sendResponse();
 
 			if (request->_close_connection || (request->_headers.count("connection") && request->_headers["connection"] == "close")) {
 				delete _client_requests[fd];
+				delete _client_response[fd];
 				_client_requests.erase(fd);
+				_client_response.erase(fd);
 				close(fd);
-			} else {
-				delete _client_requests[fd];
-				_client_requests[fd] = new Request(_remote_addr, _port);
-				_clients_read.push_back(fd);
-			}
-//			_client_requests.erase(fd);
-
-//			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);
-//			if (it_all != _all_clients.end()) {
-//                _all_clients.erase(it_all);
-//			}
-
-			it = _clients_write.erase(it);
-
+				it = _clients_write.erase(it);
+				std::cout << "connection closed, socket " << fd << std::endl;
+			} else if (!response->in_progress) {
+					delete _client_requests[fd]; // todo: make something like Request::clear() and Response::clear()
+					delete _client_response[fd];
+					_client_requests[fd] = new Request(_remote_addr, _port);
+					_client_response[fd] = new Response(_client_requests[fd], fd);
+					_clients_read.push_back(fd);
+					it = _clients_write.erase(it);
+				}
+//
 		} else {
 			++it;
 		}

@@ -94,6 +94,11 @@ private:
 	std::string _cgi_status_line;
 	std::map<std::string, std::string> _cgi_headers;
 
+public:
+	bool in_progress;
+	long remains;
+	long sent_len;
+
 //	Server* _server;
 
 //	std::string _root; // TODO:temporary
@@ -116,6 +121,9 @@ private: // headers
     int error_code_for_generaion;
 
     void checkForAcceptPrefixHeaders(void);
+
+public:
+	void setRemains();
 
 
 };
