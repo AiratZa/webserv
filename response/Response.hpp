@@ -94,6 +94,9 @@ private:
 	std::string _cgi_status_line;
 	std::map<std::string, std::string> _cgi_headers;
 
+public:
+	long begin_reponse_size;
+	long already_sent_response_size;
 //	Server* _server;
 
 //	std::string _root; // TODO:temporary

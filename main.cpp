@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, StopSignalHandler);
     signal(SIGTERM, StopSignalHandler);
+//    signal(SIGPIPE, SIG_IGN); // TODO: maybe wrong decision
 
     checkAndSetTimeZoneCorrection();
     WebServ::initLanguageCodesList();

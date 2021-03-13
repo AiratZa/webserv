@@ -11,7 +11,7 @@
 #include "../base64_coding/base64.hpp"
 #include "autoindex_handling/autoindex_handling.hpp"
 
-#define BUF_SIZE 1000000
+#define BUF_SIZE 1024*1024
 
 std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
 
@@ -83,7 +83,10 @@ std::map<int,std::string> Response::initStatusCodes() {
 Response::Response(Request* request, int socket) :
 				_request(request), _socket(socket),
 				_raw_response(""), _content(""),
-                error_code_for_generaion(200) { };
+                begin_reponse_size(0),
+                already_sent_response_size(0),
+				error_code_for_generaion(200)
+                { };
 
 Response::~Response(void) { };
 
@@ -1050,32 +1053,36 @@ void Response::generateResponse() {
 	}
 }
 
-void Response::sendResponse() {
-//	static int i = 0;
-//
-//	if (i == 0) {
-//		_raw_response = "HTTP/1.1 401 Authorization Required\r\nWWW-Authenticate: Basic realm=\"Access to the staging site\", charset=\"UTF-8\"\r\nContent-Type: image/jpeg;\r\nserver: webserv \r\n\r\n";
-//		++i;
-//	}
-//	std::cout << _raw_response.substr(0, 200) << std::endl;
+void logSentResponsesCount(void)
+{
+    static int i;
+    std::cout << KGRN << UNDL << BOLD << "Response Sent Counter [i] = " << i << RST << std::endl;
+    i++;
+}
 
-	// Отправляем ответ клиенту с помощью функции send
-//    std::cout << _raw_response << std::endl;
-	long ret = 0;
-	long sent_len = 0;
-	long remains = _raw_response.size();
-	while (remains > 0) {
-		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
-		if (ret == -1)
-			continue;
-		sent_len += ret;
-		remains -= ret;
-	}
-	static int i;
-	std::cout << "response sent, i = " << i << std::endl;
-	std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
-	i++;
-    return;
+
+void Response::sendResponse() {
+    if (!begin_reponse_size) {
+        begin_reponse_size = _raw_response.size();
+    }
+
+    long ret = send(_socket, _raw_response.c_str(), begin_reponse_size - already_sent_response_size, MSG_NOSIGNAL);
+    if ((errno == EPIPE) || (ret == -1)) {
+        errno = 0;
+        _raw_response.clear();
+        _request->setStatusCode(500);
+        begin_reponse_size = 0;
+        already_sent_response_size = 0;
+    }
+    else {
+        _raw_response.erase(0, ret);
+        already_sent_response_size += ret;
+        if (begin_reponse_size == already_sent_response_size)
+        {
+            logSentResponsesCount();
+//            std::cout << _raw_response.substr(0, 200) << std::endl; // skarry TODO: remove
+        }
+    }
 }
 
 
@@ -1090,23 +1097,3 @@ void Response::checkForAcceptPrefixHeaders(void) {
         _request->handleAcceptLanguageHeader(false);
     }
 }
-
-/*
-PUT /nginx_meme.jpg HTTP/1.1
-
-Host: localhost:8080
-
-User-Agent: curl/7.75.0
-
-Accept: *//*
-
-Content-Length: 172172
-
-Expect: 100-continue
-
-
-
-
-
-
- */

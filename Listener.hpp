@@ -10,6 +10,7 @@ class Listener;
 #include <list>
 #include <sys/socket.h>
 #include "request_handlers/Request.hpp"
+#include "response/Response.hpp"
 
 class Listener {
 
@@ -22,9 +23,7 @@ public:
 
 	const std::list<int>& getReadClients(void) const { return _clients_read; }
 	const std::list<int>& getWriteClients(void) const { return _clients_write; }
-//    const std::list<int>& getAllClients(void) const {
-//	    return _all_clients;
-//	}
+
 
 	void updateMaxFD(void);
 
@@ -55,10 +54,10 @@ private:
 
 	struct sockaddr_in _remote_addr;
 
-//	std::list<int> _all_clients;
 	std::list<int> _clients_read; // second param for ready or not
 	std::list<int> _clients_write; // second param for ready or not
-	std::map<int, Request *> _client_requests;
+    std::map<int, Request *> _client_requests;
+    std::map<int, Response *> _client_responses;
 
 	int _max_fd;
 

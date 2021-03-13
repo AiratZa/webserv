@@ -18,6 +18,12 @@ Listener::~Listener(void)
         ++_client_requests_it;
     }
 
+    std::map<int, Response *>::iterator _client_responses_it = _client_responses.begin();
+
+    while (_client_responses_it != _client_responses.end()) {
+        delete _client_responses_it->second;
+        ++_client_responses_it;
+    }
 }
 
 
@@ -114,8 +120,11 @@ void Listener::acceptConnection(void) {
 //	_all_clients.push_back(sock);
 	_clients_read.push_back(sock);
 
-	_client_requests[sock] =  new Request(_remote_addr, _port);
-	_time[sock] = _get_time();
+    _client_requests[sock] =  new Request(_remote_addr, _port);
+    _client_responses[sock] =  new Response(_client_requests[sock], sock);
+
+
+    _time[sock] = _get_time();
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -125,8 +134,10 @@ void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteS
 
 void Listener::readError(std::list<int>::iterator & it) {
 	close(*it);
-	delete _client_requests[*it];
-	_client_requests.erase(*it);
+    delete _client_requests[*it];
+    delete _client_responses[*it];
+    _client_requests.erase(*it);
+    _client_responses.erase(*it);
 	it = _clients_read.erase(it);
 }
 
@@ -469,11 +480,8 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                     // ONLY WITH EXPECT HEADERS
                     if (is_continue_read_body && (request->_status_code == 100))
                     {
-                        Response response = Response(request, fd);
-                        response.generateStatusLine();
-                        response.sendResponse();
-
-                        continue ;
+                        _client_responses[fd]->generateStatusLine();
+                        _client_responses[fd]->sendResponse();
                     }
 
                     if (is_continue_read_body) {
@@ -562,29 +570,45 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 //			if (!size_check) {
 //				return true; // finished beacuse of SIZE
 //			}
-			Response response(request, fd);
-			response.generateResponse();
-			response.sendResponse();
 
-//			close(fd);
+            Response* cur_response = _client_responses[fd];
 
-			if (request->_close_connection || (request->_headers.count("connection") && request->_headers["connection"] == "close")) {
-				delete _client_requests[fd];
-				_client_requests.erase(fd);
-				close(fd);
-			} else {
-				delete _client_requests[fd];
-				_client_requests[fd] = new Request(_remote_addr, _port);
-				_clients_read.push_back(fd);
-			}
-//			_client_requests.erase(fd);
+            if (cur_response->begin_reponse_size &&
+                (cur_response->begin_reponse_size == cur_response->already_sent_response_size))
+            {
+                cur_response->sendResponse();
+            }
+            else
+            {
+                cur_response->generateResponse();
+                cur_response->generateResponse();
+                cur_response->sendResponse();
+            }
 
-//			std::list<int>::iterator it_all = std::find(_all_clients.begin(), _all_clients.end(), fd);
-//			if (it_all != _all_clients.end()) {
-//                _all_clients.erase(it_all);
-//			}
 
-			it = _clients_write.erase(it);
+            if (cur_response->begin_reponse_size &&
+                                    (cur_response->begin_reponse_size == cur_response->already_sent_response_size))
+            {
+                if (request->_close_connection || (request->_headers.count("connection") && request->_headers["connection"] == "close")) {
+                    delete _client_requests[fd];
+                    delete _client_responses[fd];
+
+                    _client_requests.erase(fd);
+                    _client_responses.erase(fd);
+                    close(fd);
+                } else {
+                    delete _client_requests[fd];
+                    delete _client_responses[fd];
+                    _client_requests[fd] = new Request(_remote_addr, _port);
+                    _client_responses[fd] =  new Response(_client_requests[fd], fd);
+                    _clients_read.push_back(fd);
+                }
+                it = _clients_write.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
 
 		} else {
 			++it;
