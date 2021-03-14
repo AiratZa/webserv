@@ -13,6 +13,8 @@ class LocationContext;
 
 #include "AContext.hpp"
 #include "LocationContext.hpp"
+#define DEFAULT_LISTEN_PORT 8000 // https://nginx.org/ru/docs/http/ngx_http_core_module.html#listen
+
 
 
 class ServerContext : public AContext {
@@ -26,7 +28,8 @@ public:
 
 
 
-    ServerContext() : is_server_names_were_updated(false) { _server_names.push_back("");  };
+    ServerContext() :
+        is_server_names_were_updated(false) { _server_names.push_back("");  };
 
     ~ServerContext(void);
 

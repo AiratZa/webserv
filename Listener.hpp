@@ -15,7 +15,7 @@ class Listener;
 class Listener {
 
 public:
-	Listener(const std::string& host, int port);
+	Listener(const std::string& host, in_addr_t host_addr, int port);
 
 	~Listener(void);
 
@@ -52,6 +52,7 @@ private:
 
 	struct sockaddr_in _addr;
 	const std::string _host;
+    const in_addr_t _host_addr;
 	const int _port;
 
 	struct sockaddr_in _remote_addr;
@@ -66,7 +67,7 @@ private:
 
 	std::map<int, long> _time;
 
-	in_addr_t _getHostInetAddrFromStr(const std::string& host_str) const;
+//	in_addr_t _getHostInetAddrFromStr(const std::string& host_str) const;
 	long _get_time();
 };
 

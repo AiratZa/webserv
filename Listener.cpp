@@ -29,8 +29,8 @@ Listener::~Listener(void)
 
 
 
-Listener::Listener(const std::string &host, int port)
-		: _host(host), _port(port)
+Listener::Listener(const std::string &host, in_addr_t host_addr, int port)
+		: _host(host), _host_addr(host_addr), _port(port)
 {
 	_listener = socket(AF_INET, SOCK_STREAM, 0);
 	if(_listener < 0)
@@ -43,11 +43,11 @@ Listener::Listener(const std::string &host, int port)
 	if (setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
 		utils::exitWithLog();
 
-	in_addr_t host_addr = _getHostInetAddrFromStr(host);
+//	in_addr_t host_addr = _getHostInetAddrFromStr(host);
 
 	_addr.sin_family = AF_INET;
 	_addr.sin_port = htons(port); // TODO: is htons it allowed?
-	_addr.sin_addr.s_addr = host_addr;
+	_addr.sin_addr.s_addr = _host_addr;
 
 
 	if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
@@ -57,17 +57,17 @@ Listener::Listener(const std::string &host, int port)
 		utils::exitWithLog();
 }
 
-in_addr_t Listener::_getHostInetAddrFromStr(const std::string& host_str) const {
-	in_addr_t host_addr;
-	if (host_str == "*") {
-		host_addr = htonl(INADDR_ANY);
-	} else if (host_str == "localhost") {
-		host_addr = htonl(INADDR_LOOPBACK);
-	} else {
-		host_addr = inet_addr(host_str.c_str());
-	}
-	return host_addr;
-}
+//in_addr_t Listener::_getHostInetAddrFromStr(const std::string& host_str) const {
+//    in_addr_t host_addr;
+//    if (host_str == "*") {
+//        host_addr = htonl(INADDR_ANY);
+//    } else if (host_str == "localhost") {
+//        host_addr = htonl(INADDR_LOOPBACK);
+//    } else {
+//        host_addr = inet_addr(host_str.c_str());
+//    }
+//    return host_addr;
+//}
 
 template <class Key, class Value>
 Key max_map_key(const std::map<Key, Value>& map_value) {

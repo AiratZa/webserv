@@ -11,6 +11,7 @@ class WebServ;
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 
+
 #define  RETRY_AFTER_SECOND_DELAY "1"  // for header Retry-After
 
 
@@ -260,11 +261,49 @@ public:
         virtual const char* what() const throw() {return "";}
     };
 
+    static void setInAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
+        already_listening_host_plus_port[host_str].push_back(port);
+    }
+
+    static std::map<std::string, std::list<int> > & getAlreadyListeningHostPlusPort(void) {
+        return already_listening_host_plus_port;
+    }
+
+    static bool isAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
+        std::string all_hosts = "*";
+        if (already_listening_host_plus_port.count(all_hosts))
+        {
+            if ((std::find(already_listening_host_plus_port[all_hosts].begin(),
+                           already_listening_host_plus_port[all_hosts].end(),
+                           port) != already_listening_host_plus_port[all_hosts].end()))
+            {
+                return true;
+            }
+        }
+
+        if (!already_listening_host_plus_port.count(host_str))
+        {
+            return false;
+        }
+        else
+        {
+            if ((std::find(already_listening_host_plus_port[host_str].begin(),
+                           already_listening_host_plus_port[host_str].end(),
+                           port) == already_listening_host_plus_port[host_str].end()))
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
 private:
     std::vector<Server*> _servers;
 
     static int correction_minutes_to_GMT; // TIMEZONE
     static std::string _webserv_root_path;
+    static std::map<std::string, std::list<int> > already_listening_host_plus_port;
+
 
     static std::list<std::string> _lang_code_list; //
 

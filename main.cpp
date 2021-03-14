@@ -59,6 +59,8 @@ std::list<ServerContext*> WebServ::servers_list;
 int WebServ::correction_minutes_to_GMT;
 std::string WebServ::_webserv_root_path;
 std::list<std::string> WebServ::_lang_code_list;
+std::map<std::string, std::list<int> > WebServ::already_listening_host_plus_port;
+
 
 
 
