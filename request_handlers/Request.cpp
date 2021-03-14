@@ -57,11 +57,13 @@ std::set<std::string> Request::initRequestHeaders() {
 }
 
 Request::Request()
-		: _raw_request(""),
-		  _status_code(DEFAULT_REQUEST_STATUS_CODE),
+		: _status_code(DEFAULT_REQUEST_STATUS_CODE),
+		_raw_request(""),
 		  _remote_addr(),
 		  _server_port(),
 		  _close_connection(false),
+          _handling_server(NULL),
+          _handling_location(NULL),
 //    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
 		  shift_from_buf_start(0),
@@ -76,11 +78,13 @@ Request::Request()
       {  };
 
 Request::Request(struct sockaddr_in & remote_addr, int server_port)
-		: _raw_request(""),
-		  _status_code(DEFAULT_REQUEST_STATUS_CODE),
+		:  _status_code(DEFAULT_REQUEST_STATUS_CODE),
+           _raw_request(""),
 		  _remote_addr(remote_addr),
 		  _server_port(server_port),
 		  _close_connection(false),
+           _handling_server(NULL),
+           _handling_location(NULL),
 //    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
 		  shift_from_buf_start(0),
@@ -114,7 +118,15 @@ std::string & Request::getRawRequest(void) {
 
 void Request::setStatusCode(int status_code) {
 	_status_code = status_code;
+	if (!isStatusCodeOk()) {
+        throw WebServ::NotOKStatusCodeException();
+	}
 }
+
+void Request::setStatusCodeNoExept(int status_code) {
+    _status_code = status_code;
+}
+
 
 int Request::getStatusCode() {
 	return _status_code;

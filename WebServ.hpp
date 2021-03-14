@@ -256,6 +256,9 @@ public:
         _lang_code_list.push_back("zu");
     }
 
+    class NotOKStatusCodeException: public std::exception {
+        virtual const char* what() const throw() {return "";}
+    };
 
 private:
     std::vector<Server*> _servers;
