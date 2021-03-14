@@ -719,8 +719,9 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 
     int fd_read;
 
-    if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1)
+    if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1) {
         utils::exitWithLog();
+    }
 
 	std::vector<char> buf;
 	buf.reserve(size);
@@ -1111,6 +1112,7 @@ void Response::sendResponse() {
 //	long sent_len = 0;
 //	long remains = _raw_response.size();
 		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
+		std::cout << _raw_response.substr(0,200) << std::endl;
 		if (ret >= 0) {
 			sent_len += ret;
 			remains -= ret;

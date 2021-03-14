@@ -69,7 +69,7 @@ Request::Request()
 		  _header_end_pos(0),
 
 		  _header_was_read(false),
-		  _read_body_size(0),
+          _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
 		  _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
 		  is_chunked(false),
@@ -89,7 +89,7 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _header_end_pos(0),
 
 		  _header_was_read(false),
-		  _read_body_size(0),
+           _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
           _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
           is_chunked(false),

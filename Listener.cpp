@@ -153,7 +153,7 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 
         std::size_t raw_request_len = request_obj->_bytes_read;
         if (raw_request_len > (empty_line_pos + 4)) {
-            request_obj->increaseReadBodySize(raw_request_len - (empty_line_pos + 4));
+            request_obj->increaseOnlyContentLengthReadBodySize(raw_request_len - (empty_line_pos + 4));
         }
         return true;
     }
@@ -247,7 +247,7 @@ bool Listener::continueReadBody(Request* request_obj) {
             return true; // finished beacuse of SIZE
         }
 
-		if (request_obj->getReadBodySize() == length) {
+		if (request_obj->getOnlyContentLengthReadBodySize() == length) {
 			request_obj->_content.append(body, 0, length);
 			body.clear();
 			return true;
@@ -456,7 +456,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                         request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
 
                         if (header_was_read_client) {
-                            request->increaseReadBodySize(request->_bytes_read);
+                            request->increaseOnlyContentLengthReadBodySize(request->_bytes_read);
                         }
 
                     // Behavior based on was or not read header
