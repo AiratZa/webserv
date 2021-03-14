@@ -15,14 +15,14 @@ class Request;
 #define DEFAULT_REQUEST_STATUS_CODE 200
 
 #define BUFFER_LENGHT 1024
-#define TIME_OUT 20000
+#define TIME_OUT 200000
 
 
 class Request {
 	private:
-		Request();
 
 	public:
+		Request();
 
 		Request(struct sockaddr_in & remote_addr, int server_port);
 //		Request(const std::string& request);

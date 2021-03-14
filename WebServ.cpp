@@ -163,6 +163,18 @@ void WebServ::serveConnections() {
                     // Поступил новый запрос на соединение, используем accept
                     (*it_l)->acceptConnection();
                 }
+
+                std::cout << "_clients_read ";
+                for (std::list<int>::const_iterator it = (*it_l)->getReadClients().begin(); it != (*it_l)->getReadClients().end(); ++it) {
+					std::cout << *it << " ";
+                }
+				std::cout << std::endl;
+				std::cout << "_clients_write ";
+				for (std::list<int>::const_iterator it = (*it_l)->getWriteClients().begin(); it != (*it_l)->getWriteClients().end(); ++it) {
+					std::cout << *it << " ";
+				}
+				std::cout << std::endl;
+
                 (*it_l)->processConnections(&temp_read_set, &temp_write_set);
                 ++it_l;
             }

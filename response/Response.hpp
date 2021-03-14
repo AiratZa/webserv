@@ -23,7 +23,8 @@ class Response;
 
 class Response {
 public:
-	Response(Request* request, int socket);
+	Response(Request * request, int socket);
+	Response();
 
 	~Response(void);
 
@@ -63,7 +64,7 @@ private:
 	bool _isCgiExt();
 	void _runCgi(std::string & filename);
 	void _setEnv(std::vector<char *> & env, std::string & filename, std::map<std::string, std::string> & cgiVariables);
-	void _parseStatusLineFromCgiResponse();
+//	void _parseStatusLineFromCgiResponse();
 	void _parseHeadersFromCgiResponse();
 	std::string _inet_ntoa(struct in_addr sin_addr);
 //	void _appendRequestTarget(std::string & filename);
@@ -80,19 +81,22 @@ public:
 	static std::map<int, std::string> status_codes;
 
 private:
-	Request* _request;
+	Request * _request;
 	int _socket;
 	std::string _http_version;
 //	int _status_code;
 //	std::string _reason_phrase;
 	std::map<std::string, std::string> _headers;
 	std::string _raw_response;
+
+public:
 	std::string _content;
 
 	std::string _file_ext;
 	std::string _cgi_response;
 	std::string _cgi_status_line;
 	std::map<std::string, std::string> _cgi_headers;
+//	std::string _cgi_headers;
 
 public:
 	bool in_progress;

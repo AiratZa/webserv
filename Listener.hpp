@@ -59,8 +59,8 @@ private:
 //	std::list<int> _all_clients;
 	std::list<int> _clients_read; // second param for ready or not
 	std::list<int> _clients_write; // second param for ready or not
-	std::map<int, Request *> _client_requests;
-	std::map<int, Response *> _client_response;
+	std::map<int, Request> _client_requests;
+	std::map<int, Response> _client_response;
 
 	int _max_fd;
 

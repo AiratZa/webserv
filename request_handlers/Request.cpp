@@ -56,17 +56,24 @@ std::set<std::string> Request::initRequestHeaders() {
 	return implemented_headers;
 }
 
-//Request::Request()
-//    : _raw_request(""),
-//    _status_code(DEFAULT_REQUEST_STATUS_CODE),
-////    _client_max_body_size(0xfffff),
-//    _is_alias_path(false),
-//      shift_from_buf_start(0),
-//      _header_end_pos(0),
-//      _header_was_read(false),
-//      _read_body_size(0),
-//      _is_need_writing_body_to_file(false)
-//      {  };
+Request::Request()
+		: _raw_request(""),
+		  _status_code(DEFAULT_REQUEST_STATUS_CODE),
+		  _remote_addr(),
+		  _server_port(),
+		  _close_connection(false),
+//    _client_max_body_size(0xfffff),
+		  _is_alias_path(false),
+		  shift_from_buf_start(0),
+		  _header_end_pos(0),
+
+		  _header_was_read(false),
+		  _read_body_size(0),
+		  _is_need_writing_body_to_file(false),
+		  _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
+		  is_chunked(false),
+		  _is_lang_file_pos(0)
+      {  };
 
 Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		: _raw_request(""),

@@ -83,7 +83,12 @@ std::map<int,std::string> Response::initStatusCodes() {
 	return status_codes;
 }
 
-Response::Response(Request* request, int socket) :
+Response::Response() :
+		_request(), _socket(),
+		_raw_response(""), _content(""),
+		in_progress(false), sent_len(0), error_code_for_generaion(200) { };
+
+Response::Response(Request * request, int socket) :
 				_request(request), _socket(socket),
 				_raw_response(""), _content(""),
 				in_progress(false), sent_len(0), error_code_for_generaion(200) { };
@@ -749,9 +754,9 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //
 //}
 
-void Response::_parseStatusLineFromCgiResponse() {
-
-}
+//void Response::_parseStatusLineFromCgiResponse() {
+//
+//}
 
 void Response::_parseHeadersFromCgiResponse() { // the same as in request headers parsing
 	if (!_request->isStatusCodeOk())
@@ -761,38 +766,41 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 	size_t field_name_length;
 	size_t field_value_length;
 
-	size_t line_length = _cgi_response.find("\r\n");
+	long headers_len = _cgi_response.find("\r\n\r\n") + 4;
+	std::string headers = _cgi_response.substr(0, headers_len);
+
+	size_t line_length = headers.find("\r\n");
 	while (line_length != 0) {
 		if (line_length > MAX_HEADER_LINE_LENGTH
 			|| line_length == std::string::npos) {
 			return _request->setStatusCode(500); // http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 		}
 
-		field_name_length = _cgi_response.find(':'); // field-name
+		field_name_length = headers.find(':'); // field-name
 		if (field_name_length == std::string::npos) {
 			return _request->setStatusCode(500);
 		}
-		field_name = _cgi_response.substr(0, field_name_length);
+		field_name = headers.substr(0, field_name_length);
 
 		libft::string_to_lower(field_name); // field_name is case-insensitive so we make it lowercase to make life easy
 
 		if (field_name.find(' ') != std::string::npos) { // no spaces inside field-name, rfc 2.3.4
 			return _request->setStatusCode(500);
 		}
-		_cgi_response.erase(0, field_name_length + 1);
+		headers.erase(0, field_name_length + 1);
 
 
 		field_value_length = line_length - field_name_length - 1; // field-value
-		if (_cgi_response[0] == ' ') {
-			_cgi_response.erase(0, 1); // remove optional whitespace in the beginning of field-value
+		if (headers[0] == ' ') {
+			headers.erase(0, 1); // remove optional whitespace in the beginning of field-value
 			field_value_length--;
 		}
-		if (_cgi_response[field_value_length - 1] == ' ') {
-			_cgi_response.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
+		if (headers[field_value_length - 1] == ' ') {
+			headers.erase(field_value_length - 1, 1); // remove optional whitespace in the end of field-value
 			field_value_length--;
 		}
-		field_value = _cgi_response.substr(0, field_value_length);
-		_cgi_response.erase(0, field_value_length + 2);
+		field_value = headers.substr(0, field_value_length);
+		headers.erase(0, field_value_length + 2);
 
 //		if (Request::implemented_headers.count(field_name))
 //		{
@@ -805,9 +813,9 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 //		}
 		_cgi_headers[field_name].append(field_value);
 
-		line_length = _cgi_response.find("\r\n");
+		line_length = headers.find("\r\n");
 	}
-	_cgi_response.erase(0, 2);
+	_cgi_response.erase(0, headers_len);
 }
 
 
@@ -924,7 +932,7 @@ void Response::generateHeadResponseCore() {
 			if (_isCgiExt()) {
 				_runCgi(filename);
 //				if (_file_ext == "php") { //TODO: do test cgi response with headers?
-					_parseStatusLineFromCgiResponse();
+//					_parseStatusLineFromCgiResponse();
 					_parseHeadersFromCgiResponse();
 					if (_cgi_headers.count("content-length")) {
 						_cgi_response.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
@@ -1007,7 +1015,7 @@ void Response::generatePostResponse() {
 	_file_ext = _getExt(filename);
 	if (_isCgiExt()) {
 		_runCgi(filename);
-		_parseStatusLineFromCgiResponse();
+//		_parseStatusLineFromCgiResponse();
 		_parseHeadersFromCgiResponse();
 		if (!_request->isStatusCodeOk())
 			return ;
@@ -1038,7 +1046,16 @@ void Response::generatePostResponse() {
 	generateStatusLine();
 	generateHeaders();
 
-	_raw_response += _content;
+//	_raw_response += _content;
+
+	if (_cgi_response.empty())
+		_raw_response += _content;
+	else {
+		_raw_response.erase(_raw_response.size() - 1);
+		_raw_response.append(_cgi_response);
+	}
+
+
 }
 
 void Response::generateResponse() {

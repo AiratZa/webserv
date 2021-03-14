@@ -11,12 +11,19 @@
 
 Listener::~Listener(void)
 {
-    std::map<int, Request *>::iterator _client_requests_it = _client_requests.begin();
-
-    while (_client_requests_it != _client_requests.end()) {
-        delete _client_requests_it->second;
-        ++_client_requests_it;
-    }
+//    std::map<int, Request *>::iterator _client_requests_it = _client_requests.begin();
+//
+//    while (_client_requests_it != _client_requests.end()) {
+//        delete _client_requests_it->second;
+//        ++_client_requests_it;
+//    }
+//
+//	std::map<int, Response *>::iterator _client_response_it = _client_response.begin();
+//
+//	while (_client_response_it != _client_response.end()) {
+//		delete _client_response_it->second;
+//		++_client_response_it;
+//	}
 
 }
 
@@ -114,9 +121,11 @@ void Listener::acceptConnection(void) {
 //	_all_clients.push_back(sock);
 	_clients_read.push_back(sock);
 
-	_client_requests[sock] =  new Request(_remote_addr, _port);
+	_client_requests.erase(sock);
+	_client_response.erase(sock);
+	_client_requests[sock] = Request(_remote_addr, _port);
 	_time[sock] = _get_time();
-	_client_response[sock] = new Response(_client_requests[sock], sock);
+	_client_response[sock] = Response(&_client_requests[sock], sock);
 }
 
 void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteSetPtr) {
@@ -126,9 +135,11 @@ void Listener::processConnections(fd_set* globalReadSetPtr, fd_set* globalWriteS
 
 void Listener::readError(std::list<int>::iterator & it) {
 	close(*it);
-	delete _client_requests[*it];
+//	delete _client_requests[*it];
 	_client_requests.erase(*it);
 	it = _clients_read.erase(it);
+//	delete _client_response[*it];
+//	_client_response.erase(*it);
 }
 
 // return TRUE if header was read else FALSE
@@ -289,7 +300,7 @@ bool    find_log_pass(std::vector<std::string> log_pass, std::string const& cred
 
 // returns TRUE if we are ready and need body and its length check, etc.
 bool Listener::processHeaderInfoForActions(int client_socket) {
-    Request* request = _client_requests[client_socket];
+    Request * request = &_client_requests[client_socket];
 
     std::cout << request->getRawRequest() << std::endl;
 
@@ -424,7 +435,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
 		if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
 		    // Check client header info was read or not
-            Request* request = _client_requests[fd];
+            Request * request = &_client_requests[fd];
             request->setHostAndPort(_host, _port);
             bool header_was_read_client = request->isHeaderWasRead();
 
@@ -506,7 +517,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			    	++it;
             }
 			else {
-			    bool body_was_read = continueReadBody(_client_requests[*it]);
+			    bool body_was_read = continueReadBody(&_client_requests[*it]);
                 bool writing_to_file_result = true;
 
                 if (request->getNeedWritingBodyToFile() && body_was_read) {
@@ -529,8 +540,8 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 		// if not ready for reading (socket not in SET)
 		else {
 			if ((_get_time() - _time[fd]) > TIME_OUT) {
-				readError(it);
 				std::cout << "socket " << fd << " closed due to timeout" << std::endl;
+				readError(it);
 				continue;
 			}
 			++it;
@@ -545,8 +556,8 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 	while (it != _clients_write.end()) {
 		fd = *it;
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
-			Request* request = _client_requests[fd];
-			Response* response = _client_response[fd];
+			Request* request = &_client_requests[fd];
+			Response* response = &_client_response[fd];
 
 			// moved to listenere opers
 //			request->parseRequestLine();
@@ -568,27 +579,31 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 				//			Response response(request, fd);
 				response->generateResponse();
 				response->setRemains();
-				request->_content.clear();
+				request->_content.clear(); // just to free memory
+				response->_content.clear();
 			}
 
 			response->sendResponse();
 
 			if (request->_close_connection || (request->_headers.count("connection") && request->_headers["connection"] == "close")) {
-				delete _client_requests[fd];
-				delete _client_response[fd];
+//				delete _client_requests[fd];
+//				delete _client_response[fd];
 				_client_requests.erase(fd);
 				_client_response.erase(fd);
 				close(fd);
 				it = _clients_write.erase(it);
 				std::cout << "connection closed, socket " << fd << std::endl;
 			} else if (!response->in_progress) {
-					delete _client_requests[fd]; // todo: make something like Request::clear() and Response::clear()
-					delete _client_response[fd];
-					_client_requests[fd] = new Request(_remote_addr, _port);
-					_client_response[fd] = new Response(_client_requests[fd], fd);
+//					delete _client_requests[fd]; // todo: make something like Request::clear() and Response::clear()
+//					delete _client_response[fd];
+//					_client_requests.erase(fd);
+//					_client_response.erase(fd);
+					_client_requests[fd] = Request(_remote_addr, _port);
+					_client_response[fd] = Response(&_client_requests[fd], fd);
 					_clients_read.push_back(fd);
 					it = _clients_write.erase(it);
-				}
+				} else
+					++it;
 //
 		} else {
 			++it;
