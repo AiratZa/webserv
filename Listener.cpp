@@ -152,7 +152,6 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 
         std::size_t raw_request_len = request_obj->_bytes_read;
         if (raw_request_len > (empty_line_pos + 4)) {
-            request_obj->shift_from_buf_start = (empty_line_pos + 4);
             request_obj->increaseReadBodySize(raw_request_len - (empty_line_pos + 4));
         }
         return true;
@@ -323,20 +322,13 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
     WebServ::routeRequest(_host, _port, request, request->_request_target);
 
-//    if (request->isMethodLimited(request->_method)) { // TODO: jnannie: its 405, but we check for allowed methods in Response, and set 'location' header if method is not allowed, maybe later move it here, but xz
-//        request->_status_code = 403;
-//    }
-
-
     std::size_t lang_start_pos;
     if ((lang_start_pos = request->_request_target.find("_lang_")) != std::string::npos) {
         std::size_t lang_end_pos = request->_request_target.find_last_of('.');
         lang_start_pos += 6; // pass "_lang_"
         request->_is_lang_file_pos = lang_start_pos;
         std::string lang_code = (request->_request_target).substr(lang_start_pos, (lang_end_pos- lang_start_pos) );
-//        if (checkForCorrectLanguageCode(lang_code)) { TODO:
-//            request->setReponseContentLang(lang_code);
-//        }
+        request->setReponseContentLang(lang_code);
     }
 
     if (!request->isStatusCodeOk()) {
@@ -364,7 +356,6 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 			}
 		}
     }
-
 
     request->handleExpectHeader();
 
@@ -454,11 +445,7 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
             try
             {
-                request->getRawRequest().append(request->_buf);// собираем строку пока весь запрос не соберем
-                //// FOR TEST! TODO: need delete
-                if (request->getRawRequest().find("PUT") !=  std::string::npos) {
-                    std::cout << "hey" << std::endl;
-                }
+                request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
 
                 if (header_was_read_client) {
                     request->increaseReadBodySize(request->_bytes_read);
@@ -477,16 +464,6 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 			    if (header_was_read) {
                     request->setHeaderWasRead();
                     bool is_continue_read_body = processHeaderInfoForActions(*it);
-
-                    // ONLY WITH EXPECT HEADERS
-                    if (is_continue_read_body && (request->_status_code == 100))
-                    {
-                        Response response = Response(request, fd);
-                        response.generateStatusLine();
-                        response.sendResponse();
-
-                        continue ;
-                    }
 
                     if (is_continue_read_body) {
                         bool body_was_read = continueReadBody(request);
@@ -559,24 +536,8 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			Request* request = &_client_requests[fd];
 			Response* response = &_client_response[fd];
 
-			// moved to listenere opers
-//			request->parseRequestLine();
-//			if (request->isStatusCodeOk())
-//				request->parseHeaders();
-
-//			if (request->isStatusCodeOk()) {
-//				request->parsURL();
-//				if (request->isStatusCodeOk()) // TODO: routing already done in Listener::handleRequests() -> Listener::processHeaderInfoForActions() so this one is redundant
-//					WebServ::routeRequests(_host, _port, _client_requests);
-//			}
-
-//			request->parseBody();
 			if (!response->in_progress) {
 				request->checkToClientMaxBodySize(request->_content.size()); // 413 set inside if needed
-				//			if (!size_check) {
-				//				return true; // finished beacuse of SIZE
-				//			}
-				//			Response response(request, fd);
 				response->generateResponse();
 				response->setRemains();
 				request->_content.clear(); // just to free memory

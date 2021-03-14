@@ -126,7 +126,6 @@ class Request {
 
     bool checkToClientMaxBodySize(void);
 
-    int shift_from_buf_start;
     char _buf[BUFFER_LENGHT];
     int _bytes_read;
 
@@ -139,25 +138,8 @@ class Request {
             return false;
         }
 
-        if (is_chunked)
-        {
-            write(file, _content.c_str(), _content.size());
-            _content.clear();
-        }
-        else
-        {
-            if (shift_from_buf_start > 0)
-            {
-                int len = _bytes_read - shift_from_buf_start;
-                write(file, _buf + shift_from_buf_start, len);
-                shift_from_buf_start = 0;
-            }
-            else
-            {
-                write(file, _buf, _bytes_read);
-            }
-        }
-
+        write(file, _content.c_str(), _read_body_size);
+        _content.clear();
         close(file);
         return true;
     }

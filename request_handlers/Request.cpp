@@ -64,7 +64,6 @@ Request::Request()
 		  _close_connection(false),
 //    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
-		  shift_from_buf_start(0),
 		  _header_end_pos(0),
 
 		  _header_was_read(false),
@@ -83,7 +82,6 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _close_connection(false),
 //    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
-		  shift_from_buf_start(0),
 		  _header_end_pos(0),
 
 		  _header_was_read(false),
@@ -698,8 +696,6 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
         {
             std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
                                                                                      _headers["accept-language"]);
-
-
             std::list<std::string>::const_iterator it = values.begin();
 
             bool is_found = false;
