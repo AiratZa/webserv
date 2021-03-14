@@ -13,7 +13,6 @@ class LocationContext;
 
 #include "AContext.hpp"
 #include "LocationContext.hpp"
-#define DEFAULT_LISTEN_PORT 8000 // https://nginx.org/ru/docs/http/ngx_http_core_module.html#listen
 
 
 

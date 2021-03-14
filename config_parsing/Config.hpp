@@ -24,8 +24,7 @@
 
 #include "ServerContext.hpp"
 
-//!!! listen *:80 | *:8000;
-#define DEFAULT_PORT -1
+#define DEFAULT_PORT 8000 // https://nginx.org/ru/docs/http/ngx_http_core_module.html#listen
 
 // NGINX CONF KEYWORDS (KW) BEGIN
 

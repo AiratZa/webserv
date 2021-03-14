@@ -158,7 +158,28 @@ int main(int argc, char *argv[])
 //todo: put request fail
 //todo: close sockets with ctrl+c + listener socket
 
+//// NEED TESTS! TODO:
+// Can't assign requested address
+/* https://nginx.org/ru/docs/http/request_processing.html
+* http://nginx.org/ru/docs/example.html
+* server {
+   listen      80;
+   server_name example.org www.example.org;
+   ...
+}
 
+server {
+   listen      80;
+   server_name example.net www.example.net;
+   ...
+}
+
+server {
+   listen      80;
+   server_name example.com www.example.com;
+   ...
+}
+*/
 
 /* todo:
 < location: http://localhost:8081/post_body/nginx_meme.jpg/
@@ -199,26 +220,4 @@ va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body/ -v
 
 */
 
-// Can't assign requested address TODO:
 
-/* TODO:
- * https://nginx.org/ru/docs/http/request_processing.html
- * http://nginx.org/ru/docs/example.html
- * server {
-    listen      80;
-    server_name example.org www.example.org;
-    ...
-}
-
-server {
-    listen      80;
-    server_name example.net www.example.net;
-    ...
-}
-
-server {
-    listen      80;
-    server_name example.com www.example.com;
-    ...
-}
- */

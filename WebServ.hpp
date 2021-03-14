@@ -46,6 +46,11 @@ public:
                                                          const int port,
                                                          const std::string& server_name);
 
+    static std::list<ServerContext*> getAllExactHostPortComboList(const std::string& host,
+                                                                    const int port);
+
+    static std::list<ServerContext*> getAllAsteriskHostPortComboList(const int port);
+
 	static void routeRequest(const std::string& host, const int port, Request* _client_request, const std::string& request_target);
 
 //    static void routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests); // jnannie: not needed

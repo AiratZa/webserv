@@ -53,11 +53,65 @@ int isServerNameMatch(const std::string& server_name, const std::list<std::strin
     return value_to_return;
 }
 
+std::list<ServerContext*> WebServ::getAllExactHostPortComboList(const std::string& host,
+                                                                const int port)
+{
+    std::list<ServerContext*> to_return;
+
+    std::list<ServerContext*>::const_iterator it = servers_list.begin();
+    while (it != servers_list.end()) {
+        const std::map<std::string, std::list<int> >& host_n_ports = (*it)->getHostsAndPorts();
+        std::map<std::string, std::list<int> >::const_iterator it_h_p = host_n_ports.begin();
+
+        while(it_h_p != host_n_ports.end()) {
+            if (host == (*it_h_p).first) {
+                std::list<int>::const_iterator it_p = (*it_h_p).second.begin();
+                while (it_p != (*it_h_p).second.end()) {
+                    if (port == (*it_p)) {
+                        to_return.push_back(*it);
+                    }
+                    ++it_p;
+                }
+            }
+            ++it_h_p;
+        }
+        ++it;
+    }
+    return to_return;
+}
+
+std::list<ServerContext*> WebServ::getAllAsteriskHostPortComboList(const int port)
+{
+    std::list<ServerContext*> to_return;
+
+    std::list<ServerContext*>::const_iterator it = servers_list.begin();
+    while (it != servers_list.end()) {
+        const std::map<std::string, std::list<int> >& host_n_ports = (*it)->getHostsAndPorts();
+        std::map<std::string, std::list<int> >::const_iterator it_h_p = host_n_ports.begin();
+
+        while(it_h_p != host_n_ports.end()) {
+            if ("*" == (*it_h_p).first) {
+                std::list<int>::const_iterator it_p = (*it_h_p).second.begin();
+                while (it_p != (*it_h_p).second.end()) {
+                    if (port == (*it_p)) {
+                        to_return.push_back(*it);
+                    }
+                    ++it_p;
+                }
+            }
+            ++it_h_p;
+        }
+        ++it;
+    }
+    return to_return;
+}
+
+
 
 ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
                                                                 const int port,
                                                                 const std::string& server_name) {
-    std::list<ServerContext*>::const_iterator it = servers_list.begin();
+//    std::list<ServerContext*>::const_iterator it = servers_list.begin();
     ServerContext* default_serv = NULL;
 
     std::list<ServerContext*> match_with_mask_at_start;
@@ -65,10 +119,14 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
 
     int tmp = 0;
 
-    while(it != servers_list.end()) {
-        const std::list<std::string>& serv_name_list = (*it)->getServerNames();
+    //// #1 EXACT HOST(IP, localhost):PORT COMBO
+    std::list<ServerContext*> exact_host_port = getAllExactHostPortComboList(host, port);
+    std::list<ServerContext*>::const_iterator it_exact = exact_host_port.begin();
 
-        const std::map<std::string, std::list<int> >& host_n_ports = (*it)->getHostsAndPorts();
+    while(it_exact != exact_host_port.end()) {
+        const std::list<std::string>& serv_name_list = (*it_exact)->getServerNames();
+
+        const std::map<std::string, std::list<int> >& host_n_ports = (*it_exact)->getHostsAndPorts();
         std::map<std::string, std::list<int> >::const_iterator it_h_p = host_n_ports.begin();
 
         while(it_h_p != host_n_ports.end()) {
@@ -78,15 +136,15 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
                     if (port == (*it_p)) {
                         if ((tmp = isServerNameMatch(server_name, serv_name_list))) {
                             if (tmp == 1) {
-                                return *it; // full match
+                                return *it_exact; // full match
                             } else if (tmp == 2) {
-                                match_with_mask_at_start.push_back(*it);
+                                match_with_mask_at_start.push_back(*it_exact);
                             } else if (tmp == 3) {
-                                match_with_mask_at_end.push_back(*it);
+                                match_with_mask_at_end.push_back(*it_exact);
                             }
                         } else { // set default if it's NULL and find full match
                             if (!default_serv)
-                                default_serv = *it;
+                                default_serv = *it_exact;
                         }
                     }
                     ++it_p;
@@ -94,13 +152,57 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
             }
             ++it_h_p;
         }
-        ++it;
+        ++it_exact;
     }
     if (!match_with_mask_at_start.empty())
         return match_with_mask_at_start.front();
     if (!match_with_mask_at_end.empty())
         return match_with_mask_at_end.front();
-    return default_serv;
+    if (default_serv)
+        return default_serv;
+
+
+    //// #2 *:PORT COMBO
+    std::list<ServerContext*> asterisk_host_port = getAllAsteriskHostPortComboList(port);
+    std::list<ServerContext*>::const_iterator it_ast = asterisk_host_port.begin();
+
+    while(it_ast != asterisk_host_port.end()) {
+        const std::list<std::string>& serv_name_list = (*it_ast)->getServerNames();
+
+        const std::map<std::string, std::list<int> >& host_n_ports = (*it_ast)->getHostsAndPorts();
+        std::map<std::string, std::list<int> >::const_iterator it_h_p = host_n_ports.begin();
+
+        while(it_h_p != host_n_ports.end()) {
+            if (host == (*it_h_p).first) {
+                std::list<int>::const_iterator it_p = (*it_h_p).second.begin();
+                while (it_p != (*it_h_p).second.end()) {
+                    if (port == (*it_p)) {
+                        if ((tmp = isServerNameMatch(server_name, serv_name_list))) {
+                            if (tmp == 1) {
+                                return *it_ast; // full match
+                            } else if (tmp == 2) {
+                                match_with_mask_at_start.push_back(*it_ast);
+                            } else if (tmp == 3) {
+                                match_with_mask_at_end.push_back(*it_ast);
+                            }
+                        } else { // set default if it's NULL and find full match
+                            if (!default_serv)
+                                default_serv = *it_ast;
+                        }
+                    }
+                    ++it_p;
+                }
+            }
+            ++it_h_p;
+        }
+        ++it_ast;
+    }
+    if (!match_with_mask_at_start.empty())
+        return match_with_mask_at_start.front();
+    if (!match_with_mask_at_end.empty())
+        return match_with_mask_at_end.front();
+    if (default_serv)
+        return default_serv;
 }
 
 

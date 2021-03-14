@@ -56,7 +56,7 @@ void ServerContext::_divideLocationExactNonExactExt(void) {
 void ServerContext::structure_properties(void) {
     _divideLocationExactNonExactExt();
     if (_hosts_ports.empty()) {
-        _hosts_ports["*"].push_back(DEFAULT_LISTEN_PORT);
+        _hosts_ports["*"].push_back(DEFAULT_PORT);
     }
 }
 

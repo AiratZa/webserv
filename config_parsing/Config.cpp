@@ -630,6 +630,9 @@ const Pair<std::string, int > Config::_listenKeywordHandler(const std::list<std:
         }
     }
 
+    if (hosts == "localhost") {
+        hosts = "127.0.0.1";
+    }
     return Pair<std::string, int >(hosts, port);
 }
 
