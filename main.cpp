@@ -151,8 +151,8 @@ int main(int argc, char *argv[])
 ////todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
 ////todo: make content-length parsing in cgi
 //todo: make copliens form
-// todo: add languageS to content-language | wi
-//// and remove _lang_ !!!! NOT POSSIBLE | we could know avalibale languages of file by brutforce (iteration with stat())
+//// todo: add languageS to content-language | just hardcoded "en-US, ru-RU" if "_lang_" string is found in request_target
+//// and remove _lang_ !!!! NOT POSSIBLE | we cant check all requests preferred languages
 //todo: content-location
 //todo: check Response::generatePostResponse()
 //// todo: put request fail ! FIXED

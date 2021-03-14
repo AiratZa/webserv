@@ -269,8 +269,13 @@ void Response::generateHeaders() {
 	_raw_response += _last_modified;
 	_raw_response += _location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
-	_raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
-	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
+
+    if (_request->_is_lang_file_pos)
+        _raw_response += "Content-Language: " "en-US, ru-RU" "\r\n";
+    else
+	    _raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
+
+    for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
 		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
 	}
 	_raw_response += "\r\n";
