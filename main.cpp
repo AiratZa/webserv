@@ -149,36 +149,20 @@ int main(int argc, char *argv[])
 ////todo: check for sigpipe in sendResponse
 ////todo: close connection if recv returns 0
 ////todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
-//todo: test with several servers
 ////todo: make content-length parsing in cgi
 //todo: make copliens form
-//todo: add languageS to content-language and remove _lang_
+// todo: add languageS to content-language | wi
+//// and remove _lang_ !!!! NOT POSSIBLE | we could know avalibale languages of file by brutforce (iteration with stat())
 //todo: content-location
 //todo: check Response::generatePostResponse()
-//todo: put request fail
+//// todo: put request fail ! FIXED
 //todo: close sockets with ctrl+c + listener socket
 
+//todo: test with several servers SAME AS LOWER TODO
 //// NEED TESTS! TODO:
 // Can't assign requested address
 /* https://nginx.org/ru/docs/http/request_processing.html
 * http://nginx.org/ru/docs/example.html
-* server {
-   listen      80;
-   server_name example.org www.example.org;
-   ...
-}
-
-server {
-   listen      80;
-   server_name example.net www.example.net;
-   ...
-}
-
-server {
-   listen      80;
-   server_name example.com www.example.com;
-   ...
-}
 */
 
 

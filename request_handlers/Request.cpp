@@ -717,7 +717,7 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
 
                 std::string full_filename = getAbsoluteRootPathForRequest();
                 _appendRequestTarget(full_filename, this, target);
-                if (isFileExists(full_filename)) {
+                if (isRegFileExists(full_filename)) {
                     _request_target = target;
                     is_found = true;
                     setReponseContentLang(*it);

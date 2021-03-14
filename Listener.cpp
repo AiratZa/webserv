@@ -331,11 +331,11 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
     std::size_t lang_start_pos;
     if ((lang_start_pos = request->_request_target.find("_lang_")) != std::string::npos) {
-        std::size_t lang_end_pos = request->_request_target.find_last_of('.');
+//        std::size_t lang_end_pos = request->_request_target.find_last_of('.');
         lang_start_pos += 6; // pass "_lang_"
         request->_is_lang_file_pos = lang_start_pos;
-        std::string lang_code = (request->_request_target).substr(lang_start_pos, (lang_end_pos- lang_start_pos) );
-        request->setReponseContentLang(lang_code);
+//        std::string lang_code = (request->_request_target).substr(lang_start_pos, (lang_end_pos- lang_start_pos) );
+//        request->setReponseContentLang(lang_code);
     }
 
     if (!request->isStatusCodeOk()) {

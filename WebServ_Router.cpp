@@ -201,8 +201,7 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
         return match_with_mask_at_start.front();
     if (!match_with_mask_at_end.empty())
         return match_with_mask_at_end.front();
-    if (default_serv)
-        return default_serv;
+    return default_serv;
 }
 
 

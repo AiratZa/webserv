@@ -174,6 +174,11 @@ class Request {
         return (stat (full_filename.c_str(), &buffer) == 0);
     }
 
+    bool isRegFileExists(const std::string& full_filename) {
+        struct stat buffer;
+        return ((stat (full_filename.c_str(), &buffer) == 0) && S_ISREG(buffer.st_mode));
+    }
+
     void setFileExistenceStatus(bool value) {
         _is_file_exists = value;
     }
