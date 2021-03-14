@@ -137,6 +137,7 @@ void Listener::readError(std::list<int>::iterator & it) {
 	close(*it);
 //	delete _client_requests[*it];
 	_client_requests.erase(*it);
+	_client_response.erase(*it);
 	it = _clients_read.erase(it);
 //	delete _client_response[*it];
 //	_client_response.erase(*it);

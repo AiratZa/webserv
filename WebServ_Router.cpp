@@ -119,7 +119,9 @@ bool isPartOfLocationPath(const std::list<std::string>& request_target, const st
         ++it1;
         ++it2;
     }
-    return true;
+    if ((it1 == it1_e) && (it2 == it2_e))
+    	return true;
+    return false;
 }
 
 
