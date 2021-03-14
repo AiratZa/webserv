@@ -58,13 +58,14 @@ std::string write_html(std::string dir_name, Request * request)
     response_body += "<body>\n";
     response_body += "<h1>Index of ";
     response_body += request->_request_target;
-    response_body += "</h1><hr>\n";
+	response_body += "</h1><hr>\n";
     response_body += "<pre>\n";
 
 
     response_body += "<a href=\"";
 //    response_body += "http://localhost/"; // current page root
-    response_body += host_n_port + request->_request_target.substr(0, request->_request_target.rfind('/', request->_request_target.size() - 2) + 1);
+//    response_body += host_n_port + request->_request_target.substr(0, request->_request_target.rfind('/', request->_request_target.size() - 2) + 1);
+	response_body += "../";
     response_body += "\">../</a>\n";
 
 

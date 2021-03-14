@@ -441,11 +441,14 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
                     request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
 
-                    if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
-                        readError(it); // ERASES iterator instance inside
-                        continue;
-                    } else if (request->_bytes_read < 0)
-                        request->_bytes_read = 0;
+                    if (request->_bytes_read <= 0) { // Соединение разорвано, удаляем сокет из множества //
+//                        readError(it); // ERASES iterator instance inside
+//                        continue;
+//                    } else if (request->_bytes_read < 0) {
+						readError(it); // ERASES iterator instance inside
+						continue;
+//						request->_bytes_read = 0;
+                    }
                     else
                         _time[*it] = _get_time();
                     request->_buf[request->_bytes_read] = '\0';

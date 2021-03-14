@@ -150,11 +150,73 @@ int main(int argc, char *argv[])
 //todo: test with several servers
 ////todo: make content-length parsing in cgi
 //todo: make copliens form
-//todo: remove content-language from response
+//todo: add languageS to content-language and remove _lang_
 //todo: content-location
 //todo: check Response::generatePostResponse()
+//todo: put request fail
+//todo: close sockets with ctrl+c + listener socket
+
+
+
+/* todo:
+< location: http://localhost:8081/post_body/nginx_meme.jpg/
+< Content-Language: en-US
+<
+* Connection #0 to host localhost left intact
+va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body/ -v
+ */
+
+
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
 //}
 
+/*TODO:
+ *
+ * va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body -v
+*   Trying 127.0.0.1...
+* TCP_NODELAY set
+* Connected to localhost (127.0.0.1) port 8081 (#0)
+> PUT /post_body HTTP/1.1
+> Host: localhost:8081
+> User-Agent: curl/7.54.0
+> Accept: *
+> Content-Length: 172172
+> Expect: 100-continue
+>
+< HTTP/1.1 409 CONFLICT
+		< server: webserv
+		< date: Sun, 14 Mar 2021 15:48:33 GMT
+		< Content-Type: text/html;charset=utf-8
+										  < Content-Length: 14
+< Content-Language: en-US
+		* HTTP error before end of send, stop sending
+		<
+409 CONFLICT
+
+*/
+
+// Can't assign requested address TODO:
+
+/* TODO:
+ * https://nginx.org/ru/docs/http/request_processing.html
+ * http://nginx.org/ru/docs/example.html
+ * server {
+    listen      80;
+    server_name example.org www.example.org;
+    ...
+}
+
+server {
+    listen      80;
+    server_name example.net www.example.net;
+    ...
+}
+
+server {
+    listen      80;
+    server_name example.com www.example.com;
+    ...
+}
+ */

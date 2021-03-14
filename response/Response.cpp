@@ -725,7 +725,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	std::vector<char> buf;
 	buf.reserve(size);
     ret = 0;
-    while ((ret = read(fd_read, &buf[0], size)) != 0) {
+    if ((ret = read(fd_read, &buf[0], size)) >= 0) {
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(&buf[0], ret);
@@ -733,16 +733,19 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 				if (headers_end != std::string::npos) {
 					std::string headers = _cgi_response.substr(0, headers_end);
 					if (headers.find("content-length") != std::string::npos) {
-						size_t content_length = libft::strtoul_base(headers.substr(headers.find("content-length:") + 15), 10);
-						if (_cgi_response.size() - headers_end - 4 >= content_length)
-							break ;
+//						size_t content_length = libft::strtoul_base(headers.substr(headers.find("content-length:") + 15), 10);
+//						if (_cgi_response.size() - headers_end - 4 >= content_length)
+//							break ;
 					}
 				}
 			} catch (std::bad_alloc& ba) {
-				return _request->setStatusCode(500);
+				_request->setStatusCodeNoExept(500);
 //				break ;
 			}
 		}
+    	else {
+			_request->setStatusCodeNoExept(500);
+    	}
 		close(fd_read);
 //		std::cout << "strerror " << strerror(errno) << std::endl;
 	}
@@ -751,7 +754,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	unlink(in_file_path.c_str());
 	unlink(out_file_path.c_str());
 
-	if (exit_status)
+	if (exit_status || !_request->isStatusCodeOk())
 		_request->setStatusCode(500);
 }
 
@@ -1119,13 +1122,15 @@ void Response::sendResponse() {
 				in_progress =  true;
 			}
 		} else if (ret == -1) {
-			if (g_sigpipe) {
-				_request->_close_connection = true;
-				in_progress = false;
-				g_sigpipe = false;
-			} else {
-				in_progress =  true;
-			}
+			_request->_close_connection = true;
+			in_progress = false;
+//			if (g_sigpipe) {
+//				_request->_close_connection = true;
+//				in_progress = false;
+//				g_sigpipe = false;
+//			} else {
+//				in_progress =  true;
+//			}
 		}
 
 
