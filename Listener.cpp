@@ -347,7 +347,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
 
     if (request->_handling_location) {
-		if (request->_handling_location->getLocationPath() == "/ht") { // TODO: add to config file
+		if (request->_handling_location->getAuthEnable()) { // TODO: add to config file
 			if (request->_headers.count("authorization")) {
 				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/passwd"));
 				std::string auth_scheme = request->_headers["authorization"].substr(0, 5);
