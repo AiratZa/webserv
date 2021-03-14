@@ -265,6 +265,9 @@ std::vector<std::string>    parser_log_pass(std::string file) {
 	std::vector<std::string> log_pass;
 
 	int fd_file = open(file.c_str(), O_RDONLY);
+    if (fd_file < 0) {
+//        throw WebServ::UnexpectedException();
+    }
 	// if (fd_file < 0)
 	//     utils::exitWithLog("Error happened when try to open auth_basic_user_file");
 
@@ -275,6 +278,9 @@ std::vector<std::string>    parser_log_pass(std::string file) {
 		log_pass.push_back(str);
 		delete str;
 	}
+	if (read == -1) {
+//        throw WebServ::UnexpectedException();
+    }
 	log_pass.push_back(str);
 //	std::cout << "log_pass.size(): " << log_pass.size() << std::endl;
 	delete str;
@@ -375,7 +381,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
 
         // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
         if (request->isConcreteHeaderExists("content-range")) {
-            request->_status_code = 400;
+            request->setStatusCode(400);
             return false;
         }
 
@@ -390,7 +396,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
         {
             if (!request->targetIsFile()) {
                 if (request->isStatusCodeOk()) {
-                    request->_status_code = 409;
+                    request->setStatusCode(409);
                 }
                 return false;
             }
@@ -422,107 +428,106 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
 
 
 	while (it != _clients_read.end() ) {
-        int fd = *it;
+        try {
+            try {
+                int fd = *it;
 
-		if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
-		    // Check client header info was read or not
-            Request * request = &_client_requests[fd];
-            request->setHostAndPort(_host, _port);
-            bool header_was_read_client = request->isHeaderWasRead();
+                if (FD_ISSET(*it, globalReadSetPtr)) { // Поступили данные от клиента, читаем их
+                    // Check client header info was read or not
+                    Request *request = &_client_requests[fd];
+                    request->setHostAndPort(_host, _port);
+                    bool header_was_read_client = request->isHeaderWasRead();
 
-            request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
+                    request->_bytes_read = recv(fd, request->_buf, BUFFER_LENGHT - 1, 0);
 
-            if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
-			    readError(it); // ERASES iterator instance inside
-				continue;
-			}
-			else if (request->_bytes_read < 0)
-				request->_bytes_read = 0;
-			else
-				_time[*it] = _get_time();
-			request->_buf[request->_bytes_read] = '\0';
+                    if (request->_bytes_read == 0) { // Соединение разорвано, удаляем сокет из множества //
+                        readError(it); // ERASES iterator instance inside
+                        continue;
+                    } else if (request->_bytes_read < 0)
+                        request->_bytes_read = 0;
+                    else
+                        _time[*it] = _get_time();
+                    request->_buf[request->_bytes_read] = '\0';
 
+                        request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
 
-            try
-            {
-                request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
+                        if (header_was_read_client) {
+                            request->increaseReadBodySize(request->_bytes_read);
+                        }
 
-                if (header_was_read_client) {
-                    request->increaseReadBodySize(request->_bytes_read);
-                }
-            }
-            catch (std::bad_alloc const& e)
-            {
-                request->_status_code = 500;
-                readError(it);
-                continue;
-            }
+                    // Behavior based on was or not read header
+                    if (!header_was_read_client) {
+                        bool header_was_read = readAndSetHeaderInfoInRequest(request);
+                        if (header_was_read) {
+                            request->setHeaderWasRead();
+                            bool is_continue_read_body = processHeaderInfoForActions(*it);
 
-			// Behavior based on was or not read header
-			if (!header_was_read_client) {
-			    bool header_was_read = readAndSetHeaderInfoInRequest(request);
-			    if (header_was_read) {
-                    request->setHeaderWasRead();
-                    bool is_continue_read_body = processHeaderInfoForActions(*it);
+                            if (is_continue_read_body) {
+                                bool body_was_read = continueReadBody(request);
+                                bool writing_to_file_result = true;
 
-                    if (is_continue_read_body) {
-                        bool body_was_read = continueReadBody(request);
+                                if (request->getNeedWritingBodyToFile() && body_was_read) {
+                                    writing_to_file_result = request->writeBodyReadBytesIntoFile();
+
+                                    if (!writing_to_file_result) {
+                                        request->setStatusCode(500);
+                                    }
+                                }
+
+                                if (body_was_read || !writing_to_file_result) {
+                                    _clients_write.push_back(*it);
+                                    it = _clients_read.erase(it);
+                                } else {
+                                    ++it;
+                                }
+                            } else {
+                                _clients_write.push_back(*it);
+                                it = _clients_read.erase(it);
+                            }
+                        } else // jnannie: we can read and write only once according to checklist
+                            ++it;
+                    } else {
+                        bool body_was_read = continueReadBody(&_client_requests[*it]);
                         bool writing_to_file_result = true;
 
                         if (request->getNeedWritingBodyToFile() && body_was_read) {
                             writing_to_file_result = request->writeBodyReadBytesIntoFile();
 
                             if (!writing_to_file_result) {
-                                request->_status_code = 500;
+                                request->setStatusCode(500);
                             }
                         }
 
                         if (body_was_read || !writing_to_file_result) {
                             _clients_write.push_back(*it);
                             it = _clients_read.erase(it);
-                        }
-                        else {
+                        } else {
                             ++it;
                         }
                     }
-                    else {
-                        _clients_write.push_back(*it);
-                        it = _clients_read.erase(it);
-                    }
+
                 }
-			    else // jnannie: we can read and write only once according to checklist
-			    	++it;
-            }
-			else {
-			    bool body_was_read = continueReadBody(&_client_requests[*it]);
-                bool writing_to_file_result = true;
-
-                if (request->getNeedWritingBodyToFile() && body_was_read) {
-                    writing_to_file_result = request->writeBodyReadBytesIntoFile();
-
-                    if (!writing_to_file_result) {
-                        request->_status_code = 500;
+                    // if not ready for reading (socket not in SET)
+                else {
+                    if ((_get_time() - _time[fd]) > TIME_OUT) {
+                        std::cout << "socket " << fd << " closed due to timeout" << std::endl;
+                        readError(it);
+                        continue;
                     }
-                }
-
-                if (body_was_read || !writing_to_file_result) {
-                    _clients_write.push_back(*it);
-                    it = _clients_read.erase(it);
-			    }
-			    else {
                     ++it;
                 }
-			}
-		}
-		// if not ready for reading (socket not in SET)
-		else {
-			if ((_get_time() - _time[fd]) > TIME_OUT) {
-				std::cout << "socket " << fd << " closed due to timeout" << std::endl;
-				readError(it);
-				continue;
-			}
-			++it;
-		}
+            }
+            catch (std::bad_alloc const &e)
+            {
+                _client_requests[*it]._close_connection = true;
+                _client_requests[*it].setStatusCode(500);
+            }
+        }
+        catch (WebServ::NotOKStatusCodeException &e)
+        {
+            _clients_write.push_back(*it);
+            it = _clients_read.erase(it);
+        }
 	}
 }
 
@@ -536,13 +541,28 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 			Request* request = &_client_requests[fd];
 			Response* response = &_client_response[fd];
 
-			if (!response->in_progress) {
-				request->checkToClientMaxBodySize(request->_content.size()); // 413 set inside if needed
-				response->generateResponse();
-				response->setRemains();
-				request->_content.clear(); // just to free memory
-				response->_content.clear();
-			}
+                // moved to listenere opers
+    //			request->parseRequestLine();
+    //			if (request->isStatusCodeOk())
+    //				request->parseHeaders();
+
+    //			if (request->isStatusCodeOk()) {
+    //				request->parsURL();
+    //				if (request->isStatusCodeOk()) // TODO: routing already done in Listener::handleRequests() -> Listener::processHeaderInfoForActions() so this one is redundant
+    //					WebServ::routeRequests(_host, _port, _client_requests);
+    //			}
+
+    //			request->parseBody();
+                if (!response->in_progress) {
+                    //			if (!size_check) {
+                    //				return true; // finished beacuse of SIZE
+                    //			}
+                    //			Response response(request, fd);
+                    response->generateResponse();
+                    response->setRemains();
+                    request->_content.clear(); // just to free memory
+                    response->_content.clear();
+                }
 
 			response->sendResponse();
 
