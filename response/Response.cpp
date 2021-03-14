@@ -696,7 +696,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
 
-//	if (exit_status == 0) {
+	if (exit_status == 0) {
 //		size_t content_length;
 
 //		char buf[BUF_SIZE] = {0};
@@ -705,9 +705,9 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //		int ret;
 
 	struct stat stat_buf;
-	long size = 0;
+	size_t size = 0;
 
-	if (stat(out_file_path.c_str(), &stat_buf) == 0) {
+	if (stat(out_file_path.c_str(), &stat_buf) == 0) { // getting file size of "out_file_path"
 		size = stat_buf.st_size;
 	} else {
 		utils::exitWithLog();
@@ -725,14 +725,15 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 //			buf[ret] = '\0';
 			try {
 				_cgi_response.append(&buf[0], ret);
-//				size_t headers_end = _cgi_response.find("\r\n\r\n");
-//				if (headers_end != std::string::npos) {
-//					if (_cgi_response.find("content-length", 0, headers_end + 1) != std::string::npos) {
-//						content_length = libft::strtoul_base(_cgi_response.substr(_cgi_response.find("content-length:") + 15), 10);
-//						if (_cgi_response.size() - headers_end - 4 >= content_length)
-//							break ;
-//					}
-//				}
+				size_t headers_end = _cgi_response.find("\r\n\r\n") + 4;
+				if (headers_end != std::string::npos) {
+					std::string headers = _cgi_response.substr(0, headers_end);
+					if (headers.find("content-length") != std::string::npos) {
+						size_t content_length = libft::strtoul_base(headers.substr(headers.find("content-length:") + 15), 10);
+						if (_cgi_response.size() - headers_end - 4 >= content_length)
+							break ;
+					}
+				}
 			} catch (std::bad_alloc& ba) {
 				return _request->setStatusCode(500);
 //				break ;
@@ -740,14 +741,14 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		}
 		close(fd_read);
 //		std::cout << "strerror " << strerror(errno) << std::endl;
-//	}
+	}
 //	dup2(stdin_backup, 0);
 
 	unlink(in_file_path.c_str());
 	unlink(out_file_path.c_str());
 
-//	if (exit_status)
-//		_request->setStatusCode(500);
+	if (exit_status)
+		_request->setStatusCode(500);
 }
 
 //void Response::_parseStatusLineFromCgiResponse() {

@@ -146,9 +146,9 @@ int main(int argc, char *argv[])
 ////todo: when pressing to link "../" in autoindex page "http://localhost:8080/234/345/" url is becoming "http://localhost:8080/234//345/"; or when url is "http://localhost:8080/234/"
 ////todo: check for sigpipe in sendResponse
 ////todo: close connection if recv returns 0
-//todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
+////todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
 //todo: test with several servers
-//todo: make content-length parsing in cgi
+////todo: make content-length parsing in cgi
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
