@@ -212,16 +212,19 @@ std::string Response::getLastModifiedHeader(time_t tv_sec) {
 	return date_header;
 }
 
-std::string Response::getLocationHeader() {
+std::string Response::getLocationHeader(bool is_file) {
 	std::string location;
 
 	location += "location: ";
 	location += "http://";
 	location += _request->_headers["host"];
-//	location += '/';
-//	location += "http://localhost:8080"; //TODO:get scheme, host and port from connection or smt
-	location += _request->_request_target;//getLocationHeader();
 	location += '/';
+//	location += "http://localhost:8081"; //TODO:get scheme, host and port from connection or smt.
+//	                                         UPD[by Airat].:Cant simply resolve because of listen directive cpmlexity
+	location += _request->_request_target;//getLocationHeader();
+	if (!is_file) {
+        location += '/';
+	}
 	location += "\r\n";
 
 	return location;
@@ -912,7 +915,7 @@ void Response::generateHeadResponseCore() {
     if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
         if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
             if (filename[filename.size() - 1] != '/') {
-                _location = getLocationHeader();
+                _location = getLocationHeader(false);
                 return _request->setStatusCode(301); //Moved Permanently
             }
             std::list<std::string> index_list;
@@ -959,7 +962,7 @@ void Response::generateHeadResponseCore() {
 					_request->_request_target += '/';
 				_request->_request_target += matching_index;
 
-				_location = getLocationHeader();
+				_location = getLocationHeader(false); // TODO: need checks. ,aybe it is file location
 
                 _retry_after = getRetryAfterHeader();
                 return _request->setStatusCode(301); //Moved Permanently
@@ -997,7 +1000,8 @@ void Response::generatePutResponse() {
         _request->setStatusCode(204);
     } else {
         _request->setStatusCode(201);
-        _location = getLocationHeader();
+        _location = getLocationHeader(true);
+
     }
 
     generateStatusLine();

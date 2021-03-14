@@ -181,43 +181,25 @@ server {
 }
 */
 
-/* todo:
-< location: http://localhost:8081/post_body/nginx_meme.jpg/
-< Content-Language: en-US
-<
-* Connection #0 to host localhost left intact
-va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body/ -v
- */
-
 
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
 //}
 
-/*TODO:
+////TODO: DONE. IT IS OK, SHOULD BE SO
+/*
  *
  * va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body -v
-*   Trying 127.0.0.1...
-* TCP_NODELAY set
-* Connected to localhost (127.0.0.1) port 8081 (#0)
-> PUT /post_body HTTP/1.1
-> Host: localhost:8081
-> User-Agent: curl/7.54.0
-> Accept: *
-> Content-Length: 172172
-> Expect: 100-continue
->
 < HTTP/1.1 409 CONFLICT
-		< server: webserv
-		< date: Sun, 14 Mar 2021 15:48:33 GMT
-		< Content-Type: text/html;charset=utf-8
-										  < Content-Length: 14
-< Content-Language: en-US
-		* HTTP error before end of send, stop sending
-		<
-409 CONFLICT
 
 */
 
-
+//// TODO: FIXED!
+/*
+< location: http://localhost:8081/post_body/nginx_meme.jpg/
+< Content-Language: en-US
+<
+* Connection #0 to host localhost left intact
+va-e5% curl -T nginx_meme.jpg http://localhost:8081/post_body/ -v
+ */

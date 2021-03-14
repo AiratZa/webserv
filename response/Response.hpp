@@ -50,7 +50,7 @@ public:
 private:
 	std::string getDateHeader();
 	std::string getLastModifiedHeader(time_t tv_sec);
-	std::string getLocationHeader();
+	std::string getLocationHeader(bool is_file);
 	std::string getAllowHeader();
 	std::string getWwwAuthenticateHeader();
 	std::string getRetryAfterHeader();
