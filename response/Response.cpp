@@ -274,9 +274,9 @@ void Response::generateHeaders() {
 }
 
 void Response::updateRequestForErrorPage(const std::string& error_page_link) {
-    error_code_for_generaion = _request->_status_code;
+    error_code_for_generaion = _request->getStatusCode();
 
-    _request->_status_code = 200;
+    _request->setStatusCode(200);
     if (_request->_method != "HEAD") {
         _request->_method = "GET";
     }
@@ -291,10 +291,10 @@ void Response::generateResponseForErrorPage(void) {
     generateHeadResponseCore();
 
     // check for the same error
-    if (_request->_status_code == error_code_for_generaion) {
+    if (_request->getStatusCode() == error_code_for_generaion) {
         return generateDefaultResponseByStatusCode();
     }
-    _request->_status_code = error_code_for_generaion;
+    _request->setStatusCodeNoExept(error_code_for_generaion);
     error_code_for_generaion = 200;
 
     generateStatusLine();
@@ -310,36 +310,39 @@ void Response::generateResponseForErrorPage(void) {
 }
 
 const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const {
-
     AContext * context = (_request->_handling_location != NULL)?
                          static_cast<AContext*>(_request->_handling_location) :
                          static_cast<AContext*> (_request->_handling_server);
 
-    const std::map<int, std::map<std::string, std::string> >&  error_page_info = context->getErrorPagesDirectiveInfo();
+    if (context)
+    {
+        const std::map<int, std::map<std::string, std::string> > &error_page_info = context->getErrorPagesDirectiveInfo();
 
-    std::map<int, std::map<std::string, std::string> >::const_iterator it_search = error_page_info.find(_request->_status_code);
+        std::map<int, std::map<std::string, std::string> >::const_iterator it_search = error_page_info.find(
+                _request->getStatusCode());
 
-    if ( it_search != error_page_info.end() ) {
-        const std::map<std::string, std::string>& params_map = (it_search->second);
+        if (it_search != error_page_info.end()) {
+            const std::map<std::string, std::string> &params_map = (it_search->second);
 
-        std::string change_error_code = "";
-        std::string redirect_uri = "";
+            std::string change_error_code = "";
+            std::string redirect_uri = "";
 
-        std::map<std::string, std::string>::const_iterator param_it;
+            std::map<std::string, std::string>::const_iterator param_it;
 
-        param_it = params_map.find(ERROR_PAGE_CHANGE_ERROR_CODE);
-        if (param_it != params_map.end()) {
-            change_error_code = param_it->second;
-            if (change_error_code.size()) {
-                _request->_status_code = libft::stoll_base(change_error_code, 10);
+            param_it = params_map.find(ERROR_PAGE_CHANGE_ERROR_CODE);
+            if (param_it != params_map.end()) {
+                change_error_code = param_it->second;
+                if (change_error_code.size()) {
+                    _request->setStatusCode(libft::stoll_base(change_error_code, 10));
+                }
             }
-        }
 
-        param_it = params_map.find(ERROR_PAGE_REDIRECT_URI);
-        if (param_it != params_map.end()) {
-            redirect_uri = param_it->second;
+            param_it = params_map.find(ERROR_PAGE_REDIRECT_URI);
+            if (param_it != params_map.end()) {
+                redirect_uri = param_it->second;
+            }
+            return redirect_uri;
         }
-        return redirect_uri;
     }
     return "";
 }
@@ -387,7 +390,8 @@ void Response::readFileToContent(std::string & filename) {
 
 	fd = open(filename.c_str(), O_RDONLY);
     if (fd <= 0) {
-        _request->_status_code = 500;
+        _request->setStatusCode(500);
+//        throw WebServ::UnexpectedException();
         return ;
     }
 
@@ -986,9 +990,9 @@ void Response::generatePutResponse() {
     bool file_was_at_start = _request->getFileExistenceStatus();
 
     if (file_was_at_start) {
-        _request->_status_code = 204;
+        _request->setStatusCode(204);
     } else {
-        _request->_status_code = 201;
+        _request->setStatusCode(201);
         _location = getLocationHeader();
     }
 
@@ -1061,21 +1065,26 @@ void Response::generatePostResponse() {
 
 void Response::generateResponse() {
 	if (_request->isStatusCodeOk()) {
-        checkForAcceptPrefixHeaders();
+	    try
+        {
+            _request->checkToClientMaxBodySize(_request->_content.size()); // 413 set inside if needed
+            checkForAcceptPrefixHeaders();
 
-        if (_request->isStatusCodeOk()) {
-            if (_request->_method == "GET") {
-                generateGetResponse();
-            } else if (_request->_method == "HEAD") {
-                generateHeadResponse();
-            } else if (_request->_method == "PUT") {
-                generatePutResponse();
-            } else if (_request->_method == "POST") {
-                generatePostResponse();
-            } else {
-                _request->setStatusCode(501); // 501 Not Implemented
+            if (_request->isStatusCodeOk()) {
+                if (_request->_method == "GET") {
+                    generateGetResponse();
+                } else if (_request->_method == "HEAD") {
+                    generateHeadResponse();
+                } else if (_request->_method == "PUT") {
+                    generatePutResponse();
+                } else if (_request->_method == "POST") {
+                    generatePostResponse();
+                } else {
+                    _request->setStatusCode(501); // 501 Not Implemented
+                }
             }
         }
+	    catch (WebServ::NotOKStatusCodeException& e) {}
 	}
 
 	if (!_request->isStatusCodeOk()) {

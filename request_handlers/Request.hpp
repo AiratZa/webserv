@@ -31,7 +31,9 @@ class Request {
 		std::string & getRawRequest(void);
 
 		void setStatusCode(int status_code);
-		int getStatusCode();
+        void setStatusCodeNoExept(int status_code);
+
+        int getStatusCode();
 		void parseRequestLine(void);
 		void stringToLower(std::string & str);
 		bool isStatusCodeOk();
@@ -47,6 +49,7 @@ class Request {
 	private:
 		static std::set<std::string> initRequestHeaders();
 		static std::list<int> initOkStatusCodes(void);
+		int _status_code;
 
 	public:
 		std::string _raw_request;
@@ -56,7 +59,6 @@ class Request {
         static const std::list<int> OK_STATUS_CODES;
 
 	public:
-		int _status_code;
 		std::string _method;
 		std::string _request_target;
 		std::string _query_string;
