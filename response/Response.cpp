@@ -1047,14 +1047,14 @@ void Response::generatePostResponse() {
 	generateStatusLine();
 	generateHeaders();
 
-//	_raw_response += _content;
+	_raw_response += _content;
 
-	if (_cgi_response.empty())
-		_raw_response += _content;
-	else {
-		_raw_response.erase(_raw_response.size() - 1);
-		_raw_response.append(_cgi_response);
-	}
+//	if (_cgi_response.empty())
+//		_raw_response += _content;
+//	else {
+//		_raw_response.erase(_raw_response.size() - 1);
+//		_raw_response.append(_cgi_response);
+//	}
 
 
 }

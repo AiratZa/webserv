@@ -149,6 +149,10 @@ int main(int argc, char *argv[])
 ////todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
 //todo: test with several servers
 ////todo: make content-length parsing in cgi
+//todo: make copliens form
+//todo: remove content-language from response
+//todo: content-location
+//todo: check Response::generatePostResponse()
 //location /ht {
 //auth_basic "closed site";
 //auth_basic_uset_file passwd;
