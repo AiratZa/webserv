@@ -16,6 +16,7 @@ def webserv():
     yield  # здесь происходит тестирование
     time.sleep(1)
     proc.kill()
+    time.sleep(1)
 
 
 def test_put_request_file_not_exists_at_start(webserv):
@@ -25,7 +26,7 @@ def test_put_request_file_not_exists_at_start(webserv):
         url = 'http://localhost:8080/' + path
         r = requests.put(url, data=data)
         assert r.status_code == 201
-        with open('tmp_files/nginx_meme.jpg', 'rb') as expected_file:
+        with open('default_folder/nginx_meme.jpg', 'rb') as expected_file:
             final_data_size = os.fstat(expected_file.fileno()).st_size
             assert data_size == final_data_size
 
@@ -36,7 +37,7 @@ def test_put_request_file_exists_at_start(webserv):
         url = 'http://localhost:8080/' + path
         r = requests.put(url, data=data)
         assert r.status_code == 204
-        with open('tmp_files/nginx_meme.jpg', 'rb') as expected_file:
+        with open('default_folder/nginx_meme.jpg', 'rb') as expected_file:
             final_data_size = os.fstat(expected_file.fileno()).st_size
             assert data_size == final_data_size
 
