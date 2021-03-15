@@ -49,6 +49,7 @@ private:
 	std::map<int, long> _time;
 
 	long _get_time();
+    std::vector<std::string> parser_log_pass(std::string file, Request* request);
 };
 
 

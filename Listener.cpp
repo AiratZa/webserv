@@ -210,17 +210,21 @@ bool Listener::continueReadBody(Request* request_obj) {
 /*
  * authorization functions to move
  */
-std::vector<std::string>    parser_log_pass(std::string file) {
+std::vector<std::string> Listener::parser_log_pass(std::string file, Request*  request) {
 	std::vector<std::string> log_pass;
 
-	int fd_file = open(file.c_str(), O_RDONLY);
 	char *str;
 	int  read;
+	int fd_file = open(file.c_str(), O_RDONLY);
+	if (fd_file == -1)
+        request->setStatusCode(500);
 
 	while ((read = get_next_line(fd_file, &str)) == 1) {
 		log_pass.push_back(str);
 		delete str;
 	}
+    if (read == -1)
+        request->setStatusCode(500);
 	log_pass.push_back(str);
 	delete str;
 	close(fd_file);
@@ -273,7 +277,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (request->_handling_location) {
 		if (request->_handling_location->getAuthEnable()) { // TODO: add to config file
 			if (request->_headers.count("authorization")) {
-				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/passwd"));
+				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/passwd"), request);
 				std::string auth_scheme = request->_headers["authorization"].substr(0, 5);
 				libft::string_to_lower(auth_scheme);
 				std::string credentials = request->_headers["authorization"].substr(6);
