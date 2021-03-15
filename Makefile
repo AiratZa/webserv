@@ -36,10 +36,6 @@ SRCS = $(UTILS_SRCS) main.cpp \
     response/autoindex_handling/autoindex_handling.cpp \
     base64_coding/base64.cpp
 
-#     ServerListener.cpp \
-    ServerListener_HandleRequests.cpp \
-    ServerListener_HandleResponses.cpp \
-
 
 OBJS = $(SRCS:.cpp=.o)
 

@@ -32,16 +32,6 @@ std::size_t getCharsLen(const std::string& str)
 
 std::string write_html(std::string dir_name, Request * request)
 {
-//    int autoindex = open("test_autoindex.html", O_RDWR | O_CREAT | O_TRUNC, 0666);
-
-//    if (autoindex <= 0) {
-//        std::cerr << std::strerror(errno) << std::endl;
-//        throw std::exception();
-//    }
-
-//    std::string root = "";
-//    std::string uri = "/";
-
     std::string host_n_port = "http://";
     host_n_port += request->_headers["host"];
     std::string url = host_n_port + request->_request_target;
@@ -63,8 +53,6 @@ std::string write_html(std::string dir_name, Request * request)
 
 
     response_body += "<a href=\"";
-//    response_body += "http://localhost/"; // current page root
-//    response_body += host_n_port + request->_request_target.substr(0, request->_request_target.rfind('/', request->_request_target.size() - 2) + 1);
 	response_body += "../";
     response_body += "\">../</a>\n";
 
@@ -119,9 +107,6 @@ std::string write_html(std::string dir_name, Request * request)
     response_body += "</body>\n";
     response_body += "</html>\n";
 
-//    write(autoindex, response_body.c_str(), response_body.size());
-//    close(autoindex);
-
 	return response_body;
 }
 
@@ -134,8 +119,6 @@ void ft_exit()
 
 std::list<std::map<std::string, std::list<std::string> > > dir_opers(const std::string& dir_name)
 {
-//    std::string dir_name = root + uri;
-
     DIR* dir_stream;
     dir_stream = opendir(dir_name.c_str());
 

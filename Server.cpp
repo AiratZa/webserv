@@ -12,7 +12,6 @@ Server::~Server() {
     }
 }
 
-
 in_addr_t getHostInetAddrFromStr(const std::string& host_str) {
     in_addr_t host_addr;
     if (host_str == "*") {
@@ -25,9 +24,7 @@ in_addr_t getHostInetAddrFromStr(const std::string& host_str) {
     return host_addr;
 }
 
-
 Server::Server(ServerContext* server_context) {
-//                : server_context(server_context) {
     const std::map<std::string, std::list<int> >& hosts_n_ports = server_context->getHostsAndPorts();
 
     std::map<std::string, std::list<int> >::const_iterator map_it = hosts_n_ports.begin();

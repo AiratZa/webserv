@@ -17,9 +17,39 @@ void WebServ::stop() {
     }
 }
 
+bool WebServ::isAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
+    std::string all_hosts = "*";
+    if (already_listening_host_plus_port.count(all_hosts))
+    {
+        if ((std::find(already_listening_host_plus_port[all_hosts].begin(),
+                       already_listening_host_plus_port[all_hosts].end(),
+                       port) != already_listening_host_plus_port[all_hosts].end()))
+        {
+            return true;
+        }
+    }
 
-WebServ::WebServ(Config* config)
-            : _config(config) {
+    if (!already_listening_host_plus_port.count(host_str))
+    {
+        return false;
+    }
+    else
+    {
+        if ((std::find(already_listening_host_plus_port[host_str].begin(),
+                       already_listening_host_plus_port[host_str].end(),
+                       port) == already_listening_host_plus_port[host_str].end()))
+        {
+            return false;
+        }
+        return true;
+    }
+}
+
+void WebServ::addServer(Server* server) {
+    _servers.push_back(server);
+}
+
+WebServ::WebServ() {
     std::list<ServerContext*>::const_iterator it = servers_list.begin();
     std::list<ServerContext*>::const_iterator ite = servers_list.end();
 
@@ -70,24 +100,8 @@ WebServ::WebServ(Config* config)
         ++it;
         i++;
     }
-
     std::cout << "Server(s) are started" << std::endl;
 }
-
-
-void WebServ::addServer(Server* server) {
-    _servers.push_back(server);
-}
-
-//void WebServ::setToReadFDSet(const std::list<int>& clientsFD) {
-//    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-//        FD_SET(*it, &_readset);
-//}
-//
-//void WebServ::setToWriteFDSet(const std::list<int>& clientsFD) {
-//    for(std::list<int>::const_iterator it = clientsFD.begin(); it != clientsFD.end(); it++)
-//        FD_SET(*it, &_writeset);
-//}
 
 void WebServ::updateMaxFD(void) {
     _max_fd = 0;
@@ -101,18 +115,6 @@ void WebServ::updateMaxFD(void) {
             ++it_l;
         }
     }
-}
-
-
-
-//void WebServ::addServersListenerFD(void) {
-//    for (int i = 0; i < _servers.size(); i++) {
-//        _serversListenerFD.push_back(_servers[i].getListener());
-//    }
-//}
-
-Server* WebServ::getServerByPosition(int i) {
-    return _servers[i];
 }
 
 void WebServ::serveConnections() {

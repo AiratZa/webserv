@@ -5,15 +5,13 @@
 #ifndef WEBSERV_WEBSERV_HPP
 #define WEBSERV_WEBSERV_HPP
 
-#include <vector>
 
 class WebServ;
+#include <vector>
 #include "Server.hpp"
 #include "config_parsing/Config.hpp"
 
-
 #define  RETRY_AFTER_SECOND_DELAY "1"  // for header Retry-After
-
 
 #define DEFAULT_RESPONSE_CHARSET "utf-8"
 #define DEFAULT_RESPONSE_LANGUAGE "en-US"
@@ -21,58 +19,54 @@ class WebServ;
 #define CHECK_ACCEPT_CHARSET_HEADER 1
 #define CHECK_ACCEPT_LANGUAGE_HEADER 1
 
-
 class WebServ {
+private:
+    std::vector<Server*> _servers;
+
+    static int correction_minutes_to_GMT; // TIMEZONE
+    static std::string _webserv_root_path;
+    static std::map<std::string, std::list<int> > already_listening_host_plus_port;
+    static std::list<std::string> _lang_code_list;
+    int _max_fd;
+
 public:
-    WebServ() { }
-    WebServ(Config* config);
+    WebServ();
     ~WebServ(void);
-    void addServer(Server* server);
-    int getServersCount(void) const { return _servers.size(); }
-    Server* getServerByPosition(int i);
-
-//    fd_set* getReadSetPtr(void) { return &_readset; };
-//    fd_set* getWriteSetPtr(void) { return &_writeset; };
-
-    void setToReadFDSet(const std::list<int>& clientsFD);
-    void setToWriteFDSet(const std::list<int>& clientsFD);
-
-    void updateMaxFD(void);
-    const int & getMaxFD() const { return _max_fd; }
-
-	void serveConnections();
-
-    static ServerContext* findServerForHandlingRequest(const std::string& host,
-                                                         const int port,
-                                                         const std::string& server_name);
-
-    static std::list<ServerContext*> getAllExactHostPortComboList(const std::string& host,
-                                                                    const int port);
-
-    static std::list<ServerContext*> getAllAsteriskHostPortComboList(const int port);
-
-	static void routeRequest(const std::string& host, const int port, Request* _client_request, const std::string& request_target);
-
-//    static void routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests); // jnannie: not needed
-
-	void stop();
 
     static std::list<ServerContext*> servers_list;
 
-    static int getCorrectionMinutesToGMT(void) { return correction_minutes_to_GMT;}
-    static void setCorrectionMinutesToGMT(int min) { correction_minutes_to_GMT = min;}
+    int                                     getServersCount(void) const { return _servers.size(); }
+    Server*                                 getServerByPosition(int i) { return _servers[i];}
+    static std::list<ServerContext*>        getAllAsteriskHostPortComboList(const int port);
+    static int                              getCorrectionMinutesToGMT(void) { return correction_minutes_to_GMT;}
+    static const std::string&               getWebServRootPath(void) { return _webserv_root_path;}
+    static std::list<std::string>&          getLanguageCodesList(void) { return _lang_code_list;}
+    static std::list<ServerContext*>        getAllExactHostPortComboList(const std::string& host, const int port);
+    const int &                             getMaxFD() const { return _max_fd; }
 
-    static const std::string& getWebServRootPath(void) {
-        return _webserv_root_path;
-    }
+    static void                             setCorrectionMinutesToGMT(int min) { correction_minutes_to_GMT = min;}
+    static void                             setWebServRootPath(const std::string& path) { _webserv_root_path = path;}
+    static void                             setInAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
+                                                    already_listening_host_plus_port[host_str].push_back(port);}
 
-    static void setWebServRootPath(const std::string& path) {
-        _webserv_root_path = path;
-    }
+    void    updateMaxFD(void);
+    void    addServer(Server* server);
+	void    serveConnections();
+	void    stop();
 
-    static std::list<std::string>& getLanguageCodesList(void) {
-        return _lang_code_list;
-    }
+    static ServerContext*   findServerForHandlingRequest(const std::string& host,
+                                                       const int port,
+                                                       const std::string& server_name);
+
+    static void             routeRequest(const std::string& host, const int port,
+                                                         Request* _client_request,
+                                                         const std::string& request_target);
+
+    static bool             isAlreadyListeningHostPlusPort(const std::string& host_str, int port);
+
+    class NotOKStatusCodeException: public std::exception {
+        virtual const char* what() const throw() {return "";}
+    };
 
     static void initLanguageCodesList(void)
     {
@@ -261,61 +255,6 @@ public:
         _lang_code_list.push_back("za");
         _lang_code_list.push_back("zu");
     }
-
-    class NotOKStatusCodeException: public std::exception {
-        virtual const char* what() const throw() {return "";}
-    };
-
-    static void setInAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
-        already_listening_host_plus_port[host_str].push_back(port);
-    }
-
-    static std::map<std::string, std::list<int> > & getAlreadyListeningHostPlusPort(void) {
-        return already_listening_host_plus_port;
-    }
-
-    static bool isAlreadyListeningHostPlusPort(const std::string& host_str, int port) {
-        std::string all_hosts = "*";
-        if (already_listening_host_plus_port.count(all_hosts))
-        {
-            if ((std::find(already_listening_host_plus_port[all_hosts].begin(),
-                           already_listening_host_plus_port[all_hosts].end(),
-                           port) != already_listening_host_plus_port[all_hosts].end()))
-            {
-                return true;
-            }
-        }
-
-        if (!already_listening_host_plus_port.count(host_str))
-        {
-            return false;
-        }
-        else
-        {
-            if ((std::find(already_listening_host_plus_port[host_str].begin(),
-                           already_listening_host_plus_port[host_str].end(),
-                           port) == already_listening_host_plus_port[host_str].end()))
-            {
-                return false;
-            }
-            return true;
-        }
-    }
-
-private:
-    std::vector<Server*> _servers;
-
-    static int correction_minutes_to_GMT; // TIMEZONE
-    static std::string _webserv_root_path;
-    static std::map<std::string, std::list<int> > already_listening_host_plus_port;
-
-
-    static std::list<std::string> _lang_code_list; //
-
-    Config* _config;
-    int _max_fd;
-
 };
-
 
 #endif //WEBSERV_WEBSERV_HPP

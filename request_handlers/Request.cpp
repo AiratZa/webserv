@@ -5,19 +5,120 @@
 #include <string>
 #include <set>
 #include "Request.hpp"
-#include "../utils/cpp_libft/libft.hpp"
 
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
 
 /*
- * CLIENT_MAX_BODY_SIZE is about 1m
- * https://serverfault.com/questions/871717/nginx-disconnect-when-client-sends-chunked-body-exceeding-desired-size
- * https://nginx.org/ru/docs/http/ngx_http_core_module.html#client_max_body_size
+ * return true if METHOD IS NOT ALLOWED BY CONFIG
+ * Author: Airat (GDrake)
  */
-//#define CLIENT_MAX_BODY_SIZE 0xfffff
+bool isMethodLimited(const LocationContext& handling_location, const std::string& method) {
+    const std::list<std::string> limit_except = (handling_location).getLimitExceptMethods();
+    if (limit_except.empty())
+        return false;
+
+    std::list<std::string>::const_iterator it = limit_except.begin();
+    while (it != limit_except.end()) {
+        if (method == (*it)) {
+            return false;
+        }
+        ++it;
+    }
+    return true;
+}
+
+bool quality_sort_func(const Pair<std::string, float>& one, const Pair<std::string, float>& two) {
+    if (one.second >= two.second)
+        return true;
+    return false;
+}
+
+std::list<std::string> sortValuesByQuality(std::list<Pair<std::string, float> >& values_list) {
+
+    std::list<std::string> sorted_strs;
+
+    values_list.sort(quality_sort_func);
+
+    std::list<Pair<std::string, float> >::const_iterator it = values_list.begin();
+    while (it != values_list.end()) {
+        sorted_strs.push_back(it->first);
+        ++it;
+    }
+    return sorted_strs;
+}
+
+Pair<int, float> parseSpecificFloatValueForHeader(std::string str) {
+    int i = 0;
+    float value = 0;
+
+    Pair<int, float> err = Pair<int, float>(-1, -1);
+
+    std::size_t size = str.size();
+    if ((size > 5) || (size == 0)) {
+        return err;
+    }
+
+    // ===
+    if (str[i] == '0') {
+        i++;
+    } else if (str[i] == '1') {
+        value += 1;
+        i++;
+    } else {
+        return err;
+    }
+    size--;
+
+    if (!size)
+        return Pair<int, float>(i, value);
+
+    // ===
+    if (str[i] != '.')
+        return err;
+
+    i++;
+    size--;
+    if (!size)
+        return Pair<int, float>(i, value);
+
+    // ===
+    float divider = 10.0f;
+    while(size) {
+        if (libft::isdigit(str[i])) {
+            float tmp = static_cast<float>(str[i] - '0');
+            value += ( tmp / divider);
+            divider *= 10.0f;
+        }
+        else
+            return err;
+
+        i++;
+        size--;
+    }
+    return Pair<int, float>(i, value);
+}
+
+Pair<std::string, float> parseValueAndQuality(std::string str) {
+    float quality = 1.0f;
+    std::size_t q_pos = str.find(";q=");
+
+    if (q_pos == std::string::npos) {
+        return Pair<std::string, float>(str, quality);
+    }
+
+    std::string q_str = str.substr(q_pos+3);
+    Pair<int, float> quality_pair = parseSpecificFloatValueForHeader(q_str);
+    if (quality_pair.first != static_cast<int>(q_str.size())) {
+        quality = -1.0f;
+    }
+    quality = quality_pair.second;
+
+    return Pair<std::string, float>(str.substr(0, q_pos), quality);
+}
 
 const std::list<int> Request::OK_STATUS_CODES = Request::initOkStatusCodes();
+const std::set<std::string> Request::implemented_headers = Request::initRequestHeaders();
 
 std::list<int> Request::initOkStatusCodes(void) {
     std::list<int> codes;
@@ -28,8 +129,6 @@ std::list<int> Request::initOkStatusCodes(void) {
     codes.push_back(100);
     return codes;
 }
-
-const std::set<std::string> Request::implemented_headers = Request::initRequestHeaders();
 
 std::set<std::string> Request::initRequestHeaders() {
 	std::set<std::string> implemented_headers;
@@ -46,13 +145,9 @@ std::set<std::string> Request::initRequestHeaders() {
 	implemented_headers.insert("referer"); // Referer: http://en.wikipedia.org/wiki/Main_Page
 	implemented_headers.insert("transfer-encoding"); // Transfer-Encoding: gzip, chunked
     implemented_headers.insert("user-agent"); // User-Agent: Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
-
     // for requests with PUT method
     implemented_headers.insert("expect"); // Expect: 100-continue
     implemented_headers.insert("content-range"); // https://efim360.ru/rfc-7231-protokol-peredachi-giperteksta-http-1-1-semantika-i-kontent/#4-3-4-PUT
-
-
-
 	return implemented_headers;
 }
 
@@ -64,17 +159,14 @@ Request::Request()
 		  _close_connection(false),
           _handling_server(NULL),
           _handling_location(NULL),
-//    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
 		  _header_end_pos(0),
-
 		  _header_was_read(false),
           _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
 		  _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
 		  is_chunked(false),
-		  _is_lang_file_pos(0)
-      {  };
+		  _is_lang_file_pos(0) {}
 
 Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		:  _status_code(DEFAULT_REQUEST_STATUS_CODE),
@@ -84,35 +176,16 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
 		  _close_connection(false),
            _handling_server(NULL),
            _handling_location(NULL),
-//    _client_max_body_size(0xfffff),
 		  _is_alias_path(false),
 		  _header_end_pos(0),
-
 		  _header_was_read(false),
            _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
           _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
           is_chunked(false),
-          _is_lang_file_pos(0)
-{  };
+          _is_lang_file_pos(0) {}
 
-//Request::Request(const std::string& request)
-//        : _raw_request(request),
-//        _status_code(DEFAULT_REQUEST_STATUS_CODE),
-////        _client_max_body_size(0xfffff),
-//        _is_alias_path(false),
-//          shift_from_buf_start(0),
-//          _header_end_pos(0),
-//        _header_was_read(false),
-//          _read_body_size(0),
-//          _is_need_writing_body_to_file(false)
-//		  { };
-
-Request::~Request(void) { };
-
-std::string & Request::getRawRequest(void) {
-	return this->_raw_request;
-}
+Request::~Request() {}
 
 void Request::setStatusCode(int status_code) {
 	_status_code = status_code;
@@ -121,13 +194,50 @@ void Request::setStatusCode(int status_code) {
 	}
 }
 
-void Request::setStatusCodeNoExept(int status_code) {
-    _status_code = status_code;
+void Request::setAbsoluteRootPathForRequest(void) {
+    std::string globalRootPath = WebServ::getWebServRootPath();
+    std::string cont_root_path;
+
+    if (_handling_location) {
+        cont_root_path = _handling_location->getAliasPath();
+        if (!cont_root_path.empty()) {
+            _absolute_root_path_for_request = cont_root_path;
+            _is_alias_path = true;
+            return ;
+        } else {
+            cont_root_path = _handling_location->getRootPath() + _handling_location->getLocationPath();
+        }
+    } else {
+        cont_root_path = _handling_server->getRootPath();
+    }
+
+    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
+        _absolute_root_path_for_request = cont_root_path;
+    } else {
+        _absolute_root_path_for_request = globalRootPath + cont_root_path;
+    }
 }
 
+std::string Request::getAbsolutePathForPUTRequests(void) const {
+    std::string globalRootPath = WebServ::getWebServRootPath();
+    std::string cont_root_path;
 
-int Request::getStatusCode() {
-	return _status_code;
+    if (_handling_location) {
+        cont_root_path = _handling_location->getAliasPath();
+        if (!cont_root_path.empty()) {
+            return cont_root_path;
+        } else {
+            cont_root_path = _handling_location->getRootPath();
+        }
+    } else {
+        cont_root_path = _handling_server->getRootPath();
+    }
+
+    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
+        return cont_root_path;
+    } else {
+        return (globalRootPath + cont_root_path);
+    }
 }
 
 void Request::parseRequestLine() {
@@ -209,9 +319,6 @@ void Request::parseHeaders() {
 		}
 		field_value = _raw_request.substr(0, field_value_length);
 		_raw_request.erase(0, field_value_length + 2);
-
-//		if (Request::implemented_headers.count(field_name))
-//		{
 			if (_headers.count(field_name)) {
 				if (field_name == "host")
 					return setStatusCode(400);
@@ -222,7 +329,6 @@ void Request::parseHeaders() {
 				_headers[field_name].append(",");
 			}
 			_headers[field_name].append(field_value); // add field_name-field_value to map
-//		}
 
 		line_length = _raw_request.find("\r\n");
 	}
@@ -231,162 +337,18 @@ void Request::parseHeaders() {
 		return setStatusCode(400);
 }
 
-bool Request::isStatusCodeOk() {
-    std::list<int>::const_iterator found = std::find(OK_STATUS_CODES.begin(), OK_STATUS_CODES.end(), _status_code);
-
-    if (found == OK_STATUS_CODES.end()) {
-        return false;
-    }
-    return true;
-}
-
-/*
- * we ignore trailer according rfc 7230 4.1.2, because our headers dont fit requirements
- */
-//void Request::parseChunkedContent() { // TODO:we can remove all length and validity checks because all work done by Listener::continueReadBody()
-//	std::string chunk_length_field;
-//	std::string start_line;
-//	size_t chunk_length;
-//	size_t sum_content_length = 0;
-//	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
-//
-//	size_t start_line_length = _raw_request.find("\r\n");
-//	if (start_line_length == std::string::npos)
-//		return setStatusCode(400);
-//	while (!_raw_request.empty()) {
-//		if (start_line_length > MAX_HEADER_LINE_LENGTH
-//			|| start_line_length == std::string::npos) {
-//			return setStatusCode(400);
-//		}
-//		start_line = _raw_request.substr(0, start_line_length);
-//
-//		chunk_length_field = start_line.substr(0, _raw_request.find(';')); // to ';' or full line
-//
-//		libft::string_to_lower(chunk_length_field);
-//		if (chunk_length_field.find_first_not_of("0123456789abcdef") != std::string::npos)
-//			return setStatusCode(400);
-//		chunk_length = libft::strtoul_base(chunk_length_field, 16);
-//		if (chunk_length == ULONG_MAX || chunk_length > ULONG_MAX - sum_content_length)
-//			return setStatusCode(413); // 413 (Request Entity Too Large)
-//		sum_content_length += chunk_length;
-//		if (client_max_body_size && sum_content_length > client_max_body_size)
-//			return setStatusCode(413);
-//
-//		_raw_request.erase(0, start_line_length + 2); // remove start line
-//
-//		if (_raw_request.size() < chunk_length + 2)
-//			return setStatusCode(400);
-//
-//		_content.append(_raw_request.substr(0, chunk_length));
-//
-//		_raw_request.erase(0, chunk_length + 2); // remove rest of chunk
-//
-//		start_line_length = _raw_request.find("\r\n");
-//	}
-//	_raw_request.clear();
-//}
-
-//void Request::getContentByLength() {
-//	size_t client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
-//
-//	size_t content_length = libft::strtoul_base(_headers["content-length"], 10);
-//	if (content_length == ULONG_MAX)
-//		return setStatusCode(413); // 413 (Request Entity Too Large)
-//	if (client_max_body_size && content_length > client_max_body_size)
-//		return setStatusCode(413);
-//	_content.append(_raw_request, 0, content_length);
-////	_content.append(_raw_request.substr(0, content_length));
-////	_raw_request.erase(0, content_length);
-//	_raw_request.clear();
-//}
-
-bool Request::checkToClientMaxBodySize(void) {
-    long long client_max_body_size;
-    if (_handling_location) {
-        client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
-    } else {
-        client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
-    }
-
-    std::map<std::string, std::string>::const_iterator found = _headers.find("content-length");
-    if (found != _headers.end()) {
-        long long content_length = libft::stoll_base(_headers["content-length"], 10);
-        if (client_max_body_size && content_length > client_max_body_size) {
-            setStatusCode(413);
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Request::checkToClientMaxBodySize(long long int value_to_check) {
-    long long client_max_body_size;
-    if (_handling_location) {
-        client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
-    } else {
-        client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
-    }
-
-
-    if (client_max_body_size && (value_to_check > client_max_body_size)) {
-        setStatusCode(413);
-//        _close_connection = true;
-        return false;
-    }
-    return true;
-}
-
-
-//void Request::parseBody() {
-//	if (isStatusCodeOk()) {
-//		if (_headers.count("transfer-encoding")) {
-//			libft::string_to_lower(_headers["transfer-encoding"]); // to find "chunked"
-//			if (_headers["transfer-encoding"].find("chunked") != std::string::npos) {
-//				if (_headers["transfer-encoding"].find("chunked") == _headers["transfer-encoding"].size() - 7) // chunked must be last encoding
-//					parseChunkedContent();
-//				else {
-//					_close_connection = true; // rfc 7230 3.3.3
-//					return setStatusCode(400);
-//				}
-//			}
-//		}
-//		else if (_headers.count("content-length"))
-//			getContentByLength();
-//		else
-//			_content.swap(_raw_request);
-//	}
-//}
-
-
-
-// Routing (Airat)
-
-void Request::setHandlingServer(ServerContext* handling_server){
-    _handling_server = handling_server;
-}
-
-void Request::setHandlingLocation(LocationContext* location_to_route) {
-    _handling_location = location_to_route;
-}
-
 void    Request::parsURL() {
 	std::string url = _request_target;
 	std::string res;
 	std::string tmp;
 	std::list<std::string>   path;
 	std::list<std::string>::iterator it = path.begin();
-	// _requestTarget = url
 	int count = 0;
 	int lenght = url.length();
 
 	size_t hashtag_pos = url.find('#');
 	if (hashtag_pos != std::string::npos)
 		url.resize(hashtag_pos); // nginx just ignore all that after '#', even %00
-
-//	while (count < lenght && url[count] != '/') {
-//		res += url[count];
-//		++count;
-//	}
 	while (count < lenght) {
 		while (url[count] == '/') // if "//////"
 			++count;
@@ -397,7 +359,6 @@ void    Request::parsURL() {
 			((count + 2 < lenght && url[count + 1] == '.' && url[count + 2] == '/') ||
 			 (count + 2 == lenght && url[count + 1] == '.'))) {
 			if (!path.empty()) {
-//				--it;
 				path.pop_back();
 			}
 			count += 2;
@@ -415,10 +376,6 @@ void    Request::parsURL() {
 				} else {
 					return setStatusCode(400);
 				}
-//				if ((ch = libft::percent_decode(url, count)) != '\0') {
-//					tmp += ch;
-//					continue;
-//				}
 			}
 			tmp += url[count];
 			++count;
@@ -426,7 +383,6 @@ void    Request::parsURL() {
 		if (!tmp.empty()) { // args add
 			path.push_back(tmp);
 			tmp.clear();
-//			++it;
 		}
 	}
 	it = path.begin();
@@ -445,77 +401,43 @@ void    Request::parsURL() {
 	}
 }
 
-void Request::setAbsoluteRootPathForRequest(void) {
-    std::string globalRootPath = WebServ::getWebServRootPath();
-    std::string cont_root_path;
+std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::string& header_name, std::string value) {
+    (void)header_name;
 
-    if (_handling_location) {
-        cont_root_path = _handling_location->getAliasPath();
-        if (!cont_root_path.empty()) {
-            _absolute_root_path_for_request = cont_root_path;
-            _is_alias_path = true;
-            return ;
-        } else {
-            cont_root_path = _handling_location->getRootPath() + _handling_location->getLocationPath();
+    std::list<Pair<std::string, float> > with_quality;
+    std::size_t pos;
+
+    while(!value.empty()) {
+        pos = value.find_first_of(',');
+        with_quality.push_back(parseValueAndQuality(value.substr(0, pos)));
+
+        if (pos != std::string::npos)
+            pos++; // for comma delete
+        value.erase(0, pos);
+
+        while(libft::isspace(value[0])) {
+            value.erase(0, 1);
         }
-    } else {
-        cont_root_path = _handling_server->getRootPath();
     }
 
-    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
-        _absolute_root_path_for_request = cont_root_path;
-    } else {
-        _absolute_root_path_for_request = globalRootPath + cont_root_path;
-    }
-}
-
-std::string Request::getAbsolutePathForPUTRequests(void) const {
-    std::string globalRootPath = WebServ::getWebServRootPath();
-    std::string cont_root_path;
-
-    if (_handling_location) {
-        cont_root_path = _handling_location->getAliasPath();
-        if (!cont_root_path.empty()) {
-            return cont_root_path;
-        } else {
-            cont_root_path = _handling_location->getRootPath();
+    std::list<Pair<std::string, float> >::iterator it = with_quality.begin();
+    const std::list<std::string>& lang_codes = WebServ::getLanguageCodesList();
+    while (it != with_quality.end())
+    {
+        if (it->first.size() < 2)
+        {
+            it = with_quality.erase(it);
         }
-    } else {
-        cont_root_path = _handling_server->getRootPath();
-    }
-
-    if (cont_root_path[0] == '/') { // if context root path is absolute by itself
-       return cont_root_path;
-    } else {
-        return (globalRootPath + cont_root_path);
-    }
-}
-
-const std::list<std::string>& Request::getIndexPagesListForRequest(void) const {
-    if (_handling_location)
-        return _handling_location->getIndexPagesDirectiveInfo();
-    return _handling_server->getIndexPagesDirectiveInfo();
-}
-
-
-
-/*
- * return true if METHOD IS NOT ALLOWED BY CONFIG
- * Author: Airat (GDrake)
- */
-bool isMethodLimited(const LocationContext& handling_location, const std::string& method) {
-    const std::list<std::string> limit_except = (handling_location).getLimitExceptMethods();
-    if (limit_except.empty())
-        return false;
-
-    std::list<std::string>::const_iterator it = limit_except.begin();
-    while (it != limit_except.end()) {
-        if (method == (*it)) {
-            return false;
+        else
+        {
+            if (std::find(lang_codes.begin(), lang_codes.end(), it->first.substr(0, 2)) ==  lang_codes.end()) {
+                it = with_quality.erase(it);
+            } else {
+                ++it;
+            }
         }
-        ++it;
     }
-    return true;
+    return sortValuesByQuality(with_quality);
 }
 
 /*
@@ -556,142 +478,9 @@ void Request::handleExpectHeader(void) {
  * Author: Airat (GDrake)
  */
 
-Pair<int, float> parseSpecificFloatValueForHeader(std::string str) {
-    int i = 0;
-    float value = 0;
-
-    Pair<int, float> err = Pair<int, float>(-1, -1);
-
-    std::size_t size = str.size();
-    if ((size > 5) || (size == 0)) {
-        return err;
-    }
-
-    // ===
-    if (str[i] == '0') {
-        i++;
-    } else if (str[i] == '1') {
-        value += 1;
-        i++;
-    } else {
-        return err;
-    }
-    size--;
-
-    if (!size)
-        return Pair<int, float>(i, value);
-
-    // ===
-    if (str[i] != '.')
-        return err;
-
-    i++;
-    size--;
-    if (!size)
-        return Pair<int, float>(i, value);
-
-    // ===
-    float divider = 10.0f;
-    while(size) {
-        if (libft::isdigit(str[i])) {
-            float tmp = static_cast<float>(str[i] - '0');
-            value += ( tmp / divider);
-            divider *= 10.0f;
-        }
-        else
-            return err;
-
-        i++;
-        size--;
-    }
-    return Pair<int, float>(i, value);
-}
-
-Pair<std::string, float> parseValueAndQuality(std::string str) {
-    float quality = 1.0f;
-    std::size_t q_pos = str.find(";q=");
-
-    if (q_pos == std::string::npos) {
-        return Pair<std::string, float>(str, quality);
-    }
-
-    std::string q_str = str.substr(q_pos+3);
-    Pair<int, float> quality_pair = parseSpecificFloatValueForHeader(q_str);
-    if (quality_pair.first != static_cast<int>(q_str.size())) {
-        quality = -1.0f;
-    }
-    quality = quality_pair.second;
-
-    return Pair<std::string, float>(str.substr(0, q_pos), quality);
-}
-
-
-bool quality_sort_func(const Pair<std::string, float>& one, const Pair<std::string, float>& two) {
-    if (one.second >= two.second)
-        return true;
-    return false;
-}
-
-std::list<std::string> sortValuesByQuality(std::list<Pair<std::string, float> >& values_list) {
-
-    std::list<std::string> sorted_strs;
-
-    values_list.sort(quality_sort_func);
-
-    std::list<Pair<std::string, float> >::const_iterator it = values_list.begin();
-    while (it != values_list.end()) {
-        sorted_strs.push_back(it->first);
-        ++it;
-    }
-    return sorted_strs;
-}
-
-std::list<std::string> parseAndSortAcceptPrefixHeadersByQuality(const std::string& header_name, std::string value) {
-	(void)header_name;
-
-    std::list<Pair<std::string, float> > with_quality;
-
-    std::size_t pos;
-
-    while(!value.empty()) {
-        pos = value.find_first_of(',');
-        with_quality.push_back(parseValueAndQuality(value.substr(0, pos)));
-
-        if (pos != std::string::npos)
-            pos++; // for comma delete
-        value.erase(0, pos);
-
-        while(libft::isspace(value[0])) {
-            value.erase(0, 1);
-        }
-    }
-
-    std::list<Pair<std::string, float> >::iterator it = with_quality.begin();
-    const std::list<std::string>& lang_codes = WebServ::getLanguageCodesList();
-    while (it != with_quality.end())
-    {
-        if (it->first.size() < 2)
-        {
-            it = with_quality.erase(it);
-        }
-        else
-        {
-            if (std::find(lang_codes.begin(), lang_codes.end(), it->first.substr(0, 2)) ==  lang_codes.end()) {
-                it = with_quality.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
-
-    return sortValuesByQuality(with_quality);
-}
-
-
 void Request::handleAcceptCharsetHeader(void) {
     std::list<std::string> values = parseAndSortAcceptPrefixHeadersByQuality("accept-language",
                                                                              _headers["accept-charset"]);
-
 
     bool is_found = (std::find(values.begin(), values.end(), DEFAULT_RESPONSE_CHARSET) != values.end());
     if (!is_found) {

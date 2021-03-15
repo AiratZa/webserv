@@ -17,8 +17,6 @@
 namespace utils {
     void exitWithLog(void);
     void exitWithLog(const std::string& errorLog);
-    std::string			setDate(void);
-
     bool isHttpMethod(const std::string& value);
 
     template <class Container, class Value>

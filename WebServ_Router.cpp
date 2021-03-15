@@ -5,7 +5,6 @@
 #include "WebServ.hpp"
 
 //// https://nginx.org/ru/docs/http/request_processing.html
-
 /*
  * При поиске виртуального сервера по имени, если имени соответствует несколько из указанных вариантов,
  * например, одновременно подходят и имя с маской, и регулярное выражение,
@@ -111,7 +110,6 @@ std::list<ServerContext*> WebServ::getAllAsteriskHostPortComboList(const int por
 ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
                                                                 const int port,
                                                                 const std::string& server_name) {
-//    std::list<ServerContext*>::const_iterator it = servers_list.begin();
     ServerContext* default_serv = NULL;
 
     std::list<ServerContext*> match_with_mask_at_start;
@@ -212,7 +210,6 @@ bool isPartOfLocationPath(const std::list<std::string>& request_target, const st
     std::list<std::string>::const_iterator it2 = location_path.begin();
     std::list<std::string>::const_iterator it2_e = location_path.end();
 
-
     while((it1 != it1_e) && (it2 != it2_e)) {
         if ((*it1) != (*it2)) {
             return false;
@@ -237,7 +234,6 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
         }
         ++it_exact;
     }
-
     LocationContext* ext_location = NULL;
 
     const std::list<LocationContext*>& extension_loc = handling_server->R_getExtensionLocationsList();
@@ -260,10 +256,8 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
                 }
             }
         }
-
         ++it_extension;
     }
-
     /*
      * added by jnannie because current_request->_request_target == '/' didnt work
      */
@@ -278,7 +272,6 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
 		}
 		++it_non_exact;
 	}
-
 
     // Searching in Non Exact Locations
     std::list<std::string> request_target_divided = divideURIBySlashSymbols(request_target);
@@ -302,7 +295,6 @@ void WebServ::routeRequest(const std::string& host, const int port, Request* _cl
 
     std::string host_from_header;
     if (it != _client_request->_headers.end()) {
-//        host_from_header = it->second;
         host_from_header = it->second.substr(0, it->second.find(':')); //jnannie: header contains host:port so we must remove port
     } else { // jnannie: header "host" must be, rfc7230 5.4
     	return _client_request->setStatusCode(400);
@@ -316,16 +308,6 @@ void WebServ::routeRequest(const std::string& host, const int port, Request* _cl
 
     _client_request->setAbsoluteRootPathForRequest();
 }
-
-//void WebServ::routeRequests(const std::string& host, const int port, std::map<int, Request *>& _clients_requests) {
-//    std::map<int, Request *>::iterator it_r = _clients_requests.begin();
-//
-//    while (it_r != _clients_requests.end()) {
-//        Request* current_request = (*it_r).second;
-//        WebServ::routeRequest(host, port, current_request);
-//        ++it_r;
-//    }
-//}
 
 
 

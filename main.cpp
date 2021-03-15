@@ -15,7 +15,6 @@
 
 bool g_sigpipe = false;
 
-
 class SuperVisor {
 public:
     SuperVisor() : _webserv(NULL) { };
@@ -53,17 +52,11 @@ void checkAndSetTimeZoneCorrection(void) {
     WebServ::setCorrectionMinutesToGMT(tz.tz_minuteswest);
 }
 
-
-
 std::list<ServerContext*> WebServ::servers_list;
 int WebServ::correction_minutes_to_GMT;
 std::string WebServ::_webserv_root_path;
 std::list<std::string> WebServ::_lang_code_list;
 std::map<std::string, std::list<int> > WebServ::already_listening_host_plus_port;
-
-
-
-
 
 int main(int argc, char *argv[])
 {
@@ -102,13 +95,8 @@ int main(int argc, char *argv[])
         std::cout << std::endl << "===================================================" << std::endl << std::endl;
 
         WebServ::servers_list = _config.getServersList();
-        WebServ webserv = WebServ(&_config);
+        WebServ webserv = WebServ();
         supervisor.setWebServ(&webserv);
-
-//        std::string test("");
-//		std::cout << "encoded: " << Base64::base64_encode(test) << std::endl;
-//		std::string encoded = Base64::base64_encode(test);
-//		std::cout << "decoded: " << Base64::base64_decode(encoded) << std::endl;
 
         webserv.serveConnections();
     }
