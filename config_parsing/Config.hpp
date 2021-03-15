@@ -134,11 +134,6 @@ class Config {
 // INDEX DIRECTIVE FRIEND TEST CLASSES ENDS
 
 
-
-
-
-
-
 public:
     Config() { }
     ~Config(void);

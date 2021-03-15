@@ -26,17 +26,16 @@ set(UTILS_SRCS utils/utils.cpp utils/utils.hpp
 set(CONFIG_PARSING_SRCS ${UTILS_SRCS} config_parsing/Config.cpp
         config_parsing/AContext.hpp config_parsing/ServerContext.cpp config_parsing/LocationContext.cpp)
 
+set(CORE_PATH "core/")
 
-set (PROJECT_SRCS  Server.cpp
-        WebServ.cpp
-        WebServ_Router.cpp
-        Listener.cpp
-        #        ServerListener.cpp
-#        ServerListener_HandleRequests.cpp
-#        ServerListener_HandleResponses.cpp
-        request_handlers/Request.cpp
-        response/Response.cpp
-        response/autoindex_handling/autoindex_handling.cpp
+
+set (PROJECT_SRCS  ${CORE_PATH}Server.cpp
+        ${CORE_PATH}WebServ.cpp
+        ${CORE_PATH}WebServ_Router.cpp
+        ${CORE_PATH}Listener.cpp
+        ${CORE_PATH}Request/Request.cpp
+        ${CORE_PATH}Response/Response.cpp
+        ${CORE_PATH}Response/autoindex_handling/autoindex_handling.cpp
         base64_coding/base64.cpp
         ${CONFIG_PARSING_SRCS})
 
@@ -47,16 +46,16 @@ add_executable(webserv main.cpp ${PROJECT_SRCS} )
 # GTest
 ################################
 
-add_subdirectory(google_test/)
+add_subdirectory(tests/google_test/)
 enable_testing()
-include_directories(google_test/googletest/include)
+include_directories(tests/google_test/googletest/include)
 
 ################################
 # Unit Tests
 ################################
 # Add test cpp file
 
-set(CONFIG_TESTS_PATH "config_parsing/test_configs/")
+set(CONFIG_TESTS_PATH "tests/test_configs/")
 set(CONFIG_DIRECTIVES_TESTS_PATH ${CONFIG_TESTS_PATH}directives/)
 set(CONFIG_CONTEXTS_TESTS_PATH ${CONFIG_TESTS_PATH}contexts/)
 

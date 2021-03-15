@@ -146,7 +146,3 @@ void ServerContext::addServerNames(std::list<std::string>& server_names) {
     }
 }
 
-
-
-
-

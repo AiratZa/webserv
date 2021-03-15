@@ -4,9 +4,6 @@
 
 #include "LocationContext.hpp"
 
-
-
-
 LocationContext::LocationContext(const std::list<std::string>& location_uri_params, const ServerContext& serv_context)
                     : _is_exact(false)
                       ,_is_error_pages_info_was_updated(false),

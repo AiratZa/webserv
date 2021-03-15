@@ -786,14 +786,6 @@ std::list<std::string>  Config::_serverNameKeywordHandler(const std::list<std::s
 }
 
 
-
-
-
-
-
-
-
-
 const std::string Config::_checkForChangeErrorCodeParam(const std::list<std::string>& directive_params) const {
     std::size_t len = directive_params.size();
     std::list<std::string>::const_iterator it = directive_params.begin();
@@ -917,10 +909,6 @@ long long checkAndConvertToBytes(signed long long nbr, char measure_unit) {
 }
 
 
-
-
-
-
 unsigned long long Config::_clientMaxBodySizeKeywordHandler(AContext* current_context, const std::list<std::string>& directive_params) {
     (void)current_context;
     std::size_t len = directive_params.size();
@@ -952,7 +940,6 @@ unsigned long long Config::_clientMaxBodySizeKeywordHandler(AContext* current_co
     }
     return bytes;
 }
-
 
 
 std::list<std::string> Config::_limitExceptKeywordHandler(AContext* current_context,
@@ -1018,8 +1005,6 @@ bool Config::_autoindexExceptKeywordHandler(AContext* current_context, const std
     _badConfigError("invalid value \"" + directive_params.front() + "\" in \"autoindex\" directive, it must be \"on\" or \"off\" ");
     return false;
 }
-
-
 
 
 std::list<std::string> Config::_indexKeywordHandler(AContext* current_context,
@@ -1090,6 +1075,4 @@ bool Config::_authEnableParamKeywordHandler(AContext* current_context, const std
 
     return false;
 }
-
-
 

@@ -1,1 +1,0 @@
-https://docs.locust.io/en/stable/quickstart.html#example-locustfile-py

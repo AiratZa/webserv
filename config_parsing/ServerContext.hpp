@@ -15,7 +15,6 @@ class LocationContext;
 #include "LocationContext.hpp"
 
 
-
 class ServerContext : public AContext {
 
 public:

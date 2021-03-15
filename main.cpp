@@ -1,16 +1,15 @@
-#include "Server.hpp"
-#include "WebServ.hpp"
 #include <signal.h>
-#include "utils/cpp_libft/libft.hpp"
 #include <iostream>
 
-#include "response/autoindex_handling/autoindex_handling.hpp" // TODO: will be removed after TESTS
+#include "core/Server.hpp"
+#include "core/WebServ.hpp"
 
+#include "utils/cpp_libft/libft.hpp"
 #include "base64_coding/base64.hpp"
 
 #define SERVER_SUCCESS_STOP_LOG "\n\n¯\\_(ツ)_/¯ WebServ is stopped ¯\\_(ツ)_/¯\n\n"
 #define CONFIG_FILE_DEFAULT_PATH "./WEBSERV.CONF"
-#define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root // TODO:add ending '/'
+#define PREFIX_DEFAULT_PATH "/default_folder/" // From this path working root
 
 
 bool g_sigpipe = false;
