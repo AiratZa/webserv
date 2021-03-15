@@ -268,6 +268,7 @@ void Response::generateHeaders() {
 //	}
 	_raw_response += _last_modified;
 	_raw_response += _location;
+	_raw_response += _content_location;
 //	_raw_response += "Connection: keep-alive\r\n"; // TODO: need changes HARDCODE
 
     if (_request->_is_lang_file_pos)
@@ -1005,7 +1006,8 @@ void Response::generatePutResponse() {
         _request->setStatusCode(204);
     } else {
         _request->setStatusCode(201);
-        _location = getLocationHeader(true);
+        _content_location = "Content-Location: " + _request->_request_target + "\r\n";
+//        _location = getLocationHeader(true);
 
     }
 
@@ -1118,7 +1120,7 @@ void Response::sendResponse() {
 
 
 
-	//	std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
+		std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
 
 }
 

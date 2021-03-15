@@ -112,6 +112,7 @@ private: // headers
 	std::string _allow;
 	std::string _last_modified;
 	std::string _location;
+	std::string _content_location;
 	std::string _www_authenticate;
 	std::string _retry_after;
 
