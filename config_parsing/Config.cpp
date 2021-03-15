@@ -386,7 +386,7 @@ std::list<std::string> Config::parseSingleParamDirective(const std::string &keyw
 
 void Config::_checkAndSetParams(ServerContext* current_server, AContext* current_context, const std::string& directive_keyword,
                         const std::list<std::string>& directive_params) {
-    (void)current_server; // TODO: it will be needed when copy server(outside) directive MAYBE
+    (void)current_server;
 
     bool checkIfParamWasNotAlreadySet = true;
     if (directive_keyword == LISTEN_KW) {

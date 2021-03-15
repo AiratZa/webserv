@@ -108,7 +108,7 @@ void Response::generateStatusLine() {
  * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
  * explanations http://howardhinnant.github.io/date_algorithms.html
  */
-struct tm Response::_getCalendarTime(time_t tv_sec) { // TODO: maybe should make it simplier
+struct tm Response::_getCalendarTime(time_t tv_sec) { // TODO: maybe should make it simplier. !!! [Airat Comment] Dima, kak hochesh )
 	struct tm calendar_time;
 	int days = tv_sec / 86400;
 	days += 719468;
@@ -360,7 +360,7 @@ void Response::readFileToContent(std::string & filename) {
 	close(fd);
 }
 
-void Response::generateAutoindex(std::string & filename) { // TODO:replace by normal autoindex
+void Response::generateAutoindex(std::string & filename) { // TODO:replace by normal autoindex. [Airat comment] What means normal
 	_content = write_html(filename, _request);
 }
 
@@ -710,7 +710,7 @@ void Response::generateHeadResponseCore() {
         return _request->setStatusCode(405);
     }
 
-//TODO: need to figure out what path to use instead of root
+//TODO: need to figure out what path to use instead of root. [Airat comment] if work, dont touch:D
     std::string filename = _request->getAbsoluteRootPathForRequest();
 	_appendRequestTarget(filename, _request);
 
@@ -819,7 +819,7 @@ void Response::generatePostResponse() {
 		return _request->setStatusCode(405);
 	}
 
-//TODO: need to figure out what path to use instead of root
+//TODO: need to figure out what path to use instead of root. [Airat comment]: same as previous
 	std::string filename = _request->getAbsoluteRootPathForRequest();
 	_appendRequestTarget(filename, _request);
 

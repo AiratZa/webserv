@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 ////todo:the cgi should be run in the correct directory for relativ path file access
 
 //todo: test with several servers SAME AS LOWER TODO
-//todo: see how it works with query string
+////todo: see how it works with query string !!! DONE
 
 ////  TODO: FIXED AND TESTED
 // Can't assign requested address
