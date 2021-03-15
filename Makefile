@@ -21,21 +21,21 @@ UTILS_SRCS = utils/utils.cpp \
                 utils/cpp_libft/toupper.cpp \
                 utils/cpp_libft/string_to_upper.cpp
 
+CONF_PARSE_SRCS =  config_parsing/Config.cpp \
+                   config_parsing/ServerContext.cpp \
+                   config_parsing/LocationContext.cpp
 
 
-SRCS = $(UTILS_SRCS) main.cpp \
-    WebServ.cpp \
-    WebServ_Router.cpp \
-    Server.cpp\
-    config_parsing/Config.cpp \
-    config_parsing/ServerContext.cpp \
-    config_parsing/LocationContext.cpp \
-    request_handlers/Request.cpp \
-    response/Response.cpp \
-    Listener.cpp \
-    response/autoindex_handling/autoindex_handling.cpp \
-    base64_coding/base64.cpp
+CORE_SRCS =     core/WebServ.cpp \
+                core/WebServ_Router.cpp \
+                core/Listener.cpp \
+                core/Server.cpp\
+                core/Request/Request.cpp \
+                core/Response/Response.cpp \
+                core/Response/autoindex_handling/autoindex_handling.cpp \
+                base64_coding/base64.cpp
 
+SRCS = $(UTILS_SRCS) $(CONF_PARSE_SRCS) $(CORE_SRCS) main.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
