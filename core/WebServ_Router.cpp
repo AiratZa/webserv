@@ -293,14 +293,20 @@ void WebServ::routeRequest(const std::string& host, const int port, Request* _cl
 	std::string tmp_request_target = request_target;
     std::map<std::string, std::string>::const_iterator it = _client_request->_headers.find("host");
 
+    std::string input_host = host;
+    libft::string_to_lower(input_host);
+
     std::string host_from_header;
+
     if (it != _client_request->_headers.end()) {
         host_from_header = it->second.substr(0, it->second.find(':')); //jnannie: header contains host:port so we must remove port
     } else { // jnannie: header "host" must be, rfc7230 5.4
     	return _client_request->setStatusCode(400);
     }
 
-    ServerContext* handling_server = findServerForHandlingRequest(host, port, host_from_header);
+    libft::string_to_lower(host_from_header);
+
+    ServerContext* handling_server = findServerForHandlingRequest(input_host, port, host_from_header);
     _client_request->setHandlingServer(handling_server);
 
     LocationContext* location_to_route = searchForBestMatchLocation(handling_server, _client_request, tmp_request_target);

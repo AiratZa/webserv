@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 ////todo: http://localhost:8080//234/345/
 ////todo:the cgi should be run in the correct directory for relativ path file access
 
-//todo: test with several servers SAME AS LOWER TODO
+////todo: test with several servers SAME AS LOWER TODO !!! DONE. now WebServ_Router is not case sensitive to host values in request and config
 ////todo: see how it works with query string !!! DONE
 
 ////  TODO: FIXED AND TESTED
