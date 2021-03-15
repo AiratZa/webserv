@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 ////todo: close connection if recv returns 0
 ////todo: make authentication not only for "/ht" in Listener::processHeaderInfoForActions()
 ////todo: make content-length parsing in cgi
-//todo: make copliens form
+////todo: make copliens form !!! NOT NEEDED
 //// todo: add languageS to content-language | just hardcoded "en-US, ru-RU" if "_lang_" string is found in request_target
 //// and remove _lang_ !!!! NOT POSSIBLE | we cant check all requests preferred languages
 ////todo: content-location
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 //todo: test with several servers SAME AS LOWER TODO
 //todo: see how it works with query string
 
-//// NEED TESTS! TODO:
+////  TODO: FIXED AND TESTED
 // Can't assign requested address
 /* https://nginx.org/ru/docs/http/request_processing.html
 * http://nginx.org/ru/docs/example.html

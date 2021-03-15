@@ -287,7 +287,7 @@ const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const 
             if (param_it != params_map.end()) {
                 change_error_code = param_it->second;
                 if (change_error_code.size()) {
-                    _request->setStatusCode(libft::stoll_base(change_error_code, 10));
+                    _request->setStatusCodeNoExept(libft::stoll_base(change_error_code, 10));
                 }
             }
 
@@ -322,17 +322,23 @@ void Response::generateDefaultResponseByStatusCode() {
 
 void Response::generateResponseByStatusCode() {
 
-    std::string link = searchForErrorPageLinkAndSetChangeError();
-    _content = "";
-	if (link.size()) {
-        updateRequestForErrorPage(link);
-        generateResponseForErrorPage();
+    try
+    {
+        std::string link = searchForErrorPageLinkAndSetChangeError();
+        _content = "";
+        if (link.size()) {
+            updateRequestForErrorPage(link);
+            generateResponseForErrorPage();
+        }
+        else
+        {
+            generateDefaultResponseByStatusCode();
+        }
     }
-	else
+    catch (WebServ::NotOKStatusCodeException &e)
     {
         generateDefaultResponseByStatusCode();
     }
-
 }
 
 void Response::readFileToContent(std::string & filename) {

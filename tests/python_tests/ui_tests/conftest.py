@@ -8,7 +8,7 @@ import requests
 
 import time
 
-DEFAULT_PAUSE_BEFORE_BROWSER_CLOSE = 5
+DEFAULT_PAUSE_BEFORE_BROWSER_CLOSE = 1
 
 
 
