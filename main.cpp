@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
 //todo: check Response::generatePostResponse()
 //// todo: put request fail ! FIXED
 //todo: close sockets with ctrl+c + listener socket
+//todo: http://localhost:8080//234/345/
 
 //todo: test with several servers SAME AS LOWER TODO
 //// NEED TESTS! TODO:

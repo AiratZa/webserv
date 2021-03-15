@@ -272,8 +272,8 @@ void Response::generateHeaders() {
 
     if (_request->_is_lang_file_pos)
         _raw_response += "Content-Language: " "en-US, ru-RU" "\r\n";
-    else
-	    _raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
+//    else
+//	    _raw_response += "Content-Language: " + _request->getReponseContentLang() + "\r\n";
 
     for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
 		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
@@ -1015,64 +1015,36 @@ void Response::generatePutResponse() {
 }
 
 void Response::generatePostResponse() {
+	generateGetResponse();
 
-    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
-	if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
-		_allow = getAllowHeader();
-		return _request->setStatusCode(405);
-	}
-
-//TODO: need to figure out what path to use instead of root
-	std::string filename = _request->getAbsoluteRootPathForRequest();
-	_appendRequestTarget(filename, _request);
-//	if (filename[filename.size() - 1] != '/')
-//		filename += _request->_request_target; // _request->_request_target always starts with '/'
-//	else
-//		filename += _request->_request_target.substr(1); // remove '/'
-
-	_file_ext = _getExt(filename);
-	if (_isCgiExt()) {
-		_runCgi(filename);
-//		_parseStatusLineFromCgiResponse();
-		_parseHeadersFromCgiResponse();
-		if (!_request->isStatusCodeOk())
-			return ;
-		if (_cgi_headers.count("content-length")) {
-			_cgi_response.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
-		}
-		_content.swap(_cgi_response);
-	}
-	if (!_request->isStatusCodeOk())
-		return ;
-
+//    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
+//	if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
+//		_allow = getAllowHeader();
+//		return _request->setStatusCode(405);
+//	}
+//
+////TODO: need to figure out what path to use instead of root
+//	std::string filename = _request->getAbsoluteRootPathForRequest();
+//	_appendRequestTarget(filename, _request);
+//
+//	_file_ext = _getExt(filename);
+//	if (_isCgiExt()) {
+//		_runCgi(filename);
+//		_parseHeadersFromCgiResponse();
+//		if (!_request->isStatusCodeOk())
+//			return ;
+//		if (_cgi_headers.count("content-length")) {
+//			_cgi_response.resize(libft::strtoul_base(_cgi_headers["content-length"], 10));
+//		}
+//		_content.swap(_cgi_response);
+//	}
+//	if (!_request->isStatusCodeOk())
+//		return ;
+//
 //	generateStatusLine();
-//	_raw_response = "Content-Language: en-US\r\n";
-//	_raw_response = "Allow: GET, POST\r\n";
-////	_raw_response = "Connection: keep-alive\r\n";
-//	_content_type = "Content-Type: text/html\r\n";
 //	generateHeaders();
-//	_raw_response += "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAllow: GET, POST\r\nDate: Thu, 11 March 2021 12:31:25 GMT\r\nContent-Length: 100000000\r\nContent-Language: en-US\r\nHost: Webserv/1.0\r\nConnection: keep-alive\r\n\r\n";
-
-	//"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nAllow: GET, POST\r\nDate: Thu, 11 March 2021 12:31:25 GMT\r\nContent-Length: 100000000\r\nContent-Language: en-US\r\nHost: Webserv/1.0\r\nConnection: keep-alive\r\n\r\n"
-//	_raw_response += "Content-Length: ";
-//	_raw_response += libft::ultostr_base(_content.length(), 10);
-//	_raw_response += "\r\n";
-//	for (std::map<std::string, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
-//		_raw_response += (*it).first + ": " + (*it).second + "\r\n";
-//	}
-//	_raw_response += "\r\n";
-	generateStatusLine();
-	generateHeaders();
-
-	_raw_response += _content;
-
-//	if (_cgi_response.empty())
-//		_raw_response += _content;
-//	else {
-//		_raw_response.erase(_raw_response.size() - 1);
-//		_raw_response.append(_cgi_response);
-//	}
-
+//
+//	_raw_response += _content;
 
 }
 
