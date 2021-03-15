@@ -141,12 +141,16 @@ int main(int argc, char *argv[])
 //todo: make copliens form
 //// todo: add languageS to content-language | just hardcoded "en-US, ru-RU" if "_lang_" string is found in request_target
 //// and remove _lang_ !!!! NOT POSSIBLE | we cant check all requests preferred languages
-//todo: content-location
-//todo: check Response::generatePostResponse()
+////todo: content-location
+////todo: check Response::generatePostResponse()
 //// todo: put request fail ! FIXED
-//todo: close sockets with ctrl+c + listener socket
+////todo: close sockets with ctrl+c + listener socket
+////todo: http://localhost:8080//234/345/
+////todo:the cgi should be run in the correct directory for relativ path file access
 
 //todo: test with several servers SAME AS LOWER TODO
+//todo: see how it works with query string
+
 //// NEED TESTS! TODO:
 // Can't assign requested address
 /* https://nginx.org/ru/docs/http/request_processing.html
