@@ -14,8 +14,10 @@ Listener::~Listener(void) {
     std::list<int>::iterator write = _clients_write.begin();
     while (read != _clients_read.end()) {
         close(*read);
-        close(*write);
         ++read;
+    }
+    while (write != _clients_write.end()) {
+        close(*write);
         ++write;
     }
 }
