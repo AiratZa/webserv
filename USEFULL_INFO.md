@@ -1,4 +1,4 @@
-# Useful links :blush:
+# 🤩 Useful links 🤩
 
 
 **Nginx conf**

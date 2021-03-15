@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to WebServ 👋</h1>
+<h1 align="center">Welcome to WebServ 🤖</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000" />
   <a href="https://github.com/AiratZa/webserv/blob/master/USEFULL_INFO.md" target="_blank">
@@ -8,7 +8,7 @@
 
 
 
-> This project is here to make us write our own HTTP server.
+> This project is here to make us write our own HTTP server. 🚴🚴🚴
 
 > We are followed the real HTTP RFC and now everybody can
 > to test it with a real browser.
@@ -18,7 +18,7 @@
 
 
 ### 🏠 [Homepage](https://github.com/AiratZa/webserv)
-### :simple_smile: [Usefull Info for implementing](https://github.com/AiratZa/webserv/blob/master/USEFULL_INFO.md)
+### 😇 [Usefull Info for implementing](https://github.com/AiratZa/webserv/blob/master/USEFULL_INFO.md)
 
 ## Usage
 
