@@ -110,7 +110,7 @@ public:
 	bool isRegFileExists(const std::string& full_filename);
 	bool isConcreteHeaderExists(const std::string& header_name);
 	bool targetIsFile(void);
-	void appendRequestTarget(std::string & filename);
+	void appendRequestTarget(std::string & filename, std::string &request_target);
 	bool isMethodLimited(const LocationContext& handling_location);
 };
 

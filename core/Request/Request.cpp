@@ -506,7 +506,7 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
                 target.insert(_is_lang_file_pos, *it);
 
                 std::string full_filename = getAbsoluteRootPathForRequest();
-				appendRequestTarget(full_filename);
+				appendRequestTarget(full_filename, target);
                 if (isRegFileExists(full_filename)) {
                     _request_target = target;
                     is_found = true;
@@ -541,9 +541,9 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
 
 }
 
-void Request::appendRequestTarget(std::string & filename) {
+void Request::appendRequestTarget(std::string & filename, std::string &request_target) {
 	if (_handling_location) {
-		std::string request_substr = _request_target.substr(_handling_location->getLocationPath().length());
+		std::string request_substr = request_target.substr(_handling_location->getLocationPath().length());
 		if (filename[filename.size() - 1] != '/') {
 			if (request_substr.size() && request_substr[0] != '/')
 				filename += '/';
@@ -556,9 +556,9 @@ void Request::appendRequestTarget(std::string & filename) {
 		}
 	} else {
 		if (filename[filename.size() - 1] != '/')
-			filename += _request_target; // _request->_request_target always starts with '/'
+			filename += request_target; // _request->_request_target always starts with '/'
 		else
-			filename += _request_target.substr(1); // remove '/'
+			filename += request_target.substr(1); // remove '/'
 	}
 }
 

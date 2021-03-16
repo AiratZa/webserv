@@ -86,14 +86,14 @@ std::map<int,std::string> Response::_initStatusCodes() {
 Response::Response() :
 		_request(), _socket(),
 		_raw_response(""), _content(""),
-		_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { };
+		_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { }
 
 Response::Response(Request * request, int socket) :
 				_request(request), _socket(socket),
 				_raw_response(""), _content(""),
-				_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { };
+				_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { }
 
-Response::~Response(void) { };
+Response::~Response(void) { }
 
 
 void Response::_generateStatusLine() {
@@ -138,7 +138,7 @@ struct tm Response::_gmtime(time_t tv_sec) {
 	struct tm calendar_time;
 	calendar_time = _getCalendarTime(tv_sec);
 	return calendar_time;
-};
+}
 
 std::string Response::_getDateHeader() {
 	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
@@ -662,7 +662,7 @@ void Response::_generateHeadResponseCore() {
 
 //TODO: need to figure out what path to use instead of root. [Airat comment] if work, dont touch:D
     std::string filename = _request->getAbsoluteRootPathForRequest();
-	_request->appendRequestTarget(filename);
+	_request->appendRequestTarget(filename, _request->_request_target);
 
     struct stat stat_buf;
     std::string matching_index;
@@ -772,7 +772,7 @@ void Response::_generatePostResponse() {
 
 //TODO: need to figure out what path to use instead of root. [Airat comment]: same as previous
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	_request->appendRequestTarget(filename);
+	_request->appendRequestTarget(filename, _request->_request_target);
 
 	_file_ext = _getExt(filename);
 	if (_isCgiExt()) {
