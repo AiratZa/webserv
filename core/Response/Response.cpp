@@ -558,43 +558,40 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 	else if (WIFSIGNALED(exit_status))
 		exit_status = exit_status | 128;
 
+
 	if (exit_status == 0) {
+		struct stat stat_buf;
+		size_t size = 0;
 
-	struct stat stat_buf;
-	size_t size = 0;
+		if (stat(out_file_path.c_str(), &stat_buf) == 0) { // getting file size of "out_file_path"
+			size = stat_buf.st_size;
+		} else {
+			unlink(in_file_path.c_str());
+			_request->setStatusCode(500);
+		}
 
-	if (stat(out_file_path.c_str(), &stat_buf) == 0) { // getting file size of "out_file_path"
-		size = stat_buf.st_size;
-	} else {
-		utils::exitWithLog();
-	}
+		int fd_read;
 
-    int fd_read;
+		if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1) {
+			unlink(in_file_path.c_str());
+			_request->setStatusCode(500);
+		}
 
-    if ((fd_read = open(out_file_path.c_str(), O_RDONLY, S_IRWXU)) == -1) {
-        utils::exitWithLog();
-    }
-
-	std::vector<char> buf;
-	buf.reserve(size);
-    ret = 0;
-    if ((ret = read(fd_read, &buf[0], size)) >= 0) {
+		std::vector<char> buf;
+		buf.reserve(size);
+		ret = 0;
+		if ((ret = read(fd_read, &buf[0], size)) >= 0) {
 			try {
 				_cgi_response.append(&buf[0], ret);
-				size_t headers_end = _cgi_response.find("\r\n\r\n") + 4;
-				if (headers_end != std::string::npos) {
-					std::string headers = _cgi_response.substr(0, headers_end);
-					if (headers.find("content-length") != std::string::npos) {
-					}
-				}
 			} catch (std::bad_alloc& ba) {
 				_request->setStatusCodeNoExept(500);
 			}
 		}
-    	else {
+		else {
 			_request->setStatusCodeNoExept(500);
-    	}
+		}
 		close(fd_read);
+		std::cout << "cgi response received" << std::endl;
 	}
 
 	unlink(in_file_path.c_str());
@@ -724,7 +721,7 @@ void Response::_generateHeadResponseCore() {
                 return _request->setStatusCode(301); //Moved Permanently
             }
             if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
-                _generateAutoindex(filename);
+                _content = _generateAutoindex(filename);
                 _content_type = "Content-Type: text/html;charset=utf-8\r\n";
             } else {
                 return _request->setStatusCode(403);
@@ -767,7 +764,7 @@ void Response::_generatePutResponse() {
 
 void Response::_generatePostResponse() {
 
-    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
+//    std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
 	if (!_isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
 		_allow = _getAllowHeader();
 		return _request->setStatusCode(405);
@@ -832,7 +829,7 @@ void Response::sendResponse() {
 
 	long ret = 0;
 		ret = send(_socket, _raw_response.c_str() + _sent_len, _remains, 0);
-		std::cout << _raw_response.substr(0,200) << std::endl;
+//		std::cout << _raw_response.substr(0,200) << std::endl;
 		if (ret >= 0) {
 			_sent_len += ret;
 			_remains -= ret;
@@ -848,9 +845,7 @@ void Response::sendResponse() {
 			_in_progress = false;
 		}
 
-
-
-		std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
+//		std::cout << _raw_response.substr(0, 200) << std::endl; // skarry
 
 }
 

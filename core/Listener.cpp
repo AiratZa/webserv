@@ -248,7 +248,7 @@ bool    find_log_pass(std::vector<std::string> log_pass, std::string const& cred
 bool Listener::processHeaderInfoForActions(int client_socket) {
     Request * request = &_client_requests[client_socket];
 
-    std::cout << request->getRawRequest() << std::endl;
+//    std::cout << request->getRawRequest() << std::endl;
 
     // we dont need silently change raw request inside parsing methods!
     request->parseRequestLine();
@@ -298,7 +298,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     if (!request->isStatusCodeOk()) {
         return false;
     }
-    std::cout << request->getAbsoluteRootPathForRequest() << std::endl;
+//    std::cout << request->getAbsoluteRootPathForRequest() << std::endl;
 
     request->checkToClientMaxBodySize();
     if (!request->isStatusCodeOk()) {
@@ -358,11 +358,11 @@ void Listener::handleRequests(fd_set* globalReadSetPtr) {
                         _time[*it] = _get_time();
                     request->_buf[request->_bytes_read] = '\0';
 
-                        request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
+					request->getRawRequest().append(request->_buf, request->_bytes_read);// собираем строку пока весь запрос не соберем
 
-                        if (header_was_read_client) {
-                            request->increaseOnlyContentLengthReadBodySize(request->_bytes_read);
-                        }
+					if (header_was_read_client) {
+						request->increaseOnlyContentLengthReadBodySize(request->_bytes_read);
+					}
 
                     // Behavior based on was or not read header
                     if (!header_was_read_client) {

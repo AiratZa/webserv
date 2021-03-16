@@ -150,6 +150,8 @@ int main(int argc, char *argv[])
 ////todo: test with several servers SAME AS LOWER TODO !!! DONE. now WebServ_Router is not case sensitive to host values in request and config
 ////todo: see how it works with query string !!! DONE
 
+//todo: Test GET http://localhost:8080/directory/youpi.bla
+
 ////  TODO: FIXED AND TESTED
 // Can't assign requested address
 /* https://nginx.org/ru/docs/http/request_processing.html

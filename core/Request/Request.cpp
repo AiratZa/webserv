@@ -585,7 +585,7 @@ bool                    Request::getNeedWritingBodyToFile(void) const { return _
 const std::string&      Request::getReponseContentLang(void) { return _response_content_lang; }
 const std::string&      Request::getCgiScriptPathForRequest(void) const { return _cgi_script_path;}
 
-void Request::increaseOnlyContentLengthReadBodySize(int bytes_read) { _only_content_length_read_body_size += bytes_read;}
+void Request::increaseOnlyContentLengthReadBodySize(long bytes_read) { _only_content_length_read_body_size += bytes_read;}
 
 bool Request::isHeaderWasRead(void) const { return _header_was_read; }
 
