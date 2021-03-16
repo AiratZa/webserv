@@ -35,8 +35,7 @@ set (PROJECT_SRCS  ${CORE_PATH}Server.cpp
         ${CORE_PATH}Listener.cpp
         ${CORE_PATH}Request/Request.cpp
         ${CORE_PATH}Response/Response.cpp
-        ${CORE_PATH}Response/autoindex_handling/autoindex_handling.cpp
-        base64_coding/base64.cpp
+        base64_coding/Base64.cpp
         ${CONFIG_PARSING_SRCS})
 
 add_executable(webserv main.cpp ${PROJECT_SRCS} )

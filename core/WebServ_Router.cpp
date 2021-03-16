@@ -19,7 +19,7 @@
  * returns 3 if match with mask at end
  */
 
-int isServerNameMatch(const std::string& server_name, const std::list<std::string>& serv_name_list) {
+int WebServ::isServerNameMatch(const std::string& server_name, const std::list<std::string>& serv_name_list) {
     std::list<std::string>::const_iterator it = serv_name_list.begin();
     std::size_t found_pos;
 
@@ -203,7 +203,7 @@ ServerContext* WebServ::findServerForHandlingRequest(const std::string& host,
 }
 
 
-bool isPartOfLocationPath(const std::list<std::string>& request_target, const std::list<std::string>& location_path) {
+bool WebServ::isPartOfLocationPath(const std::list<std::string>& request_target, const std::list<std::string>& location_path) {
     std::list<std::string>::const_iterator it1 = request_target.begin();
     std::list<std::string>::const_iterator it1_e = request_target.end();
 
@@ -223,7 +223,7 @@ bool isPartOfLocationPath(const std::list<std::string>& request_target, const st
 }
 
 
-LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
+LocationContext* WebServ::searchForBestMatchLocation(ServerContext* handling_server,
                                             Request* current_request,
                                             const std::string& request_target) {
     const std::list<LocationContext*>& exact = handling_server->R_getExactLocationsList();
@@ -247,7 +247,7 @@ LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
             std::string end_of_request_target = request_target.substr(start_pos);
 
             if (end_of_request_target == tmp_loc_ext) {
-                bool not_allowed = isMethodLimited(*(*it_extension), current_request->_method);
+                bool not_allowed = current_request->isMethodLimited(*(*it_extension));
 
                 // no limits
                 if (!not_allowed) {

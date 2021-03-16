@@ -5,7 +5,7 @@
 #include "Listener.hpp"
 #include "WebServ.hpp"
 #include "Response/Response.hpp"
-#include "../base64_coding/base64.hpp"
+#include "../base64_coding/Base64.hpp"
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
 
@@ -140,7 +140,7 @@ bool Listener::continueReadBody(Request* request_obj) {
     // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second.find("chunked") != std::string::npos)) {
-        request_obj->is_chunked = true;
+        request_obj->_is_chunked = true;
 
 		size_t start_line_length = body.find("\r\n");
 		if (start_line_length == std::string::npos)
@@ -449,11 +449,11 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 		if (FD_ISSET(fd, globalWriteSetPtr)) {
 			Request* request = &_client_requests[fd];
 			Response* response = &_client_response[fd];
-                if (!response->in_progress) {
+                if (!response->getInProgress()) {
                     response->generateResponse();
                     response->setRemains();
                     request->_content.clear(); // just to free memory
-                    response->_content.clear();
+                    response->getContent().clear();
                 }
 
 			response->sendResponse();
@@ -464,7 +464,9 @@ void Listener::handleResponses(fd_set* globalWriteSetPtr) {
 				close(fd);
 				it = _clients_write.erase(it);
 				std::cout << "connection closed, socket " << fd << std::endl;
-			} else if (!response->in_progress) {
+			} else if (!response->getInProgress()) {
+					_client_requests.erase(fd);
+					_client_response.erase(fd);
 					_client_requests[fd] = Request(_remote_addr, _port);
 					_client_response[fd] = Response(&_client_requests[fd], fd);
 					_clients_read.push_back(fd);

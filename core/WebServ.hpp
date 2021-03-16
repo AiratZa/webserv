@@ -68,6 +68,12 @@ public:
         virtual const char* what() const throw() {return "";}
     };
 
+	static LocationContext* searchForBestMatchLocation(ServerContext* handling_server,
+														 Request* current_request,
+														 const std::string& request_target);
+	static bool isPartOfLocationPath(const std::list<std::string>& request_target, const std::list<std::string>& location_path);
+	static int isServerNameMatch(const std::string& server_name, const std::list<std::string>& serv_name_list);
+
     static void initLanguageCodesList(void)
     {
         _lang_code_list.push_back("af");

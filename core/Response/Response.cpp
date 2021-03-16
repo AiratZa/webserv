@@ -9,18 +9,18 @@
 #include <set>
 
 #include "Response.hpp"
-#include "../../utils/cpp_libft/libft.hpp"
-#include "../../base64_coding/base64.hpp"
-#include "autoindex_handling/autoindex_handling.hpp"
+//#include "../../utils/cpp_libft/libft.hpp"
+#include "../../base64_coding/Base64.hpp"
+#include <dirent.h>
 
 
 extern bool g_sigpipe;
 
-std::set<std::string> Response::implemented_headers = Response::initResponseHeaders();
+std::set<std::string> Response::implemented_headers = Response::_initResponseHeaders();
 
-std::map<int, std::string> Response::status_codes = Response::initStatusCodes();
+std::map<int, std::string> Response::status_codes = Response::_initStatusCodes();
 
-std::set<std::string> Response::initResponseHeaders() {
+std::set<std::string> Response::_initResponseHeaders() {
 	std::set<std::string> implemented_headers;
 	implemented_headers.insert("allow"); // Allow: OPTIONS, GET, HEAD
 	implemented_headers.insert("content-language"); // Content-Language: en, ase, ru
@@ -37,7 +37,7 @@ std::set<std::string> Response::initResponseHeaders() {
 	return implemented_headers;
 }
 
-std::map<int,std::string> Response::initStatusCodes() {
+std::map<int,std::string> Response::_initStatusCodes() {
 	std::map<int,std::string> status_codes;
 	status_codes[100] = "CONTINUE";
 	status_codes[101] = "SWITCHING PROTOCOLS";
@@ -86,17 +86,17 @@ std::map<int,std::string> Response::initStatusCodes() {
 Response::Response() :
 		_request(), _socket(),
 		_raw_response(""), _content(""),
-		in_progress(false), sent_len(0), error_code_for_generaion(200) { };
+		_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { };
 
 Response::Response(Request * request, int socket) :
 				_request(request), _socket(socket),
 				_raw_response(""), _content(""),
-				in_progress(false), sent_len(0), error_code_for_generaion(200) { };
+				_in_progress(false), _sent_len(0), _error_code_for_generaion(200) { };
 
 Response::~Response(void) { };
 
 
-void Response::generateStatusLine() {
+void Response::_generateStatusLine() {
 	_raw_response += "HTTP/1.1 ";
 	_raw_response += libft::ultostr_base(_request->getStatusCode(), 10);
 	_raw_response += " ";
@@ -140,7 +140,7 @@ struct tm Response::_gmtime(time_t tv_sec) {
 	return calendar_time;
 };
 
-std::string Response::getDateHeader() {
+std::string Response::_getDateHeader() {
 	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
 	struct tm calendar_time;
 	struct timeval tv;
@@ -154,7 +154,7 @@ std::string Response::getDateHeader() {
 	return date_header;
 }
 
-std::string Response::getLastModifiedHeader(time_t tv_sec) {
+std::string Response::_getLastModifiedHeader(time_t tv_sec) {
 	char s[30]; // Wed, 24 Feb 2021 12:10:04 GMT + '\0'
 	struct tm calendar_time;
 
@@ -166,7 +166,7 @@ std::string Response::getLastModifiedHeader(time_t tv_sec) {
 	return date_header;
 }
 
-std::string Response::getLocationHeader(bool is_file) {
+std::string Response::_getLocationHeader(bool is_file) {
 	std::string location;
 
 	location += "location: ";
@@ -181,7 +181,7 @@ std::string Response::getLocationHeader(bool is_file) {
 	return location;
 }
 
-std::string Response::getAllowHeader() {
+std::string Response::_getAllowHeader() {
 	std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
 	std::string allow = "Allow: ";
 	for (std::list<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); ++it) {
@@ -193,21 +193,21 @@ std::string Response::getAllowHeader() {
 	return allow;
 }
 
-std::string Response::getWwwAuthenticateHeader() {
+std::string Response::_getWwwAuthenticateHeader() {
 	std::string www_authenticate = "WWW-Authenticate: Basic realm=\"restricted\", charset=\"UTF-8\"\r\n";
 	return www_authenticate;
 }
 
-std::string Response::getRetryAfterHeader() {
+std::string Response::_getRetryAfterHeader() {
     std::string retryAfter = ("Retry-After: " + std::string(RETRY_AFTER_SECOND_DELAY) + "\r\n");
     return retryAfter;
 
 }
 
-void Response::generateHeaders() {
+void Response::_generateHeaders() {
 	_raw_response += "server: webserv\r\n";
 	_raw_response += _www_authenticate;
-	_raw_response += getDateHeader();
+	_raw_response += _getDateHeader();
 	_raw_response += _content_type;
 	_raw_response += _allow;
 	_raw_response += _retry_after;
@@ -227,8 +227,8 @@ void Response::generateHeaders() {
 	_raw_response += "\r\n";
 }
 
-void Response::updateRequestForErrorPage(const std::string& error_page_link) {
-    error_code_for_generaion = _request->getStatusCode();
+void Response::_updateRequestForErrorPage(const std::string& error_page_link) {
+    _error_code_for_generaion = _request->getStatusCode();
 
     _request->setStatusCode(200);
     if (_request->_method != "HEAD") {
@@ -239,31 +239,31 @@ void Response::updateRequestForErrorPage(const std::string& error_page_link) {
 
 }
 
-void Response::generateResponseForErrorPage(void) {
+void Response::_generateResponseForErrorPage(void) {
 
 
-    generateHeadResponseCore();
+    _generateHeadResponseCore();
 
     // check for the same error
-    if (_request->getStatusCode() == error_code_for_generaion) {
-        return generateDefaultResponseByStatusCode();
+    if (_request->getStatusCode() == _error_code_for_generaion) {
+        return _generateDefaultResponseByStatusCode();
     }
-    _request->setStatusCodeNoExept(error_code_for_generaion);
-    error_code_for_generaion = 200;
+    _request->setStatusCodeNoExept(_error_code_for_generaion);
+    _error_code_for_generaion = 200;
 
-    generateStatusLine();
+    _generateStatusLine();
 
 	if (_request->getStatusCode() == 401) {
-		_www_authenticate = getWwwAuthenticateHeader();
+		_www_authenticate = _getWwwAuthenticateHeader();
 	}
 
-    generateHeaders();
+    _generateHeaders();
     if (_request->_method != "PUT") {
         _raw_response += _content;
     }
 }
 
-const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const {
+const std::string Response::_searchForErrorPageLinkAndSetChangeError(void) const {
     AContext * context = (_request->_handling_location != NULL)?
                          static_cast<AContext*>(_request->_handling_location) :
                          static_cast<AContext*> (_request->_handling_server);
@@ -302,46 +302,46 @@ const std::string Response::searchForErrorPageLinkAndSetChangeError(void) const 
 }
 
 
-void Response::generateDefaultResponseByStatusCode() {
+void Response::_generateDefaultResponseByStatusCode() {
     _content_type = "Content-Type: text/html;charset=utf-8\r\n";
     if (_request->_method != "HEAD")
         _content.append(libft::ultostr_base(_request->getStatusCode(), 10)).append(" ").append(Response::status_codes[_request->getStatusCode()]).append("\r\n");
 
-    generateStatusLine();
+    _generateStatusLine();
 
     if (_request->getStatusCode() == 401) {
-        _www_authenticate = getWwwAuthenticateHeader();
+        _www_authenticate = _getWwwAuthenticateHeader();
     }
 
     if (_request->getStatusCode() != 100){ // cURL dont recognize 100 status code response with headers
-        generateHeaders();
+        _generateHeaders();
         _raw_response.append(_content);
     }
 
 }
 
-void Response::generateResponseByStatusCode() {
+void Response::_generateResponseByStatusCode() {
 
     try
     {
-        std::string link = searchForErrorPageLinkAndSetChangeError();
+        std::string link = _searchForErrorPageLinkAndSetChangeError();
         _content = "";
         if (link.size()) {
-            updateRequestForErrorPage(link);
-            generateResponseForErrorPage();
+            _updateRequestForErrorPage(link);
+            _generateResponseForErrorPage();
         }
         else
         {
-            generateDefaultResponseByStatusCode();
+            _generateDefaultResponseByStatusCode();
         }
     }
     catch (WebServ::NotOKStatusCodeException &e)
     {
-        generateDefaultResponseByStatusCode();
+        _generateDefaultResponseByStatusCode();
     }
 }
 
-void Response::readFileToContent(std::string & filename) {
+void Response::_readFileToContent(std::string & filename) {
 	char buf[1024 + 1];
 	int ret;
 	int fd;
@@ -354,17 +354,15 @@ void Response::readFileToContent(std::string & filename) {
 
 	while ((ret = read(fd, buf, 1024))) {
 		if (ret < 0)
-			utils::exitWithLog();
+			return _request->setStatusCode(500);
+//			utils::exitWithLog();
 		_content.append(buf, ret);
 	}
 	close(fd);
 }
 
-void Response::generateAutoindex(std::string & filename) { // TODO:replace by normal autoindex. [Airat comment] What means normal
-	_content = write_html(filename, _request);
-}
 
-void Response::setContentTypeByFileExt(std::string & ext) {
+void Response::_setContentTypeByFileExt(std::string & ext) {
 	if (ext == "")
 		_content_type = "Content-Type: application/octet-stream\r\n";
 	else {
@@ -396,7 +394,7 @@ void Response::setContentTypeByFileExt(std::string & ext) {
  *    doesnt work for files in subfolders
  *
  */
-bool Response::isMethodAllowed() {
+bool Response::_isMethodAllowed() {
 	if (!_request->_handling_location)
 		return true;
 	std::list<std::string> allowed_methods = _request->_handling_location->getLimitExceptMethods();
@@ -410,8 +408,8 @@ bool Response::isMethodAllowed() {
 	return false;
 }
 
-void Response::generateGetResponse() {
-	generateHeadResponse();
+void Response::_generateGetResponse() {
+	_generateHeadResponse();
 
 	if (!_request->isStatusCodeOk())
 		return ;
@@ -658,61 +656,16 @@ void Response::_parseHeadersFromCgiResponse() { // the same as in request header
 }
 
 
-// like pure func
-void _appendRequestTarget(std::string & filename, Request* _request) {
-    if (_request->_handling_location) {
-        std::string request_substr = _request->_request_target.substr(_request->_handling_location->getLocationPath().length());
-        if (filename[filename.size() - 1] != '/') {
-            if (request_substr[0] != '/')
-                filename += '/';
-            filename += request_substr; // _request->_request_target always starts with '/'
-        } else {
-            if (request_substr[0] == '/')
-                filename += request_substr.substr(1); // remove '/'
-            else
-                filename += request_substr;
-        }
-    } else {
-        if (filename[filename.size() - 1] != '/')
-            filename += _request->_request_target; // _request->_request_target always starts with '/'
-        else
-            filename += _request->_request_target.substr(1); // remove '/'
-    }
-}
+void Response::_generateHeadResponseCore() {
 
-
-// for existence check ONLY
-void _appendRequestTarget(std::string & filename, Request* _request, const std::string& tmp_request_target) {
-    if (_request->_handling_location) {
-        std::string request_substr = tmp_request_target.substr(_request->_handling_location->getLocationPath().length());
-        if (filename[filename.size() - 1] != '/') {
-            if (request_substr[0] != '/')
-                filename += '/';
-            filename += request_substr; // _request->_request_target always starts with '/'
-        } else {
-            if (request_substr[0] == '/')
-                filename += request_substr.substr(1); // remove '/'
-            else
-                filename += request_substr;
-        }
-    } else {
-        if (filename[filename.size() - 1] != '/')
-            filename += tmp_request_target; // _request->_request_target always starts with '/'
-        else
-            filename += tmp_request_target.substr(1); // remove '/'
-    }
-}
-
-void Response::generateHeadResponseCore() {
-
-    if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
-        _allow = getAllowHeader();
+    if (!_isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
+        _allow = _getAllowHeader();
         return _request->setStatusCode(405);
     }
 
 //TODO: need to figure out what path to use instead of root. [Airat comment] if work, dont touch:D
     std::string filename = _request->getAbsoluteRootPathForRequest();
-	_appendRequestTarget(filename, _request);
+	_request->appendRequestTarget(filename);
 
     struct stat stat_buf;
     std::string matching_index;
@@ -720,7 +673,8 @@ void Response::generateHeadResponseCore() {
     if (stat(filename.c_str(), &stat_buf) == 0) { // file or directory exists
         if (S_ISDIR(stat_buf.st_mode)) { // filename is a directory
             if (filename[filename.size() - 1] != '/') {
-                _location = getLocationHeader(false);
+                _location = _getLocationHeader(false);
+				_retry_after = _getRetryAfterHeader();
                 return _request->setStatusCode(301); //Moved Permanently
             }
             std::list<std::string> index_list;
@@ -754,9 +708,9 @@ void Response::generateHeadResponseCore() {
 				}
 				_content.swap(_cgi_response);
 			} else {
-				setContentTypeByFileExt(_file_ext);
-				readFileToContent(filename);
-				_last_modified = getLastModifiedHeader(stat_buf.st_mtime);
+				_setContentTypeByFileExt(_file_ext);
+				_readFileToContent(filename);
+				_last_modified = _getLastModifiedHeader(stat_buf.st_mtime);
 			}
 		} else if (S_ISDIR(stat_buf.st_mode)) {
 			if (filename[filename.size() - 1] != '/') {
@@ -764,13 +718,13 @@ void Response::generateHeadResponseCore() {
 					_request->_request_target += '/';
 				_request->_request_target += matching_index;
 
-				_location = getLocationHeader(false); // TODO: need checks. ,aybe it is file location
+				_location = _getLocationHeader(false); // TODO: need checks. ,aybe it is file location
 
-                _retry_after = getRetryAfterHeader();
+                _retry_after = _getRetryAfterHeader();
                 return _request->setStatusCode(301); //Moved Permanently
             }
             if ((_request->_handling_location && _request->_handling_location->isAutoindexEnabled()) || _request->_handling_server->isAutoindexEnabled()) {
-                generateAutoindex(filename);
+                _generateAutoindex(filename);
                 _content_type = "Content-Type: text/html;charset=utf-8\r\n";
             } else {
                 return _request->setStatusCode(403);
@@ -783,19 +737,19 @@ void Response::generateHeadResponseCore() {
     }
 }
 
-void Response::generateHeadResponse() {
+void Response::_generateHeadResponse() {
 
-    generateHeadResponseCore();
+    _generateHeadResponseCore();
 	if (!_request->isStatusCodeOk())
 		return ;
 
 
 
-	generateStatusLine();
-	generateHeaders();
+	_generateStatusLine();
+	_generateHeaders();
 }
 
-void Response::generatePutResponse() {
+void Response::_generatePutResponse() {
     bool file_was_at_start = _request->getFileExistenceStatus();
 
     if (file_was_at_start) {
@@ -806,22 +760,22 @@ void Response::generatePutResponse() {
 
     }
 
-    generateStatusLine();
-    generateHeaders();
+    _generateStatusLine();
+    _generateHeaders();
     _raw_response += _content;
 }
 
-void Response::generatePostResponse() {
+void Response::_generatePostResponse() {
 
     std::cout << "CGI SCRIPT: " << _request->getCgiScriptPathForRequest() << std::endl;
-	if (!isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
-		_allow = getAllowHeader();
+	if (!_isMethodAllowed() && (_request->getCgiScriptPathForRequest()).empty()) {
+		_allow = _getAllowHeader();
 		return _request->setStatusCode(405);
 	}
 
 //TODO: need to figure out what path to use instead of root. [Airat comment]: same as previous
 	std::string filename = _request->getAbsoluteRootPathForRequest();
-	_appendRequestTarget(filename, _request);
+	_request->appendRequestTarget(filename);
 
 	_file_ext = _getExt(filename);
 	if (_isCgiExt()) {
@@ -837,8 +791,8 @@ void Response::generatePostResponse() {
 	if (!_request->isStatusCodeOk())
 		return ;
 
-	generateStatusLine();
-	generateHeaders();
+	_generateStatusLine();
+	_generateHeaders();
 
 	_raw_response += _content;
 
@@ -849,17 +803,17 @@ void Response::generateResponse() {
 	    try
         {
             _request->checkToClientMaxBodySize(_request->_content.size()); // 413 set inside if needed
-            checkForAcceptPrefixHeaders();
+            _checkForAcceptPrefixHeaders();
 
             if (_request->isStatusCodeOk()) {
                 if (_request->_method == "GET") {
-                    generateGetResponse();
+                    _generateGetResponse();
                 } else if (_request->_method == "HEAD") {
-                    generateHeadResponse();
+                    _generateHeadResponse();
                 } else if (_request->_method == "PUT") {
-                    generatePutResponse();
+                    _generatePutResponse();
                 } else if (_request->_method == "POST") {
-                    generatePostResponse();
+                    _generatePostResponse();
                 } else {
                     _request->setStatusCode(501); // 501 Not Implemented
                 }
@@ -869,7 +823,7 @@ void Response::generateResponse() {
 	}
 
 	if (!_request->isStatusCodeOk()) {
-		generateResponseByStatusCode();
+		_generateResponseByStatusCode();
 	}
 }
 
@@ -877,21 +831,21 @@ void Response::sendResponse() {
 	static int i = 0;
 
 	long ret = 0;
-		ret = send(_socket, _raw_response.c_str() + sent_len, remains, 0);
+		ret = send(_socket, _raw_response.c_str() + _sent_len, _remains, 0);
 		std::cout << _raw_response.substr(0,200) << std::endl;
 		if (ret >= 0) {
-			sent_len += ret;
-			remains -= ret;
-			if (remains == 0) {
+			_sent_len += ret;
+			_remains -= ret;
+			if (_remains == 0) {
 				++i;
 				std::cout << "response " << i << " is sent" << std::endl;
-				in_progress = false;
+				_in_progress = false;
 			} else {
-				in_progress =  true;
+				_in_progress =  true;
 			}
 		} else if (ret == -1) {
 			_request->_close_connection = true;
-			in_progress = false;
+			_in_progress = false;
 		}
 
 
@@ -901,7 +855,7 @@ void Response::sendResponse() {
 }
 
 
-void Response::checkForAcceptPrefixHeaders(void) {
+void Response::_checkForAcceptPrefixHeaders(void) {
     if (_request->_headers.count("accept-charset")) {
         _request->handleAcceptCharsetHeader();
     }
@@ -915,8 +869,199 @@ void Response::checkForAcceptPrefixHeaders(void) {
 
 
 void Response::setRemains() {
-	remains = _raw_response.size();
+	_remains = _raw_response.size();
 }
+
+bool Response::getInProgress() {
+	return _in_progress;
+}
+
+std::string & Response::getContent() {
+	return _content;
+}
+
+
+std::string Response::_replaceQuoteToCode(const std::string& str) {
+	std::string copy = str;
+	std::string::iterator it = copy.begin();
+	while (it != copy.end()) {
+		if ((*it) == '"') {
+			copy.replace(it, it+1, "%22");
+		}
+		++it;
+	}
+	return copy;
+}
+
+
+bool isUtf_8(char c)
+{
+	return (c & 0xC0) == 0x80;
+}
+
+// https://stackoverflow.com/questions/31652407/how-to-get-the-accurate-length-of-a-stdstring
+std::size_t Response::_getCharsLen(const std::string& str)
+{
+	return (str.length() - count_if(str.begin(), str.end(), isUtf_8));
+}
+
+std::string Response::_generateAutoindex(std::string dir_name)
+{
+	std::string host_n_port = "http://";
+	host_n_port += _request->_headers["host"];
+	std::string url = host_n_port + _request->_request_target;
+
+	std::string response_body = "<html>";
+
+	response_body += "<head>\n"
+					 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"
+					 "<title>Index of ";
+	response_body += _request->_request_target;
+	response_body +="</title>\n"
+					"</head>\n";
+
+	response_body += "<body>\n";
+	response_body += "<h1>Index of ";
+	response_body += _request->_request_target;
+	response_body += "</h1><hr>\n";
+	response_body += "<pre>\n";
+
+
+	response_body += "<a href=\"";
+	response_body += "../";
+	response_body += "\">../</a>\n";
+
+
+
+	std::list<std::map<std::string, std::list<std::string> > > info = _dir_opers(dir_name);
+	std::list<std::map<std::string, std::list<std::string> > >::iterator it = info.begin();
+
+	while (it != info.end()) {
+		std::map<std::string, std::list<std::string> >::iterator it_map = (*it).begin();
+		while (it_map != (*it).end()) {
+			response_body += "<a href=\"";
+
+			std::string correct = _replaceQuoteToCode((*it_map).first);
+			response_body += (url + correct);
+			response_body += "\">";
+
+			std::string file_name = (*it_map).first;
+			std::size_t fname_len = _getCharsLen(file_name);
+			if (fname_len > 50) {
+				std::size_t i = 47;
+				std::string file_name_tmp = file_name.substr(0, i);
+				while (_getCharsLen(file_name_tmp) != 47)
+				{
+					i++;
+					file_name_tmp = file_name.substr(0, i);
+				}
+				if (i > 47)
+					i++;
+				file_name = file_name.substr(0,i) + "..>";
+			}
+			fname_len = _getCharsLen(file_name);
+			response_body += file_name;
+			response_body += "</a>";
+
+			std::size_t count_of_spaces = (50 - fname_len) + 1;
+			response_body += std::string(count_of_spaces, ' ');
+
+			response_body += (*it_map).second.front(); // file modified datetime
+
+			count_of_spaces = 20 - (*it_map).second.back().size();
+			response_body += std::string(count_of_spaces, ' ');
+
+			response_body += (*it_map).second.back(); // file size in bytes
+			response_body += "\n";
+			++it_map;
+		}
+		++it;
+	}
+
+	response_body += "</pre><hr>\n";
+	response_body += "</body>\n";
+	response_body += "</html>\n";
+
+	return response_body;
+}
+
+//void Response::_exit()
+//{
+//	std::cout << strerror(errno)  << std::endl;
+//	exit(errno);
+//}
+
+
+std::list<std::map<std::string, std::list<std::string> > > Response::_dir_opers(const std::string& dir_name)
+{
+	DIR* dir_stream;
+	dir_stream = opendir(dir_name.c_str());
+
+	if (!dir_stream)
+		_request->setStatusCode(500);
+//        ft_exit();
+	struct dirent *info;
+
+	std::map<std::string, std::list<std::string> > files;
+	std::map<std::string, std::list<std::string> > dirs;
+
+	std::map<std::string, std::list<std::string> >* tmp;
+	while ((info = readdir(dir_stream))) {
+		std::string file_obj_name = std::string(info->d_name);
+
+		if (file_obj_name[0] == '.')
+			continue;
+		struct stat info_buf;
+		std::string file_full_path = dir_name + file_obj_name;
+
+		if (stat(file_full_path.c_str(), &info_buf) == -1) {
+			_request->setStatusCode(500);
+//			std::cout << strerror(errno) << std::endl;
+//			exit(errno);
+		}
+
+		int file_type = info_buf.st_mode & S_IFMT;
+
+		if (file_type == S_IFREG)
+			tmp = &files;
+		else if (file_type == S_IFDIR)
+			tmp = &dirs;
+
+		std::list<std::string> date_modified_and_size_in_bytes;
+
+
+		// get modify time info
+		long corrected_to_GMT = info_buf.st_mtime + WebServ::getCorrectionMinutesToGMT()*60;
+		std::string modified_seconds_to_str = libft::ultostr_base(corrected_to_GMT, 10);
+		struct tm modified_time;
+		char *null_if_error = strptime(modified_seconds_to_str.c_str(), "%s", &modified_time);
+		if (!null_if_error)
+			throw std::exception();
+		char time_to_str[18]; // example: 31-Jan-2021 20:51
+		strftime(time_to_str, 18, "%d-%b-%Y %H:%M", &modified_time);
+
+		date_modified_and_size_in_bytes.push_back(std::string(time_to_str));
+
+		// get size of file in bytes
+		if (file_type == S_IFDIR)
+			date_modified_and_size_in_bytes.push_back("-");
+		else
+			date_modified_and_size_in_bytes.push_back(libft::ultostr_base(info_buf.st_size, 10));
+
+		if (file_type == S_IFDIR)
+			file_obj_name += "/";
+		(*tmp)[file_obj_name] = date_modified_and_size_in_bytes;
+
+	}
+	closedir(dir_stream);
+
+	std::list<std::map<std::string, std::list<std::string> > > all_info;
+	all_info.push_back(dirs);
+	all_info.push_back(files);
+
+	return all_info;
+}
+
 /*
 PUT /nginx_meme.jpg HTTP/1.1
 

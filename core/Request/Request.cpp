@@ -14,19 +14,19 @@
  * return true if METHOD IS NOT ALLOWED BY CONFIG
  * Author: Airat (GDrake)
  */
-bool isMethodLimited(const LocationContext& handling_location, const std::string& method) {
-    const std::list<std::string> limit_except = (handling_location).getLimitExceptMethods();
-    if (limit_except.empty())
-        return false;
+bool Request::isMethodLimited(const LocationContext& handling_location) {
+	const std::list<std::string> limit_except = (handling_location).getLimitExceptMethods();
+	if (limit_except.empty())
+		return false;
 
-    std::list<std::string>::const_iterator it = limit_except.begin();
-    while (it != limit_except.end()) {
-        if (method == (*it)) {
-            return false;
-        }
-        ++it;
-    }
-    return true;
+	std::list<std::string>::const_iterator it = limit_except.begin();
+	while (it != limit_except.end()) {
+		if (_method == (*it)) {
+			return false;
+		}
+		++it;
+	}
+	return true;
 }
 
 bool quality_sort_func(const Pair<std::string, float>& one, const Pair<std::string, float>& two) {
@@ -166,7 +166,7 @@ Request::Request()
           _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
 		  _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
-		  is_chunked(false),
+		  _is_chunked(false),
 		  _is_lang_file_pos(0) {}
 
 Request::Request(struct sockaddr_in & remote_addr, int server_port)
@@ -183,7 +183,7 @@ Request::Request(struct sockaddr_in & remote_addr, int server_port)
            _only_content_length_read_body_size(0),
 		  _is_need_writing_body_to_file(false),
           _response_content_lang(DEFAULT_RESPONSE_LANGUAGE),
-          is_chunked(false),
+          _is_chunked(false),
           _is_lang_file_pos(0) {}
 
 Request::~Request() {}
@@ -506,7 +506,7 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
                 target.insert(_is_lang_file_pos, *it);
 
                 std::string full_filename = getAbsoluteRootPathForRequest();
-                _appendRequestTarget(full_filename, this, target);
+				appendRequestTarget(full_filename);
                 if (isRegFileExists(full_filename)) {
                     _request_target = target;
                     is_found = true;
@@ -539,6 +539,167 @@ void Request::handleAcceptLanguageHeader(bool is_header_exists) {
 
     }
 
+}
+
+void Request::appendRequestTarget(std::string & filename) {
+	if (_handling_location) {
+		std::string request_substr = _request_target.substr(_handling_location->getLocationPath().length());
+		if (filename[filename.size() - 1] != '/') {
+			if (request_substr.size() && request_substr[0] != '/')
+				filename += '/';
+			filename += request_substr; // _request->_request_target always starts with '/'
+		} else {
+			if (request_substr[0] == '/')
+				filename += request_substr.substr(1); // remove '/'
+			else
+				filename += request_substr;
+		}
+	} else {
+		if (filename[filename.size() - 1] != '/')
+			filename += _request_target; // _request->_request_target always starts with '/'
+		else
+			filename += _request_target.substr(1); // remove '/'
+	}
+}
+
+
+
+
+void Request::setStatusCodeNoExept(int status_code) { _status_code = status_code;}
+void Request::setHandlingServer(ServerContext* handling_server) { _handling_server = handling_server;}
+void Request::setHandlingLocation(LocationContext* location_to_route) { _handling_location = location_to_route;}
+void Request::setHeaderWasRead(void) { _header_was_read = true; }
+void Request::setHeaderEndPos(std::size_t val) { _header_end_pos = val;}
+void Request::setFileExistenceStatus(bool value) { _is_file_exists = value;}
+void Request::setNeedWritingBodyToFile(bool value) { _is_need_writing_body_to_file = value;}
+void Request::setCgiScriptPathForRequest(const std::string& path) { _cgi_script_path = path;}
+void Request::setHostAndPort(const std::string& host, const int port) { _host = host;  _port = port;}
+void Request::setReponseContentLang(const std::string& lang) { _response_content_lang = lang;}
+
+std::string &           Request::getRawRequest(void) { return this->_raw_request;}
+const std::string&      Request::getAbsoluteRootPathForRequest(void) const { return _absolute_root_path_for_request;}
+int                     Request::getStatusCode() { return _status_code;}
+long long               Request::getOnlyContentLengthReadBodySize(void) { return _only_content_length_read_body_size;}
+bool                    Request::getFileExistenceStatus(void) const { return _is_file_exists;}
+bool                    Request::getNeedWritingBodyToFile(void) const { return _is_need_writing_body_to_file;}
+const std::string&      Request::getReponseContentLang(void) { return _response_content_lang; }
+const std::string&      Request::getCgiScriptPathForRequest(void) const { return _cgi_script_path;}
+
+void Request::increaseOnlyContentLengthReadBodySize(int bytes_read) { _only_content_length_read_body_size += bytes_read;}
+
+bool Request::isHeaderWasRead(void) const { return _header_was_read; }
+
+bool Request::isStatusCodeOk() {
+	std::list<int>::const_iterator found = std::find(OK_STATUS_CODES.begin(), OK_STATUS_CODES.end(), _status_code);
+
+	if (found == OK_STATUS_CODES.end()) {
+		return false;
+	}
+	return true;
+}
+
+bool Request::checkToClientMaxBodySize(void) {
+	long long client_max_body_size;
+	if (_handling_location) {
+		client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
+	} else {
+		client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+	}
+
+	std::map<std::string, std::string>::const_iterator found = _headers.find("content-length");
+	if (found != _headers.end()) {
+		long long content_length = libft::stoll_base(_headers["content-length"], 10);
+		if (client_max_body_size && content_length > client_max_body_size) {
+			setStatusCode(413);
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Request::checkToClientMaxBodySize(long long int value_to_check) {
+	long long client_max_body_size;
+	if (_handling_location) {
+		client_max_body_size = _handling_location->getClientMaxBodySizeInfo();
+	} else {
+		client_max_body_size = _handling_server->getClientMaxBodySizeInfo();
+	}
+
+
+	if (client_max_body_size && (value_to_check > client_max_body_size)) {
+		setStatusCode(413);
+		return false;
+	}
+	return true;
+}
+
+bool Request::writeBodyReadBytesIntoFile() {
+	int file = open(_full_filename.c_str(), O_RDWR | O_TRUNC, 0666);
+	if (file <= 0) {
+		_status_code = 500;
+		return false;
+	}
+
+	write(file, _content.c_str(), _content.size());
+	_content.clear();
+	close(file);
+	return true;
+}
+
+bool Request::checkIsMayFileBeOpenedOrCreated(void) {
+	int flags;
+	if (_is_file_exists) {
+		flags = O_RDWR | O_TRUNC;
+	}
+	else {
+		flags = O_RDWR | O_CREAT;
+	}
+
+	int file = open(_full_filename.c_str(), flags, 0666);
+	if (file <= 0) {
+		_status_code = 500;
+		return false;
+	}
+	close(file);
+	return true;
+}
+
+bool Request::isFileExists(void) {
+	struct stat buffer;
+	return (stat (_full_filename.c_str(), &buffer) == 0);
+}
+
+bool Request::isFileExists(const std::string& full_filename) {
+	struct stat buffer;
+	return (stat (full_filename.c_str(), &buffer) == 0);
+}
+
+bool Request::isRegFileExists(const std::string& full_filename) {
+	struct stat buffer;
+	return ((stat (full_filename.c_str(), &buffer) == 0) && S_ISREG(buffer.st_mode));
+}
+
+bool Request::isConcreteHeaderExists(const std::string& header_name) {
+	if (_headers.find(header_name) == _headers.end()) {
+		return false;
+	}
+	return true;
+}
+
+bool Request::targetIsFile(void) {
+	struct stat info_buf;
+
+	if (stat(_full_filename.c_str(), &info_buf) == -1) {
+		std::cout << strerror(errno) << std::endl;
+		_status_code = 500;
+		return false;
+	}
+
+	int file_type = info_buf.st_mode & S_IFMT;
+
+	if (file_type == S_IFREG) // return true if it's file
+		return true;
+	return false;
 }
 
 //// Accept-Charset and Accept-Language Headers Handlers END

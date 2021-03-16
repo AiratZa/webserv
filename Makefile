@@ -32,8 +32,7 @@ CORE_SRCS =     core/WebServ.cpp \
                 core/Server.cpp\
                 core/Request/Request.cpp \
                 core/Response/Response.cpp \
-                core/Response/autoindex_handling/autoindex_handling.cpp \
-                base64_coding/base64.cpp
+                base64_coding/Base64.cpp
 
 SRCS = $(UTILS_SRCS) $(CONF_PARSE_SRCS) $(CORE_SRCS) main.cpp
 
