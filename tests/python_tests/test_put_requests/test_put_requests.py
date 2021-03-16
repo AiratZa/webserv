@@ -11,7 +11,7 @@ import time
 def webserv():
     # Setup
 
-    proc = subprocess.Popen(["./WEBSERV.CONF"], executable='/home/airat/CLionProjects/webserv/webserv')
+    proc = subprocess.Popen(["./WEBSERV.CONF"], executable='/Users/jnannie/Desktop/finalweb/webserv')
 
     yield  # здесь происходит тестирование
     time.sleep(1)
@@ -42,7 +42,7 @@ def test_put_request_file_exists_at_start(webserv):
             assert data_size == final_data_size
 
 def test_put_request_passed_folder_name(webserv):
-    path = 'test_folder'
+    path = 'default_folder'
     url = 'http://localhost:8080/' + path
     r = requests.put(url, data="")
     assert r.status_code == 409

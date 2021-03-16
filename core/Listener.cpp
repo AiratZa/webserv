@@ -7,7 +7,7 @@
 #include "Response/Response.hpp"
 #include "../base64_coding/Base64.hpp"
 
-#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers TODO:look if we should use it from config
+#define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
 
 Listener::~Listener(void) {
     std::list<int>::iterator read = _clients_read.begin();
@@ -37,7 +37,7 @@ Listener::Listener(const std::string &host, in_addr_t host_addr, int port)
 		utils::exitWithLog();
 
 	_addr.sin_family = AF_INET;
-	_addr.sin_port = htons(port); // TODO: is htons it allowed?
+	_addr.sin_port = htons(port);
 	_addr.sin_addr.s_addr = _host_addr;
 
 	if (bind(_listener, (struct sockaddr *)&_addr, sizeof(_addr)) < 0)
@@ -46,21 +46,6 @@ Listener::Listener(const std::string &host, in_addr_t host_addr, int port)
 	if (listen(_listener, SOMAXCONN) < 0)
 		utils::exitWithLog();
 }
-
-//template <class Key, class Value>
-//Key max_map_key(const std::map<Key, Value>& map_value) {
-//    Key max_value = map_value.begin()->first;
-//
-//    typename std::map<Key, Value>::const_iterator it = map_value.begin();
-//
-//    while (it != map_value.end()) {
-//        if (it->first > max_value) {
-//            max_value = it->first;
-//        }
-//        ++it;
-//    }
-//    return max_value;
-//}
 
 void Listener::updateMaxFD(void) {
 	int max_tmp = _listener;
@@ -133,11 +118,10 @@ bool Listener::readAndSetHeaderInfoInRequest(Request* request_obj) {
 // return TRUE if length of body is reached else FALSE
 bool Listener::continueReadBody(Request* request_obj) {
     const std::map<std::string, std::string>& headers = request_obj->_headers;
-//    const std::string& body = request_obj->getRawBody(); // TODO: body is wrong, headers are removed during parsing so the whole _raw_request in the body
+//    const std::string& body = request_obj->getRawBody();
     std::string& body = request_obj->getRawRequest();
 	long long length;
 
-    // TODO: NEED CHECKS !!!! SEEMS LIKE SHOULDNT WORK
     std::map<std::string, std::string>::const_iterator it = headers.find("transfer-encoding");
     if ((it != headers.end()) && ((*it).second.find("chunked") != std::string::npos)) {
         request_obj->_is_chunked = true;
@@ -276,7 +260,7 @@ bool Listener::processHeaderInfoForActions(int client_socket) {
     }
 
     if (request->_handling_location) {
-		if (request->_handling_location->getAuthEnable()) { // TODO: add to config file
+		if (request->_handling_location->getAuthEnable()) {
 			if (request->_headers.count("authorization")) {
 				std::vector<std::string> log_pass = parser_log_pass(std::string("base64_coding/passwd"), request);
 				std::string auth_scheme = request->_headers["authorization"].substr(0, 5);

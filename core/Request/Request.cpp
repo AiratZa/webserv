@@ -8,7 +8,6 @@
 
 
 #define MAX_HEADER_LINE_LENGTH 8192 //http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers
-// TODO:look if we should use it from config ||| !!! Airat comment: subject and checlist not request this. can skip i think
 
 /*
  * return true if METHOD IS NOT ALLOWED BY CONFIG
@@ -254,7 +253,7 @@ void Request::parseRequestLine() {
 	_method = request_line.substr(0, word_end);
 	request_line.erase(0, word_end + 1);
 
-	word_end = request_line.find('?'); // TODO: take word first, to ' ', and find '?' in it, just in case, but not mandatory
+	word_end = request_line.find('?');
 	bool there_is_query = word_end != std::string::npos;
 	if (there_is_query) {
 		_request_target = request_line.substr(0, word_end);

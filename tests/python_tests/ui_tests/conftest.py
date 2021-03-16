@@ -17,7 +17,7 @@ DEFAULT_PAUSE_BEFORE_BROWSER_CLOSE = 1
 def webserv():
     # Setup
 
-    proc = sp.Popen(["./WEBSERV.CONF"], executable='/home/airat/CLionProjects/webserv/webserv')
+    proc = sp.Popen(["./WEBSERV.CONF"], executable='/Users/jnannie/Desktop/finalweb/webserv')
 
     yield  # здесь происходит тестирование
     time.sleep(1)

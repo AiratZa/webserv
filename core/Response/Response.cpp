@@ -108,7 +108,7 @@ void Response::_generateStatusLine() {
  * https://stackoverflow.com/questions/7960318/math-to-convert-seconds-since-1970-into-date-and-vice-versa
  * explanations http://howardhinnant.github.io/date_algorithms.html
  */
-struct tm Response::_getCalendarTime(time_t tv_sec) { // TODO: maybe should make it simplier. !!! [Airat Comment] Dima, kak hochesh )
+struct tm Response::_getCalendarTime(time_t tv_sec) {
 	struct tm calendar_time;
 	int days = tv_sec / 86400;
 	days += 719468;
@@ -378,22 +378,6 @@ void Response::_setContentTypeByFileExt(std::string & ext) {
 }
 
 
-/*
- * TODO: case1:
- *         location /html/ {
- *           index index.html;
- *           limit_except PUT;
- *        }
- *        _request->_handling_location is NULL somehow
- *        doesnt work index directive
- *
- * TODO: case2:
- *    location / {
- *    limit_except PUT;
- *    }
- *    doesnt work for files in subfolders
- *
- */
 bool Response::_isMethodAllowed() {
 	if (!_request->_handling_location)
 		return true;
@@ -552,7 +536,7 @@ void Response::_runCgi(std::string & filename) { // filename is a *.php script
 		exit(EXIT_FAILURE);
 	}
 
-	waitpid(pid, &exit_status, 0); // TODO: maybe we should use not blocking wait, then we need to save stdin and out backups and pass pipe descritpors to select
+	waitpid(pid, &exit_status, 0);
 	if (WIFEXITED(exit_status))
 		exit_status = WEXITSTATUS(exit_status);
 	else if (WIFSIGNALED(exit_status))
@@ -660,7 +644,6 @@ void Response::_generateHeadResponseCore() {
         return _request->setStatusCode(405);
     }
 
-//TODO: need to figure out what path to use instead of root. [Airat comment] if work, dont touch:D
     std::string filename = _request->getAbsoluteRootPathForRequest();
 	_request->appendRequestTarget(filename, _request->_request_target);
 
@@ -715,7 +698,7 @@ void Response::_generateHeadResponseCore() {
 					_request->_request_target += '/';
 				_request->_request_target += matching_index;
 
-				_location = _getLocationHeader(false); // TODO: need checks. ,aybe it is file location
+				_location = _getLocationHeader(false);
 
                 _retry_after = _getRetryAfterHeader();
                 return _request->setStatusCode(301); //Moved Permanently
@@ -727,7 +710,7 @@ void Response::_generateHeadResponseCore() {
                 return _request->setStatusCode(403);
             }
         } else {
-            return _request->setStatusCode(403); // TODO:check what code to return if file is not a directory and not a regular file
+            return _request->setStatusCode(403);
         }
     } else {
         return _request->setStatusCode(404);
@@ -770,7 +753,6 @@ void Response::_generatePostResponse() {
 		return _request->setStatusCode(405);
 	}
 
-//TODO: need to figure out what path to use instead of root. [Airat comment]: same as previous
 	std::string filename = _request->getAbsoluteRootPathForRequest();
 	_request->appendRequestTarget(filename, _request->_request_target);
 
